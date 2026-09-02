@@ -11,6 +11,7 @@ Singleton {
 
     property bool launcherOpen: false
     property bool clipboardOpen: false
+    property bool overviewOpen: false
     property bool dnd: false
 
     property string osdKind: ""
@@ -23,6 +24,7 @@ Singleton {
         }
         launcherOpen = false;
         clipboardOpen = false;
+        overviewOpen = false;
         popoutAnchor = anchor ?? popoutAnchor;
         popout = name;
     }
@@ -36,6 +38,7 @@ Singleton {
         closePopout();
         launcherOpen = false;
         clipboardOpen = false;
+        overviewOpen = false;
     }
 
     function toggleSidebar() {
@@ -45,13 +48,35 @@ Singleton {
     function toggleLauncher() {
         closePopout();
         clipboardOpen = false;
+        overviewOpen = false;
         launcherOpen = !launcherOpen;
     }
 
     function toggleClipboard() {
         closePopout();
         launcherOpen = false;
+        overviewOpen = false;
         clipboardOpen = !clipboardOpen;
+    }
+
+    property int overviewNudge: 0
+    property int overviewCommit: 0
+
+    function toggleOverview() {
+        if (overviewOpen) {
+            overviewNudge++;
+            return;
+        }
+        closePopout();
+        launcherOpen = false;
+        clipboardOpen = false;
+        overviewOpen = true;
+    }
+
+    function confirmOverview() {
+        if (!overviewOpen)
+            return;
+        overviewCommit++;
     }
 
     function showOsd(kind, value) {

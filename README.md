@@ -13,6 +13,7 @@ IPC:
 quickshell ipc -p ~/Programming/Tanjun-shell call tanjun toggleLauncher
 quickshell ipc -p ~/Programming/Tanjun-shell call tanjun toggleSidebar
 quickshell ipc -p ~/Programming/Tanjun-shell call tanjun toggleClipboard
+quickshell ipc -p ~/Programming/Tanjun-shell call tanjun toggleOverview
 ```
 
 See `TODO.md` and `scripts/install-hypr.sh`.

@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v1.1**
+Current: **v1.2**
 
 ## v1.0 — host (shipping)
 
@@ -24,7 +24,7 @@ Super+A / Super+V and the audio popout, no kitty.
 
 ## v1.2 — overview
 
-- [ ] Super+Tab overview with live window previews
+- [x] Super+Tab overview with live window previews
 
 ## v1.3 — color lock
 

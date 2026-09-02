@@ -8,6 +8,7 @@ import "modules/launcher"
 import "modules/osd"
 import "modules/notifs"
 import "modules/clipboard"
+import "modules/overview"
 
 ShellRoot {
     Bar {}
@@ -15,6 +16,7 @@ ShellRoot {
     Osd {}
     Toasts {}
     Clipboard {}
+    Overview {}
 
     IpcHandler {
         target: "tanjun"
@@ -33,6 +35,14 @@ ShellRoot {
 
         function toggleClipboard(): void {
             ShellState.toggleClipboard();
+        }
+
+        function toggleOverview(): void {
+            ShellState.toggleOverview();
+        }
+
+        function confirmOverview(): void {
+            ShellState.confirmOverview();
         }
 
         function toggleDnd(): void {

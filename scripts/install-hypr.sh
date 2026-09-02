@@ -38,14 +38,26 @@ t2 = t2.replace(
     """hl.bind(mainMod .. " + V", hl.dsp.exec_cmd('cliphist list | wofi --dmenu --allow-image -p "Clipboard" | cliphist decode | wl-copy'))""",
     f'hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("{ipc} toggleClipboard"))',
 )
-t2 = t2.replace(
+reload = f'hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload; killall quickshell; {qs} &"))'
+for old in (
     'hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload && killall waybar && waybar && killall hyprpaper && hyprpaper && killall hyprsunset && hyprsunset"))',
-    f'hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload && killall quickshell && {qs} && killall hyprpaper && hyprpaper && killall hyprsunset && hyprsunset"))',
+    'hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload && killall quickshell && ' + qs + ' && killall hyprpaper && hyprpaper && killall hyprsunset && hyprsunset"))',
+    'hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload; killall quickshell; ' + qs + ' & killall hyprpaper; hyprpaper & killall hyprsunset; hyprsunset &"))',
+):
+    t2 = t2.replace(old, reload)
+t2 = t2.replace(
+    'hl.bind(mainMod .. " + tab", hl.dsp.window.cycle_next())\nhl.bind(mainMod .. " + tab", hl.dsp.window.bring_to_top())',
+    f'hl.bind(mainMod .. " + tab", hl.dsp.exec_cmd("{ipc} toggleOverview"))',
 )
+for old in (
+    f'hl.bind(mainMod .. " + tab", hl.dsp.exec_cmd("{ipc} toggleOverview"), {{ allow_input_capture = true }})\nhl.bind("SUPER_L", hl.dsp.exec_cmd("{ipc} confirmOverview"), {{ release = true, allow_input_capture = true }})\nhl.bind("SUPER_R", hl.dsp.exec_cmd("{ipc} confirmOverview"), {{ release = true, allow_input_capture = true }})',
+    f'hl.bind(mainMod .. " + tab", hl.dsp.exec_cmd("{ipc} toggleOverview"), {{ allow_input_capture = true }})',
+):
+    t2 = t2.replace(old, f'hl.bind(mainMod .. " + tab", hl.dsp.exec_cmd("{ipc} toggleOverview"))')
 if t2 != t:
     binds.write_text(t2)
     print(f"patched {binds}")
-elif "toggleLauncher" in t:
+elif "toggleOverview" in t:
     print(f"already patched {binds}")
 else:
     print(f"WARN: could not patch {binds}", file=sys.stderr)
@@ -60,4 +72,6 @@ echo "IPC:"
 echo "  $IPC toggleLauncher"
 echo "  $IPC toggleSidebar"
 echo "  $IPC toggleClipboard"
+echo "  $IPC toggleOverview"
+echo "  $IPC confirmOverview"
 echo "  $IPC toggleDnd"
