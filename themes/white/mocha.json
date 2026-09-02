@@ -1,0 +1,16 @@
+{
+  "name": "mocha",
+  "label": "Mocha",
+  "kind": "white",
+  "accent": "#cba6f7",
+  "accentHover": "#b4befe",
+  "critical": "#f38ba8",
+  "warning": "#f9e2af",
+  "info": "#89b4fa",
+  "good": "#a6e3a1",
+  "fg": "#cdd6f4",
+  "fgSub": "#a6adc8",
+  "bg": "#1e1e2e",
+  "surface": "#313244",
+  "surfaceHover": "#45475a"
+}

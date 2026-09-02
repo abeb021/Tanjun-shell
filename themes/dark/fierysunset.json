@@ -1,0 +1,16 @@
+{
+  "name": "fierysunset",
+  "label": "Fiery Sunset",
+  "kind": "dark",
+  "accent": "#f97316",
+  "accentHover": "#fb923c",
+  "critical": "#ef4444",
+  "warning": "#eab308",
+  "info": "#0ea5e9",
+  "good": "#7bc379",
+  "fg": "#d4d4d4",
+  "fgSub": "#9ca3af",
+  "bg": "#1b1b1f",
+  "surface": "#252525",
+  "surfaceHover": "#2e2e36"
+}

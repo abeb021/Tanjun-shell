@@ -1,0 +1,16 @@
+{
+  "name": "macchiato",
+  "label": "Macchiato",
+  "kind": "white",
+  "accent": "#c6a0f6",
+  "accentHover": "#b7bdf8",
+  "critical": "#ed8796",
+  "warning": "#eed49f",
+  "info": "#8aadf4",
+  "good": "#a6da95",
+  "fg": "#cad3f5",
+  "fgSub": "#a5adcb",
+  "bg": "#24273a",
+  "surface": "#363a4f",
+  "surfaceHover": "#494d64"
+}

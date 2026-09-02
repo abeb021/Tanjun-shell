@@ -1,0 +1,16 @@
+{
+  "name": "obsidian",
+  "label": "Obsidian",
+  "kind": "dark",
+  "accent": "#8b5cf6",
+  "accentHover": "#a5b4fc",
+  "critical": "#ef4444",
+  "warning": "#eab308",
+  "info": "#5db7f5",
+  "good": "#7bc379",
+  "fg": "#d4d4d4",
+  "fgSub": "#9ca3af",
+  "bg": "#1b1b1f",
+  "surface": "#252525",
+  "surfaceHover": "#2e2e36"
+}

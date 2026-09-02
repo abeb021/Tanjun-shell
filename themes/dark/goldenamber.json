@@ -1,0 +1,16 @@
+{
+  "name": "goldenamber",
+  "label": "Golden Amber",
+  "kind": "dark",
+  "accent": "#f59e0b",
+  "accentHover": "#fbbf24",
+  "critical": "#ef4444",
+  "warning": "#eab308",
+  "info": "#3b82f6",
+  "good": "#7bc379",
+  "fg": "#d4d4d4",
+  "fgSub": "#9ca3af",
+  "bg": "#1b1b1f",
+  "surface": "#252525",
+  "surfaceHover": "#2e2e36"
+}

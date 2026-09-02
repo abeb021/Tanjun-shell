@@ -1,0 +1,7 @@
+# Ignore runtime junk, keep the shell
+.qmlcache/
+*.qmlc
+*.jsc
+state.json
+*.swp
+.DS_Store
