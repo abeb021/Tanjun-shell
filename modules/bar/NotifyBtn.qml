@@ -5,6 +5,8 @@ import "../../services"
 BarButton {
     id: root
     popoutName: "notify"
+    onRightClicked: ShellState.dnd = !ShellState.dnd
+    onMiddleClicked: Notifs.clear()
     BarText {
         text: ShellState.dnd ? "" : ""
         icon: true

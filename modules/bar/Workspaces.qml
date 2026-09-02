@@ -51,6 +51,7 @@ Row {
                 else
                     Quickshell.execDetached(["hyprctl", "dispatch", "workspace", `${wsId}`]);
             }
+            onRightClicked: Quickshell.execDetached(["hyprctl", "dispatch", "movetoworkspace", `${wsId}`])
             BarText {
                 text: wsBtn.active ? "" : (wsBtn.ws ? `${wsBtn.wsId}` : "")
                 px: 11

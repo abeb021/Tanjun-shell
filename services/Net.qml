@@ -46,6 +46,10 @@ Singleton {
             wifiDevice.scannerEnabled = on;
     }
 
+    function toggleWifi() {
+        Networking.wifiEnabled = !Networking.wifiEnabled;
+    }
+
     function refreshVpn() {
         vpnProc.running = true;
     }

@@ -5,6 +5,7 @@ import "../../services"
 BarButton {
     visible: Battery.ready
     popoutName: "battery"
+    onWheeled: steps => Backlight.nudge(steps * 5)
     BarText {
         text: Battery.icon
         icon: true

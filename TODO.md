@@ -2,13 +2,13 @@
 
 単純. One process. Frame off.
 
-Current: **v1.2**
+Current: **v1.3**
 
 ## v1.0 — host (shipping)
 
 - [x] Quickshell host + quiet bar, frame off (JetBrains, 1px, 単 seal)
-- [x] Popouts from the glyph; 単 menu hangs left off the seal
-- [x] Launcher: empty query is clock / weather / track, then app search
+- [x] Popouts from the glyph; 単 menu hangs off the seal (not a right System sidebar)
+- [x] Launcher: empty query is clock / weather / track labels, then app search
 - [x] Notifications + do-not-disturb + volume / backlight OSD
 - [x] Color: nine named palettes
 - [x] Workspaces: numbers / dots on the bar
@@ -26,14 +26,38 @@ Super+A / Super+V and the audio popout, no kitty.
 
 - [x] Super+Tab overview with live window previews
 
-## v1.3 — color lock
+## v1.3 — summon
+
+Panels from the keyboard, not only the 16px glyph.
+
+- [x] IPC + binds for audio, network, calendar, battery, notify, 単
+- [x] Finish widget chords (scroll / right / middle) where the verb is obvious
+- [x] Bind 単 and DND; finish `scripts/install-hypr.sh`
+
+## v1.4 — system
+
+- [ ] Real right System sidebar (not the 単 popout)
+- [ ] Session row: lock, logout, reboot, sleep
+- [ ] Mixer: mic / default source, not sink-only
+
+## v1.5 — launcher
+
+- [ ] Rest card: weather card, art + transport, not four labels
+- [ ] Prefixes: `=` calc, `;` clipboard, `?` web, `/` actions, `@` music
+
+## v1.6 — paint
+
+- [ ] Theme singleton paints kitty / hypr / lock / wallpaper; drop the old switcher script
+- [ ] Notification actions, not dismiss-only
+
+## v1.7 — color lock
 
 - [ ] Wallpaper-driven accent **plus a lock** so the palette cannot jump
 
-## v1.4 — type
+## v1.8 — type
 
 - [ ] Font picker inside the shell
 
-## v1.5 — motion
+## v1.9 — motion
 
 - [ ] Motion tokens, morphing popouts

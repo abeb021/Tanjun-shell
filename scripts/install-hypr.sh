@@ -12,14 +12,14 @@ IPC="quickshell ipc -p $ROOT call tanjun"
 
 python3 - "$HYPR" "$ROOT" <<'PY'
 import pathlib, sys
-hypr, root = pathlib.Path(sys.argv[1]), sys.argv[2]
+hypr, root = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 qs = f"quickshell -p {root}"
 ipc = f"quickshell ipc -p {root} call tanjun"
 
 auto = hypr / "autostart.lua"
 text = auto.read_text()
-old = 'hyprpaper --config ~/.config/hypr/hyprpaper.conf & waybar & swaync & hypridle & hyprsunset'
-new = f'hyprpaper --config ~/.config/hypr/hyprpaper.conf & {qs} & hypridle & hyprsunset'
+old = "hyprpaper --config ~/.config/hypr/hyprpaper.conf & waybar & swaync & hypridle & hyprsunset"
+new = f"hyprpaper --config ~/.config/hypr/hyprpaper.conf & {qs} & hypridle & hyprsunset"
 if old in text:
     auto.write_text(text.replace(old, new, 1))
     print(f"patched {auto}")
@@ -54,13 +54,31 @@ for old in (
     f'hl.bind(mainMod .. " + tab", hl.dsp.exec_cmd("{ipc} toggleOverview"), {{ allow_input_capture = true }})',
 ):
     t2 = t2.replace(old, f'hl.bind(mainMod .. " + tab", hl.dsp.exec_cmd("{ipc} toggleOverview"))')
+
+start, end = "-- Tanjun summon", "-- /Tanjun summon"
+block = "\n".join([
+    start,
+    f'hl.bind(mainMod .. " + CTRL + A", hl.dsp.exec_cmd("{ipc} toggleAudio"))',
+    f'hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("{ipc} toggleNetwork"))',
+    f'hl.bind(mainMod .. " + CTRL + C", hl.dsp.exec_cmd("{ipc} toggleCalendar"))',
+    f'hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd("{ipc} toggleBattery"))',
+    f'hl.bind(mainMod .. " + CTRL + N", hl.dsp.exec_cmd("{ipc} toggleNotify"))',
+    f'hl.bind(mainMod .. " + CTRL + S", hl.dsp.exec_cmd("{ipc} toggleSidebar"))',
+    f'hl.bind(mainMod .. " + CTRL + D", hl.dsp.exec_cmd("{ipc} toggleDnd"))',
+    end,
+])
+if start in t2:
+    i = t2.index(start)
+    j = t2.index(end, i) + len(end) if end in t2[i:] else i + len(start)
+    t2 = t2[:i] + block + t2[j:]
+else:
+    t2 = t2.rstrip() + "\n\n" + block + "\n"
+
 if t2 != t:
     binds.write_text(t2)
     print(f"patched {binds}")
-elif "toggleOverview" in t:
-    print(f"already patched {binds}")
 else:
-    print(f"WARN: could not patch {binds}", file=sys.stderr)
+    print(f"already patched {binds}")
 PY
 
 echo
@@ -71,6 +89,11 @@ echo "  $QS"
 echo "IPC:"
 echo "  $IPC toggleLauncher"
 echo "  $IPC toggleSidebar"
+echo "  $IPC toggleAudio"
+echo "  $IPC toggleNetwork"
+echo "  $IPC toggleCalendar"
+echo "  $IPC toggleBattery"
+echo "  $IPC toggleNotify"
 echo "  $IPC toggleClipboard"
 echo "  $IPC toggleOverview"
 echo "  $IPC confirmOverview"

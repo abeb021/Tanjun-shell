@@ -33,6 +33,30 @@ ShellRoot {
             ShellState.toggleSidebar();
         }
 
+        function toggleMenu(): void {
+            ShellState.toggleSidebar();
+        }
+
+        function toggleAudio(): void {
+            ShellState.togglePopout("audio");
+        }
+
+        function toggleNetwork(): void {
+            ShellState.togglePopout("network");
+        }
+
+        function toggleCalendar(): void {
+            ShellState.togglePopout("clock");
+        }
+
+        function toggleBattery(): void {
+            ShellState.togglePopout("battery");
+        }
+
+        function toggleNotify(): void {
+            ShellState.togglePopout("notify");
+        }
+
         function toggleClipboard(): void {
             ShellState.toggleClipboard();
         }

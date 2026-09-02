@@ -43,7 +43,9 @@ Singleton {
         }
     }
 
-    function cycle() {
-        tzIndex = (tzIndex + 1) % zones.length;
+    function cycle(delta) {
+        const n = zones.length;
+        const step = delta === undefined || delta === 0 ? 1 : (delta > 0 ? 1 : -1);
+        tzIndex = (tzIndex + step + n) % n;
     }
 }

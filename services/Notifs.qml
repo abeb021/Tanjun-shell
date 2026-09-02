@@ -22,6 +22,14 @@ Singleton {
         }
     }
 
+    Connections {
+        target: ShellState
+        function onPopoutChanged() {
+            if (ShellState.popout === "notify")
+                root.unread = 0;
+        }
+    }
+
     function clear() {
         const items = server.trackedNotifications.values;
         if (!items)

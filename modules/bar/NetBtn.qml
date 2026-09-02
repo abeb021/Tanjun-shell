@@ -4,6 +4,7 @@ import "../../services"
 
 BarButton {
     popoutName: "network"
+    onRightClicked: Net.toggleWifi()
     BarText {
         text: Net.connected ? "󰤨" : "󰤭"
         icon: true
