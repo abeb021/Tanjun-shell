@@ -7,7 +7,8 @@ Singleton {
     id: root
 
     property string text: ""
-    property string city: "Moscow"
+
+    readonly property string query: Config.services.weatherCity.length ? encodeURIComponent(Config.services.weatherCity) : ""
 
     function refresh() {
         proc.running = true;
@@ -15,10 +16,17 @@ Singleton {
 
     Process {
         id: proc
-        command: ["curl", "-s", "--max-time", "4", `https://wttr.in/${city}?format=%c+%t`]
+        command: ["curl", "-s", "--max-time", "4", `https://wttr.in/${root.query}?format=%c+%t`]
         running: true
         stdout: StdioCollector {
             onStreamFinished: root.text = text.trim()
+        }
+    }
+
+    Connections {
+        target: Config.services
+        function onWeatherCityChanged() {
+            root.refresh();
         }
     }
 

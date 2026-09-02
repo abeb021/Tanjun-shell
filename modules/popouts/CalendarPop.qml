@@ -9,7 +9,7 @@ Rectangle {
     border.width: 1
     border.color: Theme.bg
     radius: Theme.radius
-    implicitWidth: 280
+    implicitWidth: Math.max(280, 20 + Time.zones.length * 120)
     implicitHeight: col.implicitHeight + 16
     focus: true
     Keys.onEscapePressed: ShellState.closeMenus()
@@ -46,27 +46,20 @@ Rectangle {
 
         Row {
             spacing: 16
-            Column {
-                BarText {
-                    text: Time.timeMoscow
-                    px: 22
-                }
-                BarText {
-                    text: "Moscow"
-                    sub: true
-                    px: 11
-                }
-            }
-            Column {
-                BarText {
-                    text: Time.timeMelbourne
-                    px: 22
-                    color: Time.tzId === "Australia/Melbourne" ? Theme.accent : Theme.fg
-                }
-                BarText {
-                    text: "Melbourne"
-                    sub: true
-                    px: 11
+            Repeater {
+                model: Time.zones
+                Column {
+                    required property var modelData
+                    BarText {
+                        text: Time.time.length ? Time.formatTime(modelData.id) : ""
+                        px: 22
+                        color: Time.tzId === modelData.id ? Theme.accent : Theme.fg
+                    }
+                    BarText {
+                        text: modelData.label || Config.prettyZone(modelData.id)
+                        sub: true
+                        px: 11
+                    }
                 }
             }
         }

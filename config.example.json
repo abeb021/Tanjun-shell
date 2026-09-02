@@ -1,0 +1,10 @@
+{
+  "clock": {
+    "zones": [
+      { "id": "Europe/Berlin", "label": "Berlin" }
+    ]
+  },
+  "services": {
+    "weatherCity": "Berlin"
+  }
+}

@@ -2,9 +2,14 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 HYPR="$HOME/.config/hypr/hyprland"
-mkdir -p "$HOME/.config/tanjun"
-if [[ ! -f "$HOME/.config/tanjun/state.json" ]]; then
-  printf '%s\n' '{"kind":"dark","name":"monochrome"}' > "$HOME/.config/tanjun/state.json"
+STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+mkdir -p "$STATE_HOME/tanjun"
+if [[ ! -f "$STATE_HOME/tanjun/state.json" ]]; then
+  if [[ -f "$HOME/.config/tanjun/state.json" ]]; then
+    cp "$HOME/.config/tanjun/state.json" "$STATE_HOME/tanjun/state.json"
+  else
+    printf '%s\n' '{"kind":"dark","name":"monochrome"}' > "$STATE_HOME/tanjun/state.json"
+  fi
 fi
 
 QS="quickshell -p $ROOT"

@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v1.4**
+Current: **v1.5**
 
 ## v1.0 — host (shipping)
 
@@ -41,20 +41,28 @@ Panels from the keyboard, not only the 16px glyph.
 - [x] Mixer: mic / default source, not sink-only
 - [x] Motion tokens, morphing popouts
 
-## v1.5 — launcher
+## v1.5 — config
+
+Sparse overlay. Defaults in the shell. Pin only this machine.
+
+- [x] `~/.config/tanjun/config.json` via JsonAdapter; omit = auto
+- [x] Nested pins: clock zones, weather, backlight, keyboard, lock, theme hook
+- [x] Palette last-used in `~/.local/state/tanjun/`; vanilla hypr snippet
+
+## v1.6 — launcher
 
 - [ ] Rest card: weather card, art + transport, not four labels
 - [ ] Prefixes: `=` calc, `;` clipboard, `?` web, `/` actions, `@` music
 
-## v1.6 — paint
+## v1.7 — paint
 
 - [ ] Theme singleton paints kitty / hypr / lock / wallpaper; drop the old switcher script
 - [ ] Notification actions, not dismiss-only
 
-## v1.7 — color lock
+## v1.8 — color lock
 
 - [ ] Wallpaper-driven accent **plus a lock** so the palette cannot jump
 
-## v1.8 — type
+## v1.9 — type
 
 - [ ] Font picker inside the shell

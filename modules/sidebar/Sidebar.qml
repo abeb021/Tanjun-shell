@@ -252,7 +252,9 @@ Scope {
                                 implicitWidth: parent.cell
                                 onClicked: {
                                     ShellState.closeMenus();
-                                    Quickshell.execDetached(["hyprlock"]);
+                                    const cmd = Config.argv(Config.session.lock);
+                                    if (cmd && cmd.length)
+                                        Quickshell.execDetached(cmd);
                                 }
                                 BarText {
                                     text: "lock"

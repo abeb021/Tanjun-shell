@@ -1,0 +1,28 @@
+# Vanilla Hyprland binds. Replace /path/to/Tanjun-shell with the clone.
+# The lua installer (scripts/install-hypr.sh) is optional and only patches
+# a hyprland/ lua layout if that tree is present.
+
+$tanjun = /path/to/Tanjun-shell
+
+exec-once = quickshell -p $tanjun
+
+bind = SUPER, A, exec, quickshell ipc -p $tanjun call tanjun toggleLauncher
+bind = SUPER, V, exec, quickshell ipc -p $tanjun call tanjun toggleClipboard
+bind = SUPER, TAB, exec, quickshell ipc -p $tanjun call tanjun toggleOverview
+bind = SUPER CTRL, A, exec, quickshell ipc -p $tanjun call tanjun toggleAudio
+bind = SUPER CTRL, W, exec, quickshell ipc -p $tanjun call tanjun toggleNetwork
+bind = SUPER CTRL, C, exec, quickshell ipc -p $tanjun call tanjun toggleCalendar
+bind = SUPER CTRL, B, exec, quickshell ipc -p $tanjun call tanjun toggleBattery
+bind = SUPER CTRL, N, exec, quickshell ipc -p $tanjun call tanjun toggleNotify
+bind = SUPER CTRL, S, exec, quickshell ipc -p $tanjun call tanjun toggleSidebar
+bind = SUPER CTRL, D, exec, quickshell ipc -p $tanjun call tanjun toggleDnd
+bind = SUPER SHIFT, R, exec, hyprctl reload; killall quickshell; quickshell -p $tanjun &
+
+# Optional: skip compositor pop-in on Tanjun layers (the shell animates itself).
+layerrule = noanim, tanjun-bar
+layerrule = noanim, tanjun-sidebar
+layerrule = noanim, tanjun-launcher
+layerrule = noanim, tanjun-clipboard
+layerrule = noanim, tanjun-overview
+layerrule = noanim, tanjun-osd
+layerrule = noanim, tanjun-toast

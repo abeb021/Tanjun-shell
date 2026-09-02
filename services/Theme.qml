@@ -70,14 +70,18 @@ Singleton {
 
     function setTheme(nextKind, nextName) {
         loadPalette(nextKind, nextName);
+        Config.ensureStateDir();
+        stateFile.path = Config.stateFile;
         stateFile.setText(JSON.stringify({ kind: nextKind, name: nextName }));
-        const switcher = `${Quickshell.env("HOME")}/.config/waybar/scripts/theme-switcher.sh`;
-        Quickshell.execDetached(["bash", switcher, nextName]);
+        const hook = Config.theme.hook;
+        if (hook && hook.length)
+            Quickshell.execDetached(["bash", hook, nextName]);
     }
 
     FileView {
         id: stateFile
-        path: `${Quickshell.env("HOME")}/.config/tanjun/state.json`
+        path: Config.stateFile
+        printErrors: false
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {
@@ -86,6 +90,10 @@ Singleton {
                 if (s.kind && s.name)
                     root.loadPalette(s.kind, s.name);
             } catch (e) {}
+        }
+        onLoadFailed: {
+            if (path === Config.stateFile)
+                path = Config.legacyStateFile;
         }
     }
 

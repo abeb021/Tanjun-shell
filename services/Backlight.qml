@@ -8,25 +8,27 @@ Singleton {
 
     property int percent: -1
 
+    readonly property string deviceFlag: Config.services.backlight.length ? ` -d ${Config.services.backlight}` : ""
+
     function refresh() {
         proc.running = true;
     }
 
     function nudge(delta) {
         const sign = delta > 0 ? "+" : "-";
-        Quickshell.execDetached(["brightnessctl", "-e", "-d", "intel_backlight", "set", `${Math.abs(delta)}%${sign}`]);
+        Quickshell.execDetached(["bash", "-c", `brightnessctl -e${deviceFlag} set ${Math.abs(delta)}%${sign}`]);
         Qt.callLater(refresh);
     }
 
     function setPercent(p) {
         const n = Math.max(1, Math.min(100, Math.round(p)));
-        Quickshell.execDetached(["brightnessctl", "-d", "intel_backlight", "set", `${n}%`]);
+        Quickshell.execDetached(["bash", "-c", `brightnessctl${deviceFlag} set ${n}%`]);
         Qt.callLater(refresh);
     }
 
     Process {
         id: proc
-        command: ["bash", "-c", "brightnessctl -m -d intel_backlight | awk -F, '{gsub(/%/,\"\",$4); print $4}'"]
+        command: ["bash", "-c", `brightnessctl -m${root.deviceFlag} | awk -F, '{gsub(/%/,\"\",$4); print $4}'`]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {

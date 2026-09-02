@@ -14,9 +14,12 @@ Singleton {
     }
 
     function cycle() {
-        Quickshell.execDetached(["hyprctl", "switchxkblayout", "at-translated-set-2-keyboard", "next"]);
+        const quoted = Config.services.keyboard.length ? `'${String(Config.services.keyboard).replace(/'/g, "'\\''")}'` : `"$(${root.mainKbPy})"`;
+        Quickshell.execDetached(["bash", "-c", `hyprctl switchxkblayout ${quoted} next`]);
         Qt.callLater(refresh);
     }
+
+    readonly property string mainKbPy: "hyprctl devices -j | python -c \"import json,sys; d=json.load(sys.stdin); ks=d.get('keyboards',[]); k=next((x for x in ks if x.get('main')), ks[0] if ks else {}); print(k.get('name',''))\""
 
     Process {
         id: proc
@@ -24,11 +27,14 @@ Singleton {
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                const t = text.trim().toLowerCase();
-                if (t.indexOf("ru") >= 0 || t.indexOf("russian") >= 0)
+                const t = text.trim();
+                const low = t.toLowerCase();
+                if (low.indexOf("ru") >= 0 || low.indexOf("russian") >= 0)
                     root.keymap = "RU";
-                else
+                else if (low.indexOf("us") >= 0 || low.indexOf("english") >= 0)
                     root.keymap = "EN";
+                else if (t.length)
+                    root.keymap = t.length <= 4 ? t.toUpperCase() : t.slice(0, 2).toUpperCase();
             }
         }
     }
