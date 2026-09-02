@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Networking
 import "../bar"
 import "../../services"
 
@@ -8,8 +9,17 @@ Rectangle {
     border.width: 1
     border.color: Theme.bg
     radius: Theme.radius
-    implicitWidth: 240
+    implicitWidth: 260
     implicitHeight: col.implicitHeight + 16
+    focus: true
+    Keys.onEscapePressed: ShellState.closeMenus()
+
+    Connections {
+        target: ShellState
+        function onPopoutChanged() {
+            Net.setScanning(ShellState.popout === "network");
+        }
+    }
 
     Column {
         id: col
@@ -19,32 +29,49 @@ Rectangle {
         anchors.margins: 10
         spacing: 8
 
-        BarText {
-            text: Net.connected ? Net.ssid : "offline"
-            px: 13
-        }
-        BarText {
-            text: "click → nmtui"
-            sub: true
-            px: 11
-        }
-        MouseArea {
-            width: parent.width
-            height: 28
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                Quickshell.execDetached(["kitty", "--title=network-manager", "nmtui"]);
-                ShellState.closePopout();
-            }
-            Rectangle {
-                anchors.fill: parent
-                color: Theme.surfaceHover
-                radius: Theme.radius
-            }
+        Row {
+            spacing: 8
             BarText {
-                anchors.centerIn: parent
-                text: "open nmtui"
-                px: 12
+                text: Net.connected ? Net.ssid : (Net.wifiOn ? "wifi" : "offline")
+                px: 13
+            }
+        }
+
+        BarText {
+            visible: Net.vpnUp
+            text: "vpn  " + Net.vpn
+            px: 12
+            color: Theme.accent
+        }
+
+        BarButton {
+            implicitWidth: parent.width
+            onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
+            BarText {
+                text: Net.wifiOn ? "wifi · on" : "wifi · off"
+                px: 11
+            }
+        }
+
+        Repeater {
+            model: Net.networks
+            delegate: BarButton {
+                required property var modelData
+                implicitWidth: col.width
+                active: modelData.connected
+                onClicked: {
+                    if (modelData.connected)
+                        modelData.disconnect();
+                    else
+                        modelData.connect();
+                }
+                BarText {
+                    text: (modelData.connected ? "● " : "○ ") + (modelData.name || "hidden")
+                    px: 12
+                    color: modelData.connected ? Theme.accent : Theme.fg
+                    width: col.width - 16
+                    elide: Text.ElideRight
+                }
             }
         }
     }

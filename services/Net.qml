@@ -2,36 +2,60 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Networking
 
 Singleton {
     id: root
 
-    property string ssid: ""
-    property int signal: 0
-    property bool connected: false
-    readonly property string text: connected ? (ssid || "wifi") : "offline"
+    readonly property var wifiDevice: {
+        const list = Networking.devices.values;
+        if (!list)
+            return null;
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].type === DeviceType.Wifi)
+                return list[i];
+        }
+        return null;
+    }
 
-    function refresh() {
-        proc.running = true;
+    readonly property var connectedNet: {
+        const dev = wifiDevice;
+        if (!dev || !dev.networks)
+            return null;
+        const nets = dev.networks.values;
+        if (!nets)
+            return null;
+        for (let i = 0; i < nets.length; i++) {
+            if (nets[i].connected)
+                return nets[i];
+        }
+        return null;
+    }
+
+    readonly property var networks: wifiDevice && wifiDevice.networks ? wifiDevice.networks.values : []
+    readonly property bool wifiOn: Networking.wifiEnabled
+    readonly property bool connected: !!(connectedNet || (wifiDevice && wifiDevice.connected))
+    readonly property string ssid: connectedNet ? (connectedNet.name || "") : ""
+    readonly property string text: connected ? (ssid || "wifi") : (wifiOn ? "wifi" : "offline")
+
+    property string vpn: ""
+    readonly property bool vpnUp: vpn.length > 0
+
+    function setScanning(on) {
+        if (wifiDevice && wifiDevice.scannerEnabled !== undefined)
+            wifiDevice.scannerEnabled = on;
+    }
+
+    function refreshVpn() {
+        vpnProc.running = true;
     }
 
     Process {
-        id: proc
-        command: ["bash", "-c", `${Quickshell.env("HOME")}/.config/waybar/scripts/wifi.sh`]
+        id: vpnProc
+        command: ["bash", "-c", "nmcli -t -f TYPE,NAME connection show --active 2>/dev/null | awk -F: '$1 ~ /vpn|wireguard|tun|sstp|amnezia/ {print $2; exit}'"]
         running: true
         stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const j = JSON.parse(text.trim().split("\n").pop());
-                    const t = j.text || "";
-                    root.connected = t.indexOf("󰤭") < 0 && t !== "";
-                    const parts = t.split(" ");
-                    root.ssid = parts.length > 1 ? parts.slice(1).join(" ") : t;
-                } catch (e) {
-                    root.connected = false;
-                    root.ssid = "";
-                }
-            }
+            onStreamFinished: root.vpn = text.trim()
         }
     }
 
@@ -39,6 +63,6 @@ Singleton {
         interval: 5000
         running: true
         repeat: true
-        onTriggered: root.refresh()
+        onTriggered: root.refreshVpn()
     }
 }

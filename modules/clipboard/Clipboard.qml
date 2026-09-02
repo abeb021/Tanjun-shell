@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 import "../bar"
 import "../../services"
 
@@ -16,6 +17,10 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
             focusable: true
 
+            WlrLayershell.namespace: "tanjun-clipboard"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
             anchors {
                 top: true
                 left: true
@@ -25,7 +30,11 @@ Scope {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: ShellState.clipboardOpen = false
+                onClicked: ShellState.closeMenus()
+                Shortcut {
+                    sequence: "Escape"
+                    onActivated: ShellState.closeMenus()
+                }
             }
 
             Rectangle {

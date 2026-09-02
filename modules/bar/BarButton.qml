@@ -57,4 +57,11 @@ Item {
         if (popoutName.length)
             ShellState.togglePopout(popoutName, root);
     }
+
+    Binding {
+        when: root.popoutName.length > 0
+        target: root
+        property: "active"
+        value: ShellState.popout === root.popoutName
+    }
 }

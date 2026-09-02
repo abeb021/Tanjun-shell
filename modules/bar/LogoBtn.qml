@@ -3,12 +3,12 @@ import Quickshell
 import "../../services"
 
 BarButton {
-    onClicked: ShellState.toggleSidebar()
+    popoutName: "menu"
     implicitWidth: 28
-        BarText {
-            text: "単"
-            family: Theme.fontJp
-            px: 16
-            color: Theme.accent
-        }
+    BarText {
+        text: "単"
+        family: Theme.fontJp
+        px: 16
+        color: Theme.accent
+    }
 }

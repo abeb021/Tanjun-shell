@@ -6,7 +6,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    property int percent: 50
+    property int percent: -1
 
     function refresh() {
         proc.running = true;
@@ -25,17 +25,18 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 const n = parseInt(text.trim());
-                if (!isNaN(n)) {
-                    if (root.percent !== n)
-                        ShellState.showOsd("brightness", n / 100);
-                    root.percent = n;
-                }
+                if (isNaN(n))
+                    return;
+                const prev = root.percent;
+                root.percent = n;
+                if (prev >= 0 && prev !== n)
+                    ShellState.showOsd("brightness", n / 100);
             }
         }
     }
 
     Timer {
-        interval: 2000
+        interval: 400
         running: true
         repeat: true
         onTriggered: root.refresh()

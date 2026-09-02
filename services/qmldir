@@ -1,0 +1,12 @@
+module services
+singleton ShellState 1.0 ShellState.qml
+singleton Theme 1.0 Theme.qml
+singleton Time 1.0 Time.qml
+singleton Layout 1.0 Layout.qml
+singleton Audio 1.0 Audio.qml
+singleton Battery 1.0 Battery.qml
+singleton Backlight 1.0 Backlight.qml
+singleton Net 1.0 Net.qml
+singleton Media 1.0 Media.qml
+singleton Weather 1.0 Weather.qml
+singleton Notifs 1.0 Notifs.qml

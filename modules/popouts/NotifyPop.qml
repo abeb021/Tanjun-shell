@@ -10,11 +10,39 @@ Rectangle {
     radius: Theme.radius
     implicitWidth: 300
     implicitHeight: 360
+    focus: true
+    Keys.onEscapePressed: ShellState.closeMenus()
+
+    Row {
+        id: actions
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 8
+        spacing: 6
+        BarButton {
+            implicitWidth: 140
+            onClicked: ShellState.dnd = !ShellState.dnd
+            BarText {
+                text: ShellState.dnd ? "dnd · on" : "dnd · off"
+                px: 11
+            }
+        }
+        BarButton {
+            implicitWidth: 72
+            onClicked: Notifs.clear()
+            BarText {
+                text: "clear"
+                px: 11
+            }
+        }
+    }
 
     ListView {
         id: list
         anchors.fill: parent
         anchors.margins: 8
+        anchors.topMargin: 40
         clip: true
         spacing: 6
         model: Notifs.list

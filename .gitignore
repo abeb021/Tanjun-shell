@@ -5,3 +5,9 @@
 state.json
 *.swp
 .DS_Store
+
+# Cursor — local only (rules, research, IDE)
+.cursor/
+.cursor/**
+.cursorignore
+.vscode/

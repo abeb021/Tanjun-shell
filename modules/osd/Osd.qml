@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import "../bar"
 import "../../services"
 
@@ -15,6 +16,8 @@ Scope {
             implicitWidth: 220
             implicitHeight: 52
             exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.namespace: "tanjun-osd"
+            WlrLayershell.layer: WlrLayer.Overlay
 
             anchors {
                 bottom: true

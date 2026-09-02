@@ -8,6 +8,6 @@ BarButton {
         text: Net.connected ? "󰤨" : "󰤭"
         icon: true
         px: 13
-        color: Net.connected ? Theme.fg : Theme.fgSub
+        color: Net.vpnUp ? Theme.accent : (Net.connected ? Theme.fg : Theme.fgSub)
     }
 }

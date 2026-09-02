@@ -10,6 +10,8 @@ Rectangle {
     radius: Theme.radius
     implicitWidth: 240
     implicitHeight: col.implicitHeight + 16
+    focus: true
+    Keys.onEscapePressed: ShellState.closeMenus()
 
     Column {
         id: col

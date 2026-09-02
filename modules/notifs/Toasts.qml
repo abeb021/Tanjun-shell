@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import "../bar"
 import "../../services"
 
@@ -15,6 +16,8 @@ Scope {
             implicitWidth: 320
             implicitHeight: Math.min(240, toast.count * 64)
             exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.namespace: "tanjun-toast"
+            WlrLayershell.layer: WlrLayer.Overlay
 
             anchors {
                 top: true

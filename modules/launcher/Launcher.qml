@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Wayland
 import "../bar"
 import "../../services"
 
@@ -15,6 +16,10 @@ Scope {
             exclusionMode: ExclusionMode.Ignore
             focusable: true
 
+            WlrLayershell.namespace: "tanjun-launcher"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
             anchors {
                 top: true
                 left: true
@@ -22,9 +27,20 @@ Scope {
                 bottom: true
             }
 
+            onVisibleChanged: {
+                if (visible) {
+                    query.text = "";
+                    query.forceActiveFocus();
+                }
+            }
+
             MouseArea {
                 anchors.fill: parent
-                onClicked: ShellState.launcherOpen = false
+                onClicked: ShellState.closeMenus()
+                Shortcut {
+                    sequence: "Escape"
+                    onActivated: ShellState.closeMenus()
+                }
             }
 
             Rectangle {
@@ -70,12 +86,11 @@ Scope {
                                 font.pixelSize: 14
                                 color: Theme.fg
                                 clip: true
-                                Keys.onEscapePressed: ShellState.launcherOpen = false
+                                Keys.onEscapePressed: ShellState.closeMenus()
                                 Keys.onReturnPressed: {
                                     if (results.filtered.length > 0)
                                         launch(results.filtered[0]);
                                 }
-                                Component.onCompleted: forceActiveFocus()
                             }
                         }
                     }
@@ -94,7 +109,7 @@ Scope {
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
                             BarText {
-                                text: Time.date
+                                text: Time.tzLabel + "  ·  " + Time.date
                                 sub: true
                                 px: 14
                                 anchors.horizontalCenter: parent.horizontalCenter
@@ -129,6 +144,8 @@ Scope {
                             const out = [];
                             for (let i = 0; i < apps.length && out.length < 30; i++) {
                                 const a = apps[i];
+                                if (a.noDisplay)
+                                    continue;
                                 const n = (a.name || "").toLowerCase();
                                 if (!q || n.indexOf(q) >= 0)
                                     out.push(a);

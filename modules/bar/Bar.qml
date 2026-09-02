@@ -1,6 +1,8 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
+import Quickshell.Wayland
 import "../popouts"
 import "../../services"
 
@@ -13,14 +15,16 @@ Scope {
             required property var modelData
             screen: modelData
             color: Theme.bg
+            implicitHeight: Theme.barHeight
+
+            WlrLayershell.namespace: "tanjun-bar"
+            WlrLayershell.layer: WlrLayer.Top
 
             anchors {
                 top: true
                 left: true
                 right: true
             }
-
-            implicitHeight: Theme.barHeight
 
             Row {
                 id: left
@@ -29,7 +33,9 @@ Scope {
                 anchors.leftMargin: 4
                 spacing: 2
 
-                LogoBtn {}
+                LogoBtn {
+                    id: logoBtn
+                }
                 Workspaces {}
             }
 
@@ -78,66 +84,67 @@ Scope {
                 }
             }
 
-            PopupWindow {
-                visible: ShellState.popout === "clock"
-                grabFocus: true
-                anchor.window: barWin
-                anchor.item: clockBtn
+            BarPop {
+                name: "menu"
+                barWindow: barWin
+                anchorItem: logoBtn
+                implicitWidth: menuPop.implicitWidth
+                implicitHeight: menuPop.implicitHeight
+                MenuPop {
+                    id: menuPop
+                }
+            }
+
+            BarPop {
+                name: "clock"
+                barWindow: barWin
+                anchorItem: clockBtn
                 implicitWidth: cal.implicitWidth
                 implicitHeight: cal.implicitHeight
-                color: "transparent"
                 CalendarPop {
                     id: cal
                 }
             }
 
-            PopupWindow {
-                visible: ShellState.popout === "audio"
-                grabFocus: true
-                anchor.window: barWin
-                anchor.item: audioBtn
+            BarPop {
+                name: "audio"
+                barWindow: barWin
+                anchorItem: audioBtn
                 implicitWidth: ap.implicitWidth
                 implicitHeight: ap.implicitHeight
-                color: "transparent"
                 AudioPop {
                     id: ap
                 }
             }
 
-            PopupWindow {
-                visible: ShellState.popout === "network"
-                grabFocus: true
-                anchor.window: barWin
-                anchor.item: netBtn
+            BarPop {
+                name: "network"
+                barWindow: barWin
+                anchorItem: netBtn
                 implicitWidth: np.implicitWidth
                 implicitHeight: np.implicitHeight
-                color: "transparent"
                 NetPop {
                     id: np
                 }
             }
 
-            PopupWindow {
-                visible: ShellState.popout === "notify"
-                grabFocus: true
-                anchor.window: barWin
-                anchor.item: notifyBtn
+            BarPop {
+                name: "notify"
+                barWindow: barWin
+                anchorItem: notifyBtn
                 implicitWidth: ntp.implicitWidth
                 implicitHeight: ntp.implicitHeight
-                color: "transparent"
                 NotifyPop {
                     id: ntp
                 }
             }
 
-            PopupWindow {
-                visible: ShellState.popout === "battery"
-                grabFocus: true
-                anchor.window: barWin
-                anchor.item: batteryBtn
+            BarPop {
+                name: "battery"
+                barWindow: barWin
+                anchorItem: batteryBtn
                 implicitWidth: bp.implicitWidth
                 implicitHeight: bp.implicitHeight
-                color: "transparent"
                 BatteryPop {
                     id: bp
                 }

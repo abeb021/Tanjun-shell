@@ -9,7 +9,6 @@ Singleton {
     property real popoutX: 0
     property var popoutAnchor: null
 
-    property bool sidebarOpen: false
     property bool launcherOpen: false
     property bool clipboardOpen: false
     property bool dnd: false
@@ -24,7 +23,7 @@ Singleton {
         }
         launcherOpen = false;
         clipboardOpen = false;
-        popoutAnchor = anchor;
+        popoutAnchor = anchor ?? popoutAnchor;
         popout = name;
     }
 
@@ -33,23 +32,24 @@ Singleton {
         popoutAnchor = null;
     }
 
-    function toggleSidebar() {
+    function closeMenus() {
         closePopout();
         launcherOpen = false;
         clipboardOpen = false;
-        sidebarOpen = !sidebarOpen;
+    }
+
+    function toggleSidebar() {
+        togglePopout("menu");
     }
 
     function toggleLauncher() {
         closePopout();
-        sidebarOpen = false;
         clipboardOpen = false;
         launcherOpen = !launcherOpen;
     }
 
     function toggleClipboard() {
         closePopout();
-        sidebarOpen = false;
         launcherOpen = false;
         clipboardOpen = !clipboardOpen;
     }

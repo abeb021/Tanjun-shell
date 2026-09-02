@@ -7,35 +7,55 @@ Row {
     id: root
     spacing: 2
 
+    readonly property var items: {
+        const occupied = {};
+        const list = Hyprland.workspaces.values;
+        if (list) {
+            for (let i = 0; i < list.length; i++) {
+                const id = list[i].id;
+                if (id > 0 && id <= 10)
+                    occupied[id] = list[i];
+            }
+        }
+        const out = [];
+        for (let i = 1; i <= 10; i++) {
+            const ws = occupied[i] || null;
+            if (i <= 3 || ws)
+                out.push({
+                    id: i,
+                    ws: ws
+                });
+        }
+        return out;
+    }
+
+    WheelHandler {
+        onWheel: event => {
+            Quickshell.execDetached(["hyprctl", "dispatch", "workspace", event.angleDelta.y > 0 ? "e-1" : "e+1"]);
+            event.accepted = true;
+        }
+    }
+
     Repeater {
-        model: 10
+        model: root.items
         delegate: BarButton {
             id: wsBtn
-            required property int index
-            property int wsId: index + 1
-            property var ws: {
-                const list = Hyprland.workspaces.values;
-                if (!list)
-                    return null;
-                for (let i = 0; i < list.length; i++) {
-                    if (list[i].id === wsId)
-                        return list[i];
-                }
-                return null;
-            }
+            required property var modelData
+            property int wsId: modelData.id
+            property var ws: modelData.ws
             active: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
             implicitWidth: 22
             onClicked: {
                 if (ws)
                     ws.activate();
                 else
-                    Hyprland.dispatch(`workspace ${wsId}`);
+                    Quickshell.execDetached(["hyprctl", "dispatch", "workspace", `${wsId}`]);
             }
             BarText {
-                text: wsBtn.active ? "" : `${wsBtn.wsId}`
+                text: wsBtn.active ? "" : (wsBtn.ws ? `${wsBtn.wsId}` : "")
                 px: 11
                 color: wsBtn.active ? Theme.accent : (wsBtn.ws ? Theme.fg : Theme.fgSub)
-                icon: wsBtn.active
+                icon: wsBtn.active || !wsBtn.ws
             }
         }
     }

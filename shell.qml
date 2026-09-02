@@ -5,7 +5,6 @@ import Quickshell.Io
 import "services"
 import "modules/bar"
 import "modules/launcher"
-import "modules/sidebar"
 import "modules/osd"
 import "modules/notifs"
 import "modules/clipboard"
@@ -13,7 +12,6 @@ import "modules/clipboard"
 ShellRoot {
     Bar {}
     Launcher {}
-    Sidebar {}
     Osd {}
     Toasts {}
     Clipboard {}
