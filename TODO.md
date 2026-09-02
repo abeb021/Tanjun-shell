@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v1.6**
+Current: **v1.7**
 
 ## v1.0 — host (shipping)
 
@@ -70,11 +70,11 @@ Sparse overlay. Defaults in the shell. Pin only this machine.
 
 Host facts and a real player in the left System drawer.
 
-- [ ] RAM + CPU
-- [ ] Running processes
-- [ ] Internet speed
-- [ ] Distro, kernel, username
-- [ ] Audio player with art preview (not a one-line label)
+- [x] RAM + CPU
+- [x] Running processes
+- [x] Internet speed
+- [x] Distro, kernel, username
+- [x] Audio player with art preview (not a one-line label)
 
 ## v1.8 — paint
 

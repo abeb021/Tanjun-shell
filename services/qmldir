@@ -9,6 +9,7 @@ singleton Battery 1.0 Battery.qml
 singleton Backlight 1.0 Backlight.qml
 singleton Net 1.0 Net.qml
 singleton Media 1.0 Media.qml
+singleton Host 1.0 Host.qml
 singleton Weather 1.0 Weather.qml
 singleton Notifs 1.0 Notifs.qml
 singleton Motion 1.0 Motion.qml

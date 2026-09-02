@@ -5,6 +5,7 @@ Rectangle {
     id: bar
     property real value: 0
     property color fill: Theme.accent
+    property bool interactive: true
     signal moved(real v)
 
     height: 8
@@ -26,6 +27,7 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
+        enabled: bar.interactive
         onPressed: mouse => bar.moved(mouse.x / width)
         onPositionChanged: mouse => {
             if (pressed)
