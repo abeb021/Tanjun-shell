@@ -87,9 +87,27 @@ Scope {
                     currentIndex: 0
                     keyNavigationWraps: true
                     highlightMoveDuration: 0
+                    highlightResizeDuration: 0
+                    reuseItems: true
+                    cacheBuffer: 480
+                    maximumFlickVelocity: 12000
+                    flickDeceleration: 3500
+                    boundsBehavior: Flickable.StopAtBounds
                     Keys.onEscapePressed: ShellState.closeMenus()
                     Keys.onReturnPressed: copyCurrent()
                     Keys.onEnterPressed: copyCurrent()
+                    Keys.onDownPressed: clips.incrementCurrentIndex()
+                    Keys.onUpPressed: clips.decrementCurrentIndex()
+
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: event => {
+                            const delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y * 2.8 : event.angleDelta.y * 2.4;
+                            const maxY = Math.max(0, clips.contentHeight - clips.height);
+                            clips.contentY = Math.max(0, Math.min(maxY, clips.contentY - delta));
+                            event.accepted = true;
+                        }
+                    }
 
                     delegate: Rectangle {
                         id: row

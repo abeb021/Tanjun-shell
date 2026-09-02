@@ -20,6 +20,12 @@ Singleton {
     readonly property bool active: player !== null
     readonly property string title: player ? (player.trackTitle || "") : ""
     readonly property string artist: player ? (player.trackArtist || "") : ""
+    readonly property string artUrl: {
+        if (!player)
+            return "";
+        const u = player.trackArtUrl;
+        return u ? `${u}` : "";
+    }
     readonly property string line: {
         if (!player)
             return "";

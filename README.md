@@ -14,7 +14,7 @@ Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, 
 | Bar          | Flush to the top. 単, numbered desks, clock, layout, a few glyphs, tray.                                 |
 | Popouts      | Grow from the glyph you touched: calendar, mixer, wifi, notifications, battery.                         |
 | System       | Left drawer from 単 or Super+Ctrl+S. Media, sink + mic, backlight, battery, net, DND, session, palettes. |
-| Launcher     | Super+A. Empty query is clock / weather / track, then `.desktop` search.                                |
+| Launcher     | Super+A. Rest card is clock / weather / art + transport. Type to search apps. Prefixes: `=` calc, `;` clips, `?` web, `/` act, `@` music. |
 | Clipboard    | Super+V. cliphist, including images.                                                                    |
 | Overview     | Super+Tab. Live window previews, desks 1–10.                                                            |
 | Toasts + OSD | Notifications and volume / backlight. No dim behind menus.                                              |
@@ -62,6 +62,8 @@ Reload the session: **Super+Shift+R**.
 
 
 Bar chords worth knowing: scroll audio = volume, right-click = mute; scroll clock = timezone; middle-click clock = first zone; right-click notify = DND; scroll battery = backlight; right-click a desk number = move the focused window there.
+
+Launcher prefixes: `=` calc (qalc, else python), `;` cliphist, `?` web, `/` session actions, `@` now-playing + Spotify search. Enter on a calc row copies the result.
 
 ## IPC
 
@@ -140,4 +142,4 @@ scripts/install-hypr.sh      optional lua-hypr patcher
 scripts/hyprland.conf.example
 ```
 
-Next work is in `TODO.md`. Current: **v1.5**.
+Next work is in `TODO.md`. Current: **v1.6**.
