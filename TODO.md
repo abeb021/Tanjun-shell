@@ -2,18 +2,38 @@
 
 単純. One process. Frame off.
 
-## V1 — запускаем вместо waybar+wofi+swaync
+Current: **v1.1**
 
-- [x] Хост Quickshell + тихая панель, без рамки, вид как сейчас (JetBrains, 1px, печать 単)
-- [x] Попауты от виджета + системный сайдбар
-- [x] Лаунчер: пустой запрос = часы / погода / трек, потом поиск
-- [x] Уведомления + не беспокоить + OSD громкость / яркость
-- [x] Цвет как сейчас: девять именованных палитр
-- [x] Воркспейсы: цифры / точки на панели
+## v1.0 — host (shipping)
 
-## Позже — не блокирует запуск
+- [x] Quickshell host + quiet bar, frame off (JetBrains, 1px, 単 seal)
+- [x] Popouts from the glyph; 単 menu hangs left off the seal
+- [x] Launcher: empty query is clock / weather / track, then app search
+- [x] Notifications + do-not-disturb + volume / backlight OSD
+- [x] Color: nine named palettes
+- [x] Workspaces: numbers / dots on the bar
+- [x] Escape closes menus
 
-- [ ] Цвет от обоев **и замок** палитры, чтобы не скакала
-- [ ] Super+Tab overview с живыми превью окон
-- [ ] Смена шрифта в шелле
-- [ ] Движение (motion tokens, morph попаутов)
+## v1.1 — hands
+
+Super+A / Super+V and the audio popout, no kitty.
+
+- [x] Clipboard: cliphist images, not text-only
+- [x] Launcher: arrows + highlight, Enter launches the selection
+- [x] Mixer: per-app streams, not master-only
+
+## v1.2 — overview
+
+- [ ] Super+Tab overview with live window previews
+
+## v1.3 — color lock
+
+- [ ] Wallpaper-driven accent **plus a lock** so the palette cannot jump
+
+## v1.4 — type
+
+- [ ] Font picker inside the shell
+
+## v1.5 — motion
+
+- [ ] Motion tokens, morphing popouts

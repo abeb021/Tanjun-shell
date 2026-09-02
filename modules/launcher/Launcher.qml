@@ -87,10 +87,23 @@ Scope {
                                 color: Theme.fg
                                 clip: true
                                 Keys.onEscapePressed: ShellState.closeMenus()
-                                Keys.onReturnPressed: {
-                                    if (results.filtered.length > 0)
-                                        launch(results.filtered[0]);
+                                Keys.onDownPressed: {
+                                    if (results.filtered.length === 0)
+                                        return;
+                                    results.currentIndex = Math.min(results.filtered.length - 1, results.currentIndex + 1);
                                 }
+                                Keys.onUpPressed: {
+                                    if (results.filtered.length === 0)
+                                        return;
+                                    results.currentIndex = Math.max(0, results.currentIndex - 1);
+                                }
+                                Keys.onReturnPressed: {
+                                    if (results.filtered.length === 0)
+                                        return;
+                                    const i = Math.max(0, results.currentIndex);
+                                    launch(results.filtered[i]);
+                                }
+                                onTextChanged: results.currentIndex = 0
                             }
                         }
                     }
@@ -153,12 +166,17 @@ Scope {
                             return out;
                         }
                         model: filtered
+                        currentIndex: 0
+                        highlightMoveDuration: 0
                         delegate: Rectangle {
                             required property var modelData
+                            required property int index
                             width: results.width
                             height: 40
-                            color: ma.containsMouse ? Theme.surfaceHover : "transparent"
+                            color: results.currentIndex === index || ma.containsMouse ? Theme.surfaceHover : "transparent"
                             radius: Theme.radius
+                            border.width: results.currentIndex === index ? 1 : 0
+                            border.color: Theme.accent
                             BarText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left
@@ -170,7 +188,10 @@ Scope {
                                 id: ma
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                onClicked: launch(modelData)
+                                onClicked: {
+                                    results.currentIndex = index;
+                                    launch(modelData);
+                                }
                             }
                         }
                     }

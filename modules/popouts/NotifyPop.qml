@@ -81,7 +81,7 @@ Rectangle {
         BarText {
             visible: list.count === 0
             anchors.centerIn: parent
-            text: ShellState.dnd ? "не беспокоить" : "нет уведомлений"
+            text: ShellState.dnd ? "do not disturb" : "no notifications"
             sub: true
         }
     }

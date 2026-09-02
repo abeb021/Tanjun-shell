@@ -7,7 +7,22 @@ Singleton {
     id: root
 
     PwObjectTracker {
-        objects: [Pipewire.defaultAudioSink]
+        objects: root.tracked
+    }
+
+    readonly property var tracked: {
+        const out = [];
+        if (Pipewire.defaultAudioSink)
+            out.push(Pipewire.defaultAudioSink);
+        const nodes = Pipewire.nodes.values;
+        if (nodes) {
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i];
+                if (n && n.isStream)
+                    out.push(n);
+            }
+        }
+        return out;
     }
 
     readonly property var sink: Pipewire.defaultAudioSink
@@ -19,6 +34,19 @@ Singleton {
     }
     readonly property bool muted: sink?.audio?.muted ?? false
     readonly property string label: muted ? "muted" : `${Math.round(volume * 100)}%`
+
+    readonly property var streams: {
+        const nodes = Pipewire.nodes.values;
+        const out = [];
+        if (!nodes)
+            return out;
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (n && n.isStream && n.isSink && n.audio)
+                out.push(n);
+        }
+        return out;
+    }
 
     property real lastVolume: -1
 
@@ -37,6 +65,18 @@ Singleton {
         if (!sink?.audio)
             return;
         sink.audio.volume = Math.max(0, Math.min(1, v));
+    }
+
+    function setStreamVolume(node, v) {
+        if (!node?.audio)
+            return;
+        node.audio.volume = Math.max(0, Math.min(1, v));
+    }
+
+    function streamName(node) {
+        if (!node)
+            return "app";
+        return node.nickname || node.description || node.name || "app";
     }
 
     function nudge(delta) {

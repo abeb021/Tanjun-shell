@@ -133,7 +133,7 @@ Rectangle {
                 implicitWidth: parent.width
                 onClicked: ShellState.dnd = !ShellState.dnd
                 BarText {
-                    text: ShellState.dnd ? "не беспокоить · on" : "не беспокоить · off"
+                        text: ShellState.dnd ? "do not disturb · on" : "do not disturb · off"
                     px: 12
                 }
             }
