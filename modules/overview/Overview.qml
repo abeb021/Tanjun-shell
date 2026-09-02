@@ -13,11 +13,12 @@ Scope {
             id: win
             required property var modelData
             screen: modelData
-            visible: ShellState.overviewOpen
-            color: Qt.rgba(0, 0, 0, 0.45)
+            visible: ShellState.overviewOpen || stage.opacity > 0.02
+            color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             focusable: true
 
+            readonly property bool open: ShellState.overviewOpen
             readonly property bool isFocused: {
                 const m = Hyprland.focusedMonitor;
                 if (!m || !modelData)
@@ -27,7 +28,7 @@ Scope {
 
             WlrLayershell.namespace: "tanjun-overview"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: (visible && isFocused) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: (open && isFocused) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             anchors {
                 top: true
@@ -161,8 +162,8 @@ Scope {
                 goTimer.restart();
             }
 
-            onVisibleChanged: {
-                if (!visible)
+            onOpenChanged: {
+                if (!open)
                     return;
                 Hyprland.refreshToplevels();
                 selectActive();
@@ -176,11 +177,11 @@ Scope {
             Connections {
                 target: ShellState
                 function onOverviewNudgeChanged() {
-                    if (win.visible)
+                    if (win.open)
                         win.move(1);
                 }
                 function onOverviewCommitChanged() {
-                    if (win.visible)
+                    if (win.open)
                         win.activateCurrent();
                 }
             }
@@ -194,6 +195,22 @@ Scope {
                 id: stage
                 anchors.fill: parent
                 anchors.margins: 28
+                opacity: win.open ? 1 : 0
+                scale: win.open ? 1 : Motion.panelFrom
+                Behavior on opacity {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.panel
+                        easing.type: win.open ? Motion.easeOut : Motion.easeIn
+                    }
+                }
+                Behavior on scale {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.panel
+                        easing.type: win.open ? Motion.easeOut : Motion.easeIn
+                    }
+                }
 
                 Flickable {
                     id: scroller
@@ -293,9 +310,9 @@ Scope {
             Item {
                 id: kb
                 anchors.fill: parent
-                focus: win.visible && win.isFocused
+                focus: win.open && win.isFocused
                 Keys.onPressed: event => {
-                    if (!win.isFocused)
+                    if (!win.open || !win.isFocused)
                         return;
                     const shift = (event.modifiers & Qt.ShiftModifier) !== 0;
                     if (event.key === Qt.Key_Escape) {
@@ -319,7 +336,7 @@ Scope {
                     }
                 }
                 Keys.onReleased: event => {
-                    if (!win.isFocused)
+                    if (!win.open || !win.isFocused)
                         return;
                     if (event.key === Qt.Key_Meta || event.key === Qt.Key_Super_L || event.key === Qt.Key_Super_R) {
                         win.activateCurrent();

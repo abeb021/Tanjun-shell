@@ -33,9 +33,7 @@ Scope {
                 anchors.leftMargin: 4
                 spacing: 2
 
-                LogoBtn {
-                    id: logoBtn
-                }
+                LogoBtn {}
                 Workspaces {}
             }
 
@@ -81,17 +79,6 @@ Scope {
                             height: 16
                         }
                     }
-                }
-            }
-
-            BarPop {
-                name: "menu"
-                barWindow: barWin
-                anchorItem: logoBtn
-                implicitWidth: menuPop.implicitWidth
-                implicitHeight: menuPop.implicitHeight
-                MenuPop {
-                    id: menuPop
                 }
             }
 

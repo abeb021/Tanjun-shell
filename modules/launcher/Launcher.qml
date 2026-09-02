@@ -11,14 +11,16 @@ Scope {
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: ShellState.launcherOpen
-            color: Qt.rgba(0, 0, 0, 0.4)
+            visible: ShellState.launcherOpen || card.opacity > 0.02
+            color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             focusable: true
 
+            readonly property bool open: ShellState.launcherOpen
+
             WlrLayershell.namespace: "tanjun-launcher"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             anchors {
                 top: true
@@ -27,20 +29,21 @@ Scope {
                 bottom: true
             }
 
-            onVisibleChanged: {
-                if (visible) {
-                    query.text = "";
-                    query.forceActiveFocus();
-                }
+            onOpenChanged: if (open) {
+                query.text = "";
+                query.forceActiveFocus();
+            }
+
+            Shortcut {
+                sequence: "Escape"
+                enabled: open
+                onActivated: ShellState.closeMenus()
             }
 
             MouseArea {
                 anchors.fill: parent
+                enabled: open
                 onClicked: ShellState.closeMenus()
-                Shortcut {
-                    sequence: "Escape"
-                    onActivated: ShellState.closeMenus()
-                }
             }
 
             Rectangle {
@@ -52,6 +55,23 @@ Scope {
                 border.width: 1
                 border.color: Theme.accent
                 radius: Theme.radius
+                opacity: open ? 1 : 0
+                scale: open ? 1 : Motion.panelFrom
+
+                Behavior on opacity {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.panel
+                        easing.type: open ? Motion.easeOut : Motion.easeIn
+                    }
+                }
+                Behavior on scale {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.panel
+                        easing.type: open ? Motion.easeOut : Motion.easeIn
+                    }
+                }
 
                 MouseArea {
                     anchors.fill: parent

@@ -3,8 +3,9 @@ import Quickshell
 import "../../services"
 
 BarButton {
-    popoutName: "menu"
     implicitWidth: 28
+    active: ShellState.sidebarOpen
+    onClicked: ShellState.toggleSidebar()
     BarText {
         text: "単"
         family: Theme.fontJp

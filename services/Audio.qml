@@ -14,6 +14,8 @@ Singleton {
         const out = [];
         if (Pipewire.defaultAudioSink)
             out.push(Pipewire.defaultAudioSink);
+        if (Pipewire.defaultAudioSource)
+            out.push(Pipewire.defaultAudioSource);
         const nodes = Pipewire.nodes.values;
         if (nodes) {
             for (let i = 0; i < nodes.length; i++) {
@@ -34,6 +36,16 @@ Singleton {
     }
     readonly property bool muted: sink?.audio?.muted ?? false
     readonly property string label: muted ? "muted" : `${Math.round(volume * 100)}%`
+
+    readonly property var source: Pipewire.defaultAudioSource
+    readonly property real micVolume: {
+        const a = source?.audio;
+        if (!a)
+            return 0;
+        return a.muted ? 0 : a.volume;
+    }
+    readonly property bool micMuted: source?.audio?.muted ?? false
+    readonly property string micLabel: micMuted ? "muted" : `${Math.round(micVolume * 100)}%`
 
     readonly property var streams: {
         const nodes = Pipewire.nodes.values;
@@ -87,5 +99,17 @@ Singleton {
         if (!sink?.audio)
             return;
         sink.audio.muted = !sink.audio.muted;
+    }
+
+    function setMicVolume(v) {
+        if (!source?.audio)
+            return;
+        source.audio.volume = Math.max(0, Math.min(1, v));
+    }
+
+    function toggleMicMute() {
+        if (!source?.audio)
+            return;
+        source.audio.muted = !source.audio.muted;
     }
 }

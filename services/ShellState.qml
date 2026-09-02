@@ -12,6 +12,7 @@ Singleton {
     property bool launcherOpen: false
     property bool clipboardOpen: false
     property bool overviewOpen: false
+    property bool sidebarOpen: false
     property bool dnd: false
 
     property string osdKind: ""
@@ -25,6 +26,7 @@ Singleton {
         launcherOpen = false;
         clipboardOpen = false;
         overviewOpen = false;
+        sidebarOpen = false;
         popoutAnchor = anchor ?? popoutAnchor;
         popout = name;
     }
@@ -39,16 +41,22 @@ Singleton {
         launcherOpen = false;
         clipboardOpen = false;
         overviewOpen = false;
+        sidebarOpen = false;
     }
 
     function toggleSidebar() {
-        togglePopout("menu");
+        closePopout();
+        launcherOpen = false;
+        clipboardOpen = false;
+        overviewOpen = false;
+        sidebarOpen = !sidebarOpen;
     }
 
     function toggleLauncher() {
         closePopout();
         clipboardOpen = false;
         overviewOpen = false;
+        sidebarOpen = false;
         launcherOpen = !launcherOpen;
     }
 
@@ -56,6 +64,7 @@ Singleton {
         closePopout();
         launcherOpen = false;
         overviewOpen = false;
+        sidebarOpen = false;
         clipboardOpen = !clipboardOpen;
     }
 
@@ -70,6 +79,7 @@ Singleton {
         closePopout();
         launcherOpen = false;
         clipboardOpen = false;
+        sidebarOpen = false;
         overviewOpen = true;
     }
 
@@ -87,7 +97,7 @@ Singleton {
 
     Timer {
         id: osdTimer
-        interval: 1400
+        interval: Motion.osdHold
         onTriggered: root.osdKind = ""
     }
 }

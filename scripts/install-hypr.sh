@@ -79,6 +79,41 @@ if t2 != t:
     print(f"patched {binds}")
 else:
     print(f"already patched {binds}")
+
+rules = hypr / "rules.lua"
+rt = rules.read_text()
+rstart, rend = "-- Tanjun layers", "-- /Tanjun layers"
+rblock = "\n".join([
+    rstart,
+    "for _, ns in ipairs({",
+    '    "tanjun-bar",',
+    '    "tanjun-sidebar",',
+    '    "tanjun-launcher",',
+    '    "tanjun-clipboard",',
+    '    "tanjun-overview",',
+    '    "tanjun-osd",',
+    '    "tanjun-toast",',
+    "}) do",
+    "    hl.layer_rule({",
+    "        match = {",
+    "            namespace = ns,",
+    "        },",
+    "        no_anim = true,",
+    "    })",
+    "end",
+    rend,
+])
+if rstart in rt:
+    i = rt.index(rstart)
+    j = rt.index(rend, i) + len(rend) if rend in rt[i:] else i + len(rstart)
+    rt2 = rt[:i] + rblock + rt[j:]
+else:
+    rt2 = rt.rstrip() + "\n\n" + rblock + "\n"
+if rt2 != rt:
+    rules.write_text(rt2)
+    print(f"patched {rules}")
+else:
+    print(f"already patched {rules}")
 PY
 
 echo

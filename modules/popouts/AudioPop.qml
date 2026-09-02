@@ -47,6 +47,30 @@ Rectangle {
                 }
             }
 
+            BarText {
+                visible: Audio.source
+                text: Audio.micMuted ? "mic muted" : `mic  ${Math.round(Audio.micVolume * 100)}%`
+                px: 12
+            }
+
+            VolumeBar {
+                visible: Audio.source
+                width: parent.width
+                value: Audio.micVolume
+                fill: Audio.micMuted ? Theme.critical : Theme.accent
+                onMoved: v => Audio.setMicVolume(v)
+            }
+
+            BarButton {
+                visible: Audio.source
+                implicitWidth: 72
+                onClicked: Audio.toggleMicMute()
+                BarText {
+                    text: Audio.micMuted ? "unmute" : "mute"
+                    px: 11
+                }
+            }
+
             Repeater {
                 model: Audio.streams
                 delegate: Column {
@@ -66,29 +90,6 @@ Rectangle {
                         onMoved: v => Audio.setStreamVolume(modelData, v)
                     }
                 }
-            }
-        }
-    }
-
-    component VolumeBar: Rectangle {
-        id: bar
-        property real value: 0
-        property color fill: Theme.accent
-        signal moved(real v)
-        height: 8
-        radius: 1
-        color: Theme.bg
-        Rectangle {
-            width: parent.width * Math.max(0, Math.min(1, bar.value))
-            height: parent.height
-            color: bar.fill
-        }
-        MouseArea {
-            anchors.fill: parent
-            onPressed: mouse => bar.moved(mouse.x / width)
-            onPositionChanged: mouse => {
-                if (pressed)
-                    bar.moved(mouse.x / width);
             }
         }
     }

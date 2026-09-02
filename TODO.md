@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v1.3**
+Current: **v1.4**
 
 ## v1.0 — host (shipping)
 
@@ -36,9 +36,10 @@ Panels from the keyboard, not only the 16px glyph.
 
 ## v1.4 — system
 
-- [ ] Real right System sidebar (not the 単 popout)
-- [ ] Session row: lock, logout, reboot, sleep
-- [ ] Mixer: mic / default source, not sink-only
+- [x] Real left System sidebar (not the 単 popout)
+- [x] Session row: lock, logout, reboot, sleep
+- [x] Mixer: mic / default source, not sink-only
+- [x] Motion tokens, morphing popouts
 
 ## v1.5 — launcher
 
@@ -57,7 +58,3 @@ Panels from the keyboard, not only the 16px glyph.
 ## v1.8 — type
 
 - [ ] Font picker inside the shell
-
-## v1.9 — motion
-
-- [ ] Motion tokens, morphing popouts

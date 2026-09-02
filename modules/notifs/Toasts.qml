@@ -11,10 +11,10 @@ Scope {
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: !ShellState.dnd && toast.count > 0
+            visible: (!ShellState.dnd && toast.count > 0) || toast.opacity > 0.02
             color: "transparent"
             implicitWidth: 320
-            implicitHeight: Math.min(240, toast.count * 64)
+            implicitHeight: Math.min(240, Math.max(1, toast.count) * 64)
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "tanjun-toast"
             WlrLayershell.layer: WlrLayer.Overlay
@@ -31,6 +31,45 @@ Scope {
                 anchors.fill: parent
                 model: Notifs.list
                 spacing: 6
+                opacity: !ShellState.dnd && count > 0 ? 1 : 0
+                Behavior on opacity {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.fast
+                        easing.type: Motion.easeOut
+                    }
+                }
+                add: Transition {
+                    NumberAnimation {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: Motion.fast
+                        easing.type: Motion.easeOut
+                    }
+                    NumberAnimation {
+                        property: "x"
+                        from: 24
+                        to: 0
+                        duration: Motion.fast
+                        easing.type: Motion.easeOut
+                    }
+                }
+                remove: Transition {
+                    NumberAnimation {
+                        property: "opacity"
+                        to: 0
+                        duration: Motion.fast
+                        easing.type: Motion.easeIn
+                    }
+                }
+                displaced: Transition {
+                    NumberAnimation {
+                        properties: "y"
+                        duration: Motion.fast
+                        easing.type: Motion.easeOut
+                    }
+                }
                 delegate: Rectangle {
                     required property var modelData
                     width: toast.width

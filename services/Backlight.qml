@@ -18,6 +18,12 @@ Singleton {
         Qt.callLater(refresh);
     }
 
+    function setPercent(p) {
+        const n = Math.max(1, Math.min(100, Math.round(p)));
+        Quickshell.execDetached(["brightnessctl", "-d", "intel_backlight", "set", `${n}%`]);
+        Qt.callLater(refresh);
+    }
+
     Process {
         id: proc
         command: ["bash", "-c", "brightnessctl -m -d intel_backlight | awk -F, '{gsub(/%/,\"\",$4); print $4}'"]

@@ -9,6 +9,7 @@ import "modules/osd"
 import "modules/notifs"
 import "modules/clipboard"
 import "modules/overview"
+import "modules/sidebar"
 
 ShellRoot {
     Bar {}
@@ -17,6 +18,7 @@ ShellRoot {
     Toasts {}
     Clipboard {}
     Overview {}
+    Sidebar {}
 
     IpcHandler {
         target: "tanjun"

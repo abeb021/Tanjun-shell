@@ -11,7 +11,8 @@ Scope {
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: ShellState.osdKind.length > 0
+            readonly property bool open: ShellState.osdKind.length > 0
+            visible: open || body.opacity > 0.02
             color: "transparent"
             implicitWidth: 220
             implicitHeight: 52
@@ -25,11 +26,29 @@ Scope {
             margins.bottom: 48
 
             Rectangle {
+                id: body
                 anchors.fill: parent
                 color: Theme.surface
                 border.width: 1
                 border.color: Theme.accent
                 radius: Theme.radius
+                opacity: open ? 1 : 0
+                scale: open ? 1 : Motion.osdFrom
+
+                Behavior on opacity {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.fast
+                        easing.type: open ? Motion.easeOut : Motion.easeIn
+                    }
+                }
+                Behavior on scale {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.fast
+                        easing.type: open ? Motion.easeOut : Motion.easeIn
+                    }
+                }
 
                 Column {
                     anchors.centerIn: parent
@@ -47,6 +66,13 @@ Scope {
                             width: parent.width * ShellState.osdValue
                             height: parent.height
                             color: Theme.accent
+                            Behavior on width {
+                                enabled: Motion.ready
+                                NumberAnimation {
+                                    duration: Motion.fast
+                                    easing.type: Motion.easeOut
+                                }
+                            }
                         }
                     }
                 }
