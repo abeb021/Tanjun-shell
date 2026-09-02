@@ -13,7 +13,18 @@ Singleton {
     readonly property bool charging: {
         if (!device)
             return false;
-        const s = `${device.state}`;
-        return s.indexOf("Charg") >= 0 || s === "FullyCharged" || s === "2" || s === "4";
+        const s = device.state;
+        if (s === UPowerDeviceState.Charging || s === UPowerDeviceState.FullyCharged || s === UPowerDeviceState.PendingCharge)
+            return true;
+        if (s === UPowerDeviceState.Discharging || s === UPowerDeviceState.PendingDischarge || s === UPowerDeviceState.Empty)
+            return false;
+        return !UPower.onBattery;
+    }
+    readonly property string icon: {
+        if (charging)
+            return "󰂄";
+        const idle = ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"];
+        const i = Math.max(0, Math.min(10, Math.round(percent / 10)));
+        return idle[i];
     }
 }

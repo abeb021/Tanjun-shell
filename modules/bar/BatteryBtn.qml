@@ -6,7 +6,7 @@ BarButton {
     visible: Battery.ready
     popoutName: "battery"
     BarText {
-        text: Battery.charging ? "󰂄" : "󰁹"
+        text: Battery.icon
         icon: true
         px: 13
         color: Battery.percent <= 15 ? Theme.critical : (Battery.percent <= 30 ? Theme.warning : (Battery.percent >= 70 ? Theme.good : Theme.fg))
