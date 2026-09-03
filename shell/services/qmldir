@@ -14,3 +14,4 @@ singleton Weather 1.0 Weather.qml
 singleton Notifs 1.0 Notifs.qml
 singleton Motion 1.0 Motion.qml
 singleton Launches 1.0 Launches.qml
+singleton Screens 1.0 Screens.qml

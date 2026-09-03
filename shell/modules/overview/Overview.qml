@@ -197,7 +197,7 @@ Scope {
                 Behavior on opacity {
                     enabled: Motion.ready
                     NumberAnimation {
-                        duration: Motion.panel
+                        duration: Motion.peek
                         easing.type: win.open ? Motion.easeOut : Motion.easeIn
                     }
                 }
@@ -213,18 +213,10 @@ Scope {
                 anchors.fill: parent
                 anchors.margins: 28
                 opacity: win.open ? 1 : 0
-                scale: win.open ? 1 : Motion.panelFrom
                 Behavior on opacity {
                     enabled: Motion.ready
                     NumberAnimation {
-                        duration: Motion.panel
-                        easing.type: win.open ? Motion.easeOut : Motion.easeIn
-                    }
-                }
-                Behavior on scale {
-                    enabled: Motion.ready
-                    NumberAnimation {
-                        duration: Motion.panel
+                        duration: Motion.peek
                         easing.type: win.open ? Motion.easeOut : Motion.easeIn
                     }
                 }

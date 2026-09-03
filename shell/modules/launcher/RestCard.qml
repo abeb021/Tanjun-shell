@@ -62,6 +62,7 @@ Item {
             spacing: 16
             Repeater {
                 model: [
+                    { mark: "↓", label: "apps" },
                     { mark: "=", label: "calc" },
                     { mark: ";", label: "clips" },
                     { mark: "?", label: "web" },

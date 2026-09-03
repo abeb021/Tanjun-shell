@@ -1,25 +1,29 @@
-# Vanilla Hyprland binds. Replace /path/to/Tanjun-shell with the clone.
-# The lua installer (scripts/install-hypr.sh) is optional and only patches
-# a hyprland/ lua layout if that tree is present.
+# Hyprland lua rice is in the clone. Attach it once:
 
-$tanjun = /path/to/Tanjun-shell
+#   bash scripts/setup.sh
+#   Super+Shift+R
 
-exec-once = quickshell -p $tanjun
+# That plants:
+#   ~/.local/share/tanjun     -> this clone
+#   ~/.config/quickshell      -> shell/
+#   ~/.config/hypr/hyprland.lua  stub (XDG, no machine path)
+# Vanilla hyprlang below is only a fallback if you do not use the lua rice.
 
-bind = SUPER, A, exec, quickshell ipc -p $tanjun call tanjun toggleLauncher
-bind = SUPER, V, exec, quickshell ipc -p $tanjun call tanjun toggleClipboard
-bind = SUPER, TAB, exec, quickshell ipc -p $tanjun call tanjun toggleOverview
-bind = SUPER CTRL, A, exec, quickshell ipc -p $tanjun call tanjun toggleAudio
-bind = SUPER CTRL, W, exec, quickshell ipc -p $tanjun call tanjun toggleNetwork
-bind = SUPER CTRL, C, exec, quickshell ipc -p $tanjun call tanjun toggleCalendar
-bind = SUPER CTRL, B, exec, quickshell ipc -p $tanjun call tanjun toggleBattery
-bind = SUPER CTRL, N, exec, quickshell ipc -p $tanjun call tanjun toggleNotify
-bind = SUPER CTRL, S, exec, quickshell ipc -p $tanjun call tanjun toggleSidebar
-bind = SUPER CTRL, comma, exec, quickshell ipc -p $tanjun call tanjun toggleSettings
-bind = SUPER CTRL, D, exec, quickshell ipc -p $tanjun call tanjun toggleDnd
-bind = SUPER SHIFT, R, exec, hyprctl reload; killall quickshell; quickshell -p $tanjun &
+exec-once = quickshell
 
-# Optional: skip compositor pop-in on Tanjun layers (the shell animates itself).
+bind = SUPER, A, exec, quickshell ipc call tanjun toggleLauncher
+bind = SUPER, V, exec, quickshell ipc call tanjun toggleClipboard
+bind = SUPER, TAB, exec, quickshell ipc call tanjun toggleOverview
+bind = SUPER CTRL, A, exec, quickshell ipc call tanjun toggleAudio
+bind = SUPER CTRL, W, exec, quickshell ipc call tanjun toggleNetwork
+bind = SUPER CTRL, C, exec, quickshell ipc call tanjun toggleCalendar
+bind = SUPER CTRL, B, exec, quickshell ipc call tanjun toggleBattery
+bind = SUPER CTRL, N, exec, quickshell ipc call tanjun toggleNotify
+bind = SUPER CTRL, S, exec, quickshell ipc call tanjun toggleSidebar
+bind = SUPER CTRL, comma, exec, quickshell ipc call tanjun toggleSettings
+bind = SUPER CTRL, D, exec, quickshell ipc call tanjun toggleDnd
+bind = SUPER SHIFT, R, exec, ~/.local/share/tanjun/hyprland/scripts/reload-shell.sh
+
 layerrule = noanim, tanjun-bar
 layerrule = noanim, tanjun-sidebar
 layerrule = noanim, tanjun-launcher

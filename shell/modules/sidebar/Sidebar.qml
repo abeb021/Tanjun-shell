@@ -131,7 +131,22 @@ PopupWindow {
                                 spacing: 8
 
                                 Column {
-                                    width: parent.width
+                                    id: mark
+                                    spacing: 0
+                                    BarText {
+                                        text: "単"
+                                        role: "seal"
+                                        px: 20
+                                    }
+                                    BarText {
+                                        text: "純"
+                                        role: "seal"
+                                        px: 20
+                                    }
+                                }
+
+                                Column {
+                                    width: parent.width - mark.implicitWidth - 8
                                     spacing: 2
 
                                     Item {

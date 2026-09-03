@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "../widgets"
@@ -20,6 +21,12 @@ Scope {
             focusable: true
 
             readonly property bool open: ShellState.settingsOpen
+            readonly property bool isFocused: {
+                const m = Hyprland.focusedMonitor;
+                if (!m || !modelData)
+                    return true;
+                return m.name === modelData.name;
+            }
             property string page: "type"
             property string face: "ui"
             property string query: ""
@@ -40,6 +47,9 @@ Scope {
                     { title: "hyprlock", sub: "session", page: "session", hay: "hyprlock lock session" },
                     { title: "devices", sub: "page", page: "devices", hay: "devices backlight keyboard intel_backlight" },
                     { title: "intel_backlight", sub: "devices", page: "devices", hay: "intel_backlight brightness light" },
+                    { title: "screen", sub: "page", page: "screen", hay: "screen monitor display scale gamma output edp" },
+                    { title: "scale", sub: "screen", page: "screen", hay: "scale 1.2 fractional scaling monitor" },
+                    { title: "gamma", sub: "screen", page: "screen", hay: "gamma hyprsunset night identity" },
                     { title: "color", sub: "page", page: "color", hay: "color theme palette preset skin" },
                     { title: "From wall", sub: "color", page: "color", kind: "wall", name: "wall", hay: "from wall wallpaper accent sample" }
                 ];
@@ -67,7 +77,7 @@ Scope {
 
             WlrLayershell.namespace: "tanjun-settings"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: (open && isFocused) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
             anchors {
                 top: true
@@ -85,13 +95,22 @@ Scope {
                 lockDraft = Config.argv(Config.session.lock).join(" ");
                 blDraft = Config.services.backlight;
                 kbDraft = Config.services.keyboard;
+                Screens.refresh();
                 fontsProc.running = false;
                 Qt.callLater(() => {
                     fontsProc.running = true;
                 });
+                find.forceActiveFocus();
             }
 
             onPageChanged: restFlick.contentY = 0
+
+            HyprlandFocusGrab {
+                active: win.open && win.isFocused
+                windows: [win]
+                onCleared: if (win.open && ShellState.settingsOpen)
+                    ShellState.closeMenus()
+            }
 
             Shortcut {
                 sequence: "Escape"
@@ -221,6 +240,7 @@ Scope {
                                     { id: "weather", label: "weather" },
                                     { id: "session", label: "session" },
                                     { id: "devices", label: "devices" },
+                                    { id: "screen", label: "screen" },
                                     { id: "color", label: "color" }
                                 ]
                                 BarButton {
@@ -685,6 +705,11 @@ Scope {
                                             px: 11
                                         }
                                     }
+                                }
+
+                                ScreenPage {
+                                    visible: win.page === "screen"
+                                    width: parent.width
                                 }
 
                                 Column {

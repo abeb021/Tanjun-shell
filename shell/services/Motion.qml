@@ -7,6 +7,7 @@ Singleton {
 
     property bool ready: false
 
+    readonly property int peek: 90
     readonly property int fast: 140
     readonly property int pop: 220
     readonly property int panel: 280

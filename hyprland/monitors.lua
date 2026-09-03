@@ -1,0 +1,10 @@
+---@module 'hl'
+-- Example pin for one laptop. Live file is ~/.config/hypr/monitors.lua
+-- (Settings → screen). If that file is missing, Hyprland picks outputs itself.
+--
+-- hl.monitor({
+--     output = "eDP-1",
+--     mode = "1920x1200@60",
+--     position = "0x0",
+--     scale = 1.2,
+-- })

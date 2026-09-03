@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v2.1**
+Current: **v2.2**
 
 ## v1.0 — host (shipping)
 
@@ -109,3 +109,11 @@ A settings surface, not more bar polish. Summon it; live pins in `config.json`.
 - [x] Rest card is one object: clock, weather, track. Not boxes inside boxes. Prefixes stay a quiet legend
 - [x] Motion from the glyph you touched, not generic scale from the corner
 - [x] OSD and toasts speak the same language. No leftover bars
+
+## v2.2 — desktop
+
+One clone. Hyprland and the shell ship together. Screen is a settings page.
+
+- [x] Compositor in `hyprland/` (one module per concern); Quickshell in `shell/`. `scripts/setup.sh` plants XDG links on any Arch + Hyprland
+- [x] Screen page: output, mode, scale, gamma (hyprsunset). Mode/scale persist in `~/.config/hypr/monitors.lua`
+

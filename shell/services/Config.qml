@@ -18,6 +18,7 @@ Singleton {
     readonly property alias services: adapter.services
     readonly property alias session: adapter.session
     readonly property alias appearance: adapter.appearance
+    readonly property alias screens: adapter.screens
 
     readonly property string defaultFontUi: "JetBrains Mono"
     readonly property string defaultFontJp: "Noto Sans CJK JP"
@@ -144,6 +145,8 @@ Singleton {
             ap.fontPx = appearance.fontPx;
         if (Object.keys(ap).length)
             out.appearance = ap;
+        if (screens.gamma > 0)
+            out.screens = { gamma: screens.gamma };
         return out;
     }
 
@@ -203,6 +206,10 @@ Singleton {
                 property string fontJp: ""
                 property string fontIcons: ""
                 property int fontPx: 0
+            }
+
+            property JsonObject screens: JsonObject {
+                property int gamma: 0
             }
         }
     }

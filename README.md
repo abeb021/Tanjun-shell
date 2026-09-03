@@ -2,11 +2,21 @@
 
 Frame off. Quiet bar. One process.
 
-Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, overview, and settings in a single [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland stays compositor. Summon a panel with IPC; do not spawn a new process. Color follows the wallpaper (**From wall**) or a named preset.
+Tanjun is a Hyprland desktop: compositor config and the Quickshell host ship in this clone. Bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, overview, and settings run in one [Quickshell](https://quickshell.outfoxxed.me) process. Summon a panel with IPC; do not spawn a new process. Color follows the wallpaper (**From wall**) or a named preset.
 
 単純 means simple in structure, unmixed. **単** is the seal.
 
+![Bar on an empty desk](docs/desktop.webp)
+
 ## Surfaces
+
+![Launcher rest card](docs/launcher.webp)
+
+![Settings](docs/settings.webp)
+
+![Calendar popout](docs/calendar.webp)
+
+![System drawer](docs/system.webp)
 
 
 | Surface      | What it is                                                                                              |
@@ -17,7 +27,7 @@ Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, 
 | Launcher     | Super+A. Rest card is clock / weather / art + transport. Type to search apps (ranked by use). Down lists every app the same way. Prefixes: `=` calc, `;` clips, `?` web, `/` act, `@` music. |
 | Clipboard    | Super+V. cliphist, including images.                                                                    |
 | Overview     | Super+Tab. Live window previews, desks 1–10.                                                            |
-| Settings     | Super+Ctrl+, . Search (Ctrl+K) jumps pages. Color chips show the palette. Live pins in `config.json`. |
+| Settings     | Super+Ctrl+, . Search (Ctrl+K) jumps pages. Screen: output, mode, scale, gamma. Color chips show the palette. Live pins in `config.json`. |
 | Toasts + OSD | Notifications and volume / backlight. No dim behind menus.                                              |
 
 
@@ -25,22 +35,31 @@ Widgets are verbs. Left click opens the panel. Scroll, right, and middle do the 
 
 ## Run
 
-Needs Quickshell and Hyprland.
+Needs Arch Linux, Hyprland, and Quickshell. One command from the clone (any path):
 
 ```
 git clone <this-repo> Tanjun-shell
 cd Tanjun-shell
-killall waybar swaync 2>/dev/null
-quickshell -p "$PWD"
+bash scripts/setup.sh
 ```
 
-The file is optional. Defaults live in the shell. Create `~/.config/tanjun/config.json` only for the keys you want to pin. Omit a key and the default stays. Do not copy the whole example — it is a reference, and dumped keys go stale.
+It installs missing packages (`pacman`, AUR helper if a name is not in extra), plants XDG links, and writes a Hyprland stub with no machine path. It does not kill running processes. Super+Shift+R (or a new session) picks it up. The git tree can live anywhere; the system always looks here:
 
-Empty / omitted means auto: local timezone, `wttr.in` from IP, default `brightnessctl` device, Hyprland’s main keyboard, `loginctl lock-session`. Last-used palette: `~/.local/state/tanjun/state.json`. Palettes are `themes/dark/*.json` and `themes/white/*.json`.
+- `~/.local/share/tanjun` → this clone
+- `~/.config/quickshell` → `shell/` (so `quickshell` needs no `-p`)
+- `~/.config/hypr/hyprland.lua` → stub that loads the compositor from the data dir
+
+Outputs stay auto until you pin them in Settings → screen (`~/.config/hypr/monitors.lua`).
+
+Pins stay separate: `~/.config/tanjun/config.json`. Super+Shift+R reloads both.
+
+The Tanjun config file is optional. Defaults live in the shell. Create `~/.config/tanjun/config.json` only for the keys you want to pin. Omit a key and the default stays. Do not copy the whole example — it is a reference, and dumped keys go stale.
+
+Empty / omitted means auto: local timezone, `wttr.in` from IP, default `brightnessctl` device, Hyprland’s main keyboard, `loginctl lock-session`. Last-used palette: `~/.local/state/tanjun/state.json`. Palettes are `shell/themes/dark/*.json` and `shell/themes/white/*.json`.
 
 ## Hands
 
-Compositor binds stay in Hyprland. The shell only owns what it draws. Vanilla `hyprland.conf` snippet: `scripts/hyprland.conf.example`. If this machine uses a `~/.config/hypr/hyprland/*.lua` layout, `bash scripts/install-hypr.sh` can patch autostart and binds from the clone path.
+Compositor binds live in `hyprland/modules/binds.lua`. `bash scripts/setup.sh` plants the XDG links and the Hyprland stub. Vanilla hyprlang fallback: `scripts/hyprland.conf.example`.
 
 Reload the session: **Super+Shift+R**.
 
@@ -70,20 +89,20 @@ Launcher prefixes: `=` calc (qalc, else python), `;` cliphist, `?` web, `/` acti
 
 ## IPC
 
-Target `tanjun`. Same verbs as the binds. `$ROOT` is the clone directory:
+Target `tanjun`. Same verbs as the binds. After install, no clone path:
 
 ```
-quickshell ipc -p "$ROOT" call tanjun toggleLauncher
-quickshell ipc -p "$ROOT" call tanjun toggleSidebar
-quickshell ipc -p "$ROOT" call tanjun toggleAudio
-quickshell ipc -p "$ROOT" call tanjun toggleNetwork
-quickshell ipc -p "$ROOT" call tanjun toggleCalendar
-quickshell ipc -p "$ROOT" call tanjun toggleBattery
-quickshell ipc -p "$ROOT" call tanjun toggleNotify
-quickshell ipc -p "$ROOT" call tanjun toggleClipboard
-quickshell ipc -p "$ROOT" call tanjun toggleSettings
-quickshell ipc -p "$ROOT" call tanjun toggleOverview
-quickshell ipc -p "$ROOT" call tanjun toggleDnd
+quickshell ipc call tanjun toggleLauncher
+quickshell ipc call tanjun toggleSidebar
+quickshell ipc call tanjun toggleAudio
+quickshell ipc call tanjun toggleNetwork
+quickshell ipc call tanjun toggleCalendar
+quickshell ipc call tanjun toggleBattery
+quickshell ipc call tanjun toggleNotify
+quickshell ipc call tanjun toggleClipboard
+quickshell ipc call tanjun toggleSettings
+quickshell ipc call tanjun toggleOverview
+quickshell ipc call tanjun toggleDnd
 ```
 
 ## Config
@@ -116,6 +135,7 @@ quickshell ipc -p "$ROOT" call tanjun toggleDnd
 | `appearance.fontJp`    | Noto Sans CJK JP                      |
 | `appearance.fontIcons` | Symbols Nerd Font                     |
 | `appearance.fontPx`    | 13                                    |
+| `screens.gamma`        | hyprsunset as-is (profile / 100)      |
 
 
 `session.lock` is an argv list (`["hyprlock"]` if that is your locker). A previous flat `config.json` is rewritten to nested sparse on load.
@@ -141,23 +161,20 @@ Toasts carry notification actions, not dismiss-only.
 ## Tree
 
 ```
-shell.qml                    host + IPC
+hyprland/                    compositor (lua). one concern per module
+  hyprland.lua               entry. install writes a stub in ~/.config/hypr
+  modules/                   binds, autostart, rules, rice
+  themes/                    compositor palettes
+  scripts/                   compositor helpers (buds, reload)
+shell/                       Quickshell host → ~/.config/quickshell
+  shell.qml                  host + IPC
+  modules/                   bar, popouts, drawer, launcher, settings, …
+  services/                  singletons (config, theme, screens, …)
+  themes/                    named palettes (json)
+  scripts/                   paint / calc / clip / host
 config.example.json          sparse pin reference (do not dump)
-modules/bar                  quiet strip + bar glyphs
-modules/widgets              shared type, chips, sliders, player
-modules/popouts              panels from the glyph
-modules/sidebar              left System + wallpaper picker
-modules/launcher             rest card, then search
-modules/clipboard            cliphist
-modules/overview             Super+Tab
-modules/settings             rail + pages (type, clock, weather, session, devices, color)
-modules/notifs               toasts
-modules/osd                  volume / backlight
-services/                    singletons (config, theme, audio, net, motion, …)
-themes/                      named palettes
-scripts/tanjun-paint.py      kitty / hypr / lock / wallpaper
-scripts/install-hypr.sh      optional lua-hypr patcher
+scripts/setup.sh             attach to XDG, start host, check the chain
 scripts/hyprland.conf.example
 ```
 
-Next work is in `TODO.md`. Current: **v2.0**.
+Next work is in `TODO.md`. Current: **v2.2**.
