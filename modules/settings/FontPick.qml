@@ -96,7 +96,7 @@ Item {
             height: 24
             color: Theme.surface
             border.width: 1
-            border.color: Theme.accent
+            border.color: q.activeFocus ? Theme.accent : Theme.hairline
             radius: Theme.radius
             TextInput {
                 id: q
@@ -129,9 +129,14 @@ Item {
             width: ListView.view.width
             height: 26
             color: rowHover.containsMouse ? Theme.surfaceHover : "transparent"
-            border.width: modelData === root.current ? 1 : 0
-            border.color: Theme.accent
             radius: Theme.radius
+            Rectangle {
+                visible: modelData === root.current
+                width: 1
+                height: parent.height - 8
+                anchors.verticalCenter: parent.verticalCenter
+                color: Theme.accent
+            }
 
             BarText {
                 anchors.left: parent.left

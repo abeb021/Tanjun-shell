@@ -41,7 +41,7 @@ Item {
         height: Math.min(parent.height - 48, 560)
         color: Theme.surface
         border.width: 1
-        border.color: Theme.accent
+        border.color: Theme.hairline
         radius: Theme.radius
 
         MouseArea {

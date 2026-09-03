@@ -30,7 +30,7 @@ Scope {
                 anchors.fill: parent
                 color: Theme.surface
                 border.width: 1
-                border.color: Theme.bg
+                border.color: Theme.hairline
                 radius: Theme.radius
                 opacity: open ? 1 : 0
                 scale: open ? 1 : Motion.osdFrom

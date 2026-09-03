@@ -11,7 +11,7 @@ Rectangle {
     implicitHeight: box.implicitHeight + 16
     color: Theme.surface
     border.width: 1
-    border.color: Theme.surfaceHover
+    border.color: Theme.hairline
     radius: Theme.radius
 
     Column {

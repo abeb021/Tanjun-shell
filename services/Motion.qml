@@ -15,9 +15,9 @@ Singleton {
     readonly property int easeOut: Easing.OutCubic
     readonly property int easeIn: Easing.InCubic
 
-    readonly property real popFrom: 0.84
-    readonly property real panelFrom: 0.96
-    readonly property real osdFrom: 0.92
+    readonly property real popFrom: 0.92
+    readonly property real panelFrom: 0.97
+    readonly property real osdFrom: 0.94
 
     Component.onCompleted: ready = true
 }

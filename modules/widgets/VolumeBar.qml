@@ -8,7 +8,7 @@ Rectangle {
     property bool interactive: true
     signal moved(real v)
 
-    height: 8
+    height: 4
     radius: Theme.radius
     color: Theme.bg
 

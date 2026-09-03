@@ -5,7 +5,7 @@ import "../../services"
 Rectangle {
     color: Theme.surface
     border.width: 1
-    border.color: Theme.bg
+    border.color: Theme.hairline
     radius: Theme.radius
     implicitWidth: 260
     implicitHeight: Math.min(col.implicitHeight + 16, 420)

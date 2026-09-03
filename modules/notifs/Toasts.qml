@@ -77,7 +77,7 @@ Scope {
                     height: implicitHeight
                     color: Theme.surface
                     border.width: 1
-                    border.color: Theme.bg
+                    border.color: Theme.hairline
                     radius: Theme.radius
                     MouseArea {
                         anchors.fill: parent
@@ -90,6 +90,12 @@ Scope {
                         anchors.top: parent.top
                         anchors.margins: 8
                         spacing: 4
+                        BarText {
+                            visible: (modelData.appName || "").length && modelData.appName !== modelData.summary
+                            text: modelData.appName || ""
+                            role: "caption"
+                            width: parent.width
+                        }
                         BarText {
                             text: modelData.summary || modelData.appName
                             px: 12

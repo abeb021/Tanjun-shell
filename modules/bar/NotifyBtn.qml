@@ -17,7 +17,7 @@ BarButton {
         visible: Notifs.unread > 0 && !ShellState.dnd
         width: 5
         height: 5
-        radius: 2.5
+        radius: Theme.radius
         color: Theme.critical
         anchors.right: parent.right
         anchors.top: parent.top

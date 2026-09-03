@@ -190,6 +190,19 @@ Scope {
                 }
             }
 
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.bg
+                opacity: win.open ? 0.62 : 0
+                Behavior on opacity {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.panel
+                        easing.type: win.open ? Motion.easeOut : Motion.easeIn
+                    }
+                }
+            }
+
             MouseArea {
                 anchors.fill: parent
                 onClicked: ShellState.closeMenus()
@@ -256,19 +269,19 @@ Scope {
                                 readonly property int gap: 10
                                 readonly property int maxCols: Math.max(1, Math.floor(stage.width / (cardW + gap)))
                                 readonly property int cols: tiles.length === 0 ? 1 : Math.min(tiles.length, maxCols)
-                                width: tiles.length === 0 ? 80 : cols * (cardW + gap) - gap
+                                width: tiles.length === 0 ? 160 : cols * (cardW + gap) - gap
 
                                 MouseArea {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: numLab.implicitWidth + 10
-                                    height: 20
+                                    height: 22
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: win.goDesk(desk.deskId)
                                     BarText {
                                         id: numLab
                                         anchors.centerIn: parent
                                         text: `${desk.deskId}`
-                                        px: 14
+                                        role: "title"
                                         color: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === desk.deskId ? Theme.accent : Theme.fgSub
                                     }
                                 }
@@ -293,15 +306,16 @@ Scope {
 
                                     MouseArea {
                                         visible: desk.tiles.length === 0
-                                        width: parent.width
-                                        height: 20
+                                        width: 160
+                                        height: 100
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: win.goDesk(desk.deskId)
-                                        BarText {
-                                            anchors.horizontalCenter: parent.horizontalCenter
-                                            text: "empty"
-                                            sub: true
-                                            px: 12
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: "transparent"
+                                            border.width: 1
+                                            border.color: Theme.hairline
+                                            radius: Theme.radius
                                         }
                                     }
                                 }

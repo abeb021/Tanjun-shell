@@ -71,17 +71,14 @@ Scope {
                 onClicked: ShellState.closeMenus()
             }
 
-            Rectangle {
-                id: card
-                width: 560
-                height: Math.min(parent.height * 0.72, (query.text.length || win.browse) ? 520 : 460)
-                anchors.centerIn: parent
-                color: Theme.bg
-                border.width: 1
-                border.color: Theme.accent
-                radius: Theme.radius
-                opacity: open ? 1 : 0
-                scale: open ? 1 : Motion.panelFrom
+                Face {
+                    id: card
+                    job: "plane"
+                    width: 560
+                    height: Math.min(parent.height * 0.72, (query.text.length || win.browse) ? 520 : 460)
+                    anchors.centerIn: parent
+                    opacity: open ? 1 : 0
+                    scale: open ? 1 : Motion.panelFrom
 
                 Behavior on opacity {
                     enabled: Motion.ready
@@ -105,61 +102,52 @@ Scope {
 
                 Column {
                     anchors.fill: parent
-                    anchors.margins: 18
-                    spacing: 12
+                    anchors.margins: Theme.pad
+                    spacing: Theme.gap
 
-                    Row {
-                        spacing: 10
-                        BarText {
-                            text: "単"
-                            family: Theme.fontJp
-                            px: 22
-                            color: Theme.accent
-                        }
-                        Rectangle {
-                            width: 480
-                            height: 28
-                            color: Theme.surface
-                            border.width: 1
-                            border.color: Theme.accent
-                            radius: Theme.radius
-                            TextInput {
-                                id: query
-                                anchors.fill: parent
-                                anchors.margins: 4
-                                font.family: Theme.fontUi
-                                font.pixelSize: 14
-                                color: Theme.fg
-                                clip: true
-                                Keys.onEscapePressed: ShellState.closeMenus()
-                                Keys.onDownPressed: {
-                                    if (query.text.length === 0 && win.mode === "apps" && !win.browse) {
-                                        win.browse = true;
-                                        results.currentIndex = 0;
-                                        return;
-                                    }
-                                    if (results.count === 0)
-                                        return;
-                                    results.currentIndex = Math.min(results.count - 1, results.currentIndex + 1);
-                                }
-                                Keys.onUpPressed: {
-                                    if (win.browse && query.text.length === 0 && results.currentIndex <= 0) {
-                                        win.browse = false;
-                                        return;
-                                    }
-                                    if (results.count === 0)
-                                        return;
-                                    results.currentIndex = Math.max(0, results.currentIndex - 1);
-                                }
-                                Keys.onReturnPressed: win.activate()
-                                Keys.onEnterPressed: win.activate()
-                                onTextChanged: {
+                    Rectangle {
+                        width: parent.width
+                        height: 32
+                        color: Theme.surface
+                        border.width: 1
+                        border.color: query.activeFocus ? Theme.accent : Theme.hairline
+                        radius: Theme.radius
+                        TextInput {
+                            id: query
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            font.family: Theme.fontUi
+                            font.pixelSize: Theme.typeBody
+                            color: Theme.fg
+                            clip: true
+                            Keys.onEscapePressed: ShellState.closeMenus()
+                            Keys.onDownPressed: {
+                                if (query.text.length === 0 && win.mode === "apps" && !win.browse) {
+                                    win.browse = true;
                                     results.currentIndex = 0;
-                                    if (query.text.length)
-                                        win.browse = false;
-                                    if (win.mode === "calc")
-                                        calcTimer.restart();
+                                    return;
                                 }
+                                if (results.count === 0)
+                                    return;
+                                results.currentIndex = Math.min(results.count - 1, results.currentIndex + 1);
+                            }
+                            Keys.onUpPressed: {
+                                if (win.browse && query.text.length === 0 && results.currentIndex <= 0) {
+                                    win.browse = false;
+                                    return;
+                                }
+                                if (results.count === 0)
+                                    return;
+                                results.currentIndex = Math.max(0, results.currentIndex - 1);
+                            }
+                            Keys.onReturnPressed: win.activate()
+                            Keys.onEnterPressed: win.activate()
+                            onTextChanged: {
+                                results.currentIndex = 0;
+                                if (query.text.length)
+                                    win.browse = false;
+                                if (win.mode === "calc")
+                                    calcTimer.restart();
                             }
                         }
                     }
@@ -206,8 +194,13 @@ Scope {
                             height: 40
                             color: results.currentIndex === index || ma.containsMouse ? Theme.surfaceHover : "transparent"
                             radius: Theme.radius
-                            border.width: results.currentIndex === index ? 1 : 0
-                            border.color: Theme.accent
+                            Rectangle {
+                                visible: results.currentIndex === index
+                                width: 1
+                                height: parent.height - 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: Theme.accent
+                            }
                             readonly property string iconSrc: modelData.kind === "app" ? win.appIcon(modelData.entry) : ""
                             IconImage {
                                 id: appIcon

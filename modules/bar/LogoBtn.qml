@@ -3,13 +3,12 @@ import "../widgets"
 import "../../services"
 
 BarButton {
-    implicitWidth: 28
+    mark: true
+    implicitWidth: 32
     active: ShellState.sidebarOpen
     onClicked: ShellState.toggleSidebar()
     BarText {
         text: "単"
-        family: Theme.fontJp
-        px: 16
-        color: Theme.accent
+        role: "seal"
     }
 }

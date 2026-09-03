@@ -5,6 +5,7 @@ Item {
     id: root
     property string popoutName: ""
     property bool active: false
+    property bool mark: false
     implicitHeight: Theme.barHeight
     implicitWidth: Math.max(Theme.barHeight, content.implicitWidth + 10)
 
@@ -13,10 +14,19 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: hover.hovered ? Theme.surfaceHover : "transparent"
-        border.width: hover.hovered || root.active ? 1 : 0
-        border.color: Theme.accent
+        color: hover.hovered || (root.active && !root.mark) ? Theme.surfaceHover : "transparent"
         radius: Theme.radius
+    }
+
+    Rectangle {
+        visible: !root.mark && root.active
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 5
+        anchors.rightMargin: 5
+        height: 1
+        color: Theme.accent
     }
 
     Row {

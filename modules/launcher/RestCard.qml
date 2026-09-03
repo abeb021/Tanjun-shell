@@ -9,61 +9,78 @@ Item {
 
     Column {
         anchors.fill: parent
-        spacing: 14
+        spacing: Theme.pad
 
-        Row {
-            spacing: 16
+        Item {
             width: parent.width
+            height: Math.max(clockCol.implicitHeight, weatherCol.implicitHeight)
 
             Column {
-                spacing: 4
+                id: clockCol
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 2
                 BarText {
                     text: Time.time
-                    px: 52
+                    role: "display"
                 }
                 BarText {
                     text: Time.tzLabel + "  ·  " + Time.date
-                    sub: true
-                    px: 13
+                    role: "caption"
                 }
             }
 
-            Rectangle {
-                width: 220
-                height: 88
-                color: Theme.surface
-                border.width: 1
-                border.color: Theme.accent
-                radius: Theme.radius
-                Column {
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 4
-                    BarText {
-                        text: Config.services.weatherCity.length ? Config.services.weatherCity : Config.localLabel
-                        sub: true
-                        px: 11
-                    }
-                    BarText {
-                        text: Weather.text || "…"
-                        px: 22
-                        width: parent.width
-                        wrapMode: Text.Wrap
-                    }
+            Column {
+                id: weatherCol
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(220, parent.width * 0.42)
+                spacing: 2
+                BarText {
+                    text: Config.services.weatherCity.length ? Config.services.weatherCity : Config.localLabel
+                    role: "caption"
+                    width: parent.width
+                    horizontalAlignment: Text.AlignRight
+                }
+                BarText {
+                    text: Weather.text.length ? Weather.text : "…"
+                    role: "title"
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignRight
                 }
             }
         }
 
         PlayerCard {
             width: parent.width
-            artSize: 88
+            artSize: 72
             live: ShellState.launcherOpen
         }
 
-        BarText {
-            text: "↓ apps by use   = calc   ; clips   ? web   / act   @ music"
-            sub: true
-            px: 11
+        Row {
+            spacing: 16
+            Repeater {
+                model: [
+                    { mark: "=", label: "calc" },
+                    { mark: ";", label: "clips" },
+                    { mark: "?", label: "web" },
+                    { mark: "/", label: "act" },
+                    { mark: "@", label: "music" }
+                ]
+                Row {
+                    required property var modelData
+                    spacing: 6
+                    BarText {
+                        text: modelData.mark
+                        role: "caption"
+                    }
+                    BarText {
+                        text: modelData.label
+                        role: "caption"
+                    }
+                }
+            }
         }
     }
 }

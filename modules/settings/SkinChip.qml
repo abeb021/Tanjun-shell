@@ -20,7 +20,7 @@ Item {
         anchors.fill: parent
         color: root.bg
         border.width: 1
-        border.color: root.active || hover.containsMouse ? root.accent : root.surface
+        border.color: root.active || hover.containsMouse ? root.accent : Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.2)
         radius: Theme.radius
 
         Column {

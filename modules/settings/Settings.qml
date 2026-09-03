@@ -123,15 +123,12 @@ Scope {
                 onClicked: ShellState.closeMenus()
             }
 
-            Rectangle {
+            Face {
                 id: card
+                job: "plane"
                 width: 720
                 height: Math.min(parent.height * 0.78, 520)
                 anchors.centerIn: parent
-                color: Theme.bg
-                border.width: 1
-                border.color: Theme.accent
-                radius: Theme.radius
                 opacity: open ? 1 : 0
                 scale: open ? 1 : Motion.panelFrom
 
@@ -155,29 +152,20 @@ Scope {
                     onClicked: {}
                 }
 
-                Column {
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 12
+                    Column {
+                        anchors.fill: parent
+                    anchors.margins: Theme.pad
+                    spacing: Theme.gap
 
                     Column {
                         id: head
                         width: parent.width
                         spacing: 8
 
-                        Row {
-                            spacing: 10
-                            BarText {
-                                text: "単"
-                                family: Theme.fontJp
-                                px: 20
-                                color: Theme.accent
-                            }
-                            BarText {
-                                text: "settings"
-                                px: 16
-                                family: Config.defaultFontUi
-                            }
+                        BarText {
+                            text: "settings"
+                            role: "caption"
+                            family: Config.defaultFontUi
                         }
 
                         Rectangle {
@@ -185,7 +173,7 @@ Scope {
                             height: 28
                             color: Theme.surface
                             border.width: 1
-                            border.color: find.activeFocus || win.looking ? Theme.accent : Theme.surfaceHover
+                            border.color: find.activeFocus || win.looking ? Theme.accent : Theme.hairline
                             radius: Theme.radius
                             BarText {
                                 visible: !find.text.length
@@ -468,7 +456,7 @@ Scope {
                                             height: 24
                                             color: Theme.surface
                                             border.width: 1
-                                            border.color: Theme.accent
+                                            border.color: Theme.hairline
                                             radius: Theme.radius
                                             TextInput {
                                                 anchors.fill: parent
@@ -514,7 +502,7 @@ Scope {
                                         height: 28
                                         color: Theme.surface
                                         border.width: 1
-                                        border.color: Theme.accent
+                                        border.color: Theme.hairline
                                         radius: Theme.radius
                                         TextInput {
                                             anchors.fill: parent
@@ -569,7 +557,7 @@ Scope {
                                         height: 28
                                         color: Theme.surface
                                         border.width: 1
-                                        border.color: Theme.accent
+                                        border.color: Theme.hairline
                                         radius: Theme.radius
                                         TextInput {
                                             anchors.fill: parent
@@ -640,7 +628,7 @@ Scope {
                                         height: 28
                                         color: Theme.surface
                                         border.width: 1
-                                        border.color: Theme.accent
+                                        border.color: Theme.hairline
                                         radius: Theme.radius
                                         TextInput {
                                             anchors.fill: parent
@@ -675,7 +663,7 @@ Scope {
                                         height: 28
                                         color: Theme.surface
                                         border.width: 1
-                                        border.color: Theme.accent
+                                        border.color: Theme.hairline
                                         radius: Theme.radius
                                         TextInput {
                                             anchors.fill: parent

@@ -45,15 +45,12 @@ Scope {
                 onClicked: ShellState.closeMenus()
             }
 
-            Rectangle {
+            Face {
                 id: card
+                job: "plane"
                 width: 560
                 height: 440
                 anchors.centerIn: parent
-                color: Theme.bg
-                border.width: 1
-                border.color: Theme.accent
-                radius: Theme.radius
                 opacity: open ? 1 : 0
                 scale: open ? 1 : Motion.panelFrom
 
@@ -119,8 +116,13 @@ Scope {
                         height: row.pic ? 76 : 36
                         color: clips.currentIndex === index || ma.containsMouse ? Theme.surfaceHover : "transparent"
                         radius: Theme.radius
-                        border.width: clips.currentIndex === index ? 1 : 0
-                        border.color: Theme.accent
+                        Rectangle {
+                            visible: clips.currentIndex === index
+                            width: 1
+                            height: parent.height - 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Theme.accent
+                        }
 
                         Row {
                             anchors.fill: parent

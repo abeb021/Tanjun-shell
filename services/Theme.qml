@@ -29,6 +29,15 @@ Singleton {
     readonly property string fontJp: Config.appearance.fontJp.length ? Config.appearance.fontJp : Config.defaultFontJp
     readonly property string fontIcons: Config.appearance.fontIcons.length ? Config.appearance.fontIcons : Config.defaultFontIcons
 
+    readonly property color hairline: Qt.rgba(fg.r, fg.g, fg.b, 0.16)
+    readonly property int typeCaption: Math.max(10, fontPx - 2)
+    readonly property int typeBody: fontPx
+    readonly property int typeTitle: fontPx + 3
+    readonly property int typeDisplay: Math.round(fontPx * 4)
+    readonly property int typeSeal: fontPx + 5
+    readonly property int pad: 14
+    readonly property int gap: 8
+
     readonly property var presets: [
         { kind: "dark", name: "monochrome", label: "Monochrome", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#e0e0e0" },
         { kind: "dark", name: "obsidian", label: "Obsidian", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#8b5cf6" },

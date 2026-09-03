@@ -89,6 +89,7 @@ Scope {
                 name: "clock"
                 barWindow: barWin
                 anchorItem: clockBtn
+                growFrom: Item.Top
                 implicitWidth: cal.implicitWidth
                 implicitHeight: cal.implicitHeight
                 CalendarPop {
@@ -100,6 +101,7 @@ Scope {
                 name: "audio"
                 barWindow: barWin
                 anchorItem: audioBtn
+                growFrom: Item.TopRight
                 implicitWidth: ap.implicitWidth
                 implicitHeight: ap.implicitHeight
                 AudioPop {
@@ -111,6 +113,7 @@ Scope {
                 name: "network"
                 barWindow: barWin
                 anchorItem: netBtn
+                growFrom: Item.TopRight
                 implicitWidth: np.implicitWidth
                 implicitHeight: np.implicitHeight
                 NetPop {
@@ -122,6 +125,7 @@ Scope {
                 name: "notify"
                 barWindow: barWin
                 anchorItem: notifyBtn
+                growFrom: Item.TopRight
                 implicitWidth: ntp.implicitWidth
                 implicitHeight: ntp.implicitHeight
                 NotifyPop {
@@ -133,6 +137,7 @@ Scope {
                 name: "battery"
                 barWindow: barWin
                 anchorItem: batteryBtn
+                growFrom: Item.TopRight
                 implicitWidth: bp.implicitWidth
                 implicitHeight: bp.implicitHeight
                 BatteryPop {

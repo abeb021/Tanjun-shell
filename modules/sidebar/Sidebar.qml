@@ -109,7 +109,7 @@ PopupWindow {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: 1
-                color: Theme.accent
+                color: Theme.hairline
             }
 
             Flickable {
@@ -131,24 +131,7 @@ PopupWindow {
                                 spacing: 8
 
                                 Column {
-                                    id: mark
-                                    spacing: 0
-                                    BarText {
-                                        text: "単"
-                                        family: Theme.fontJp
-                                        px: 20
-                                        color: Theme.accent
-                                    }
-                                    BarText {
-                                        text: "純"
-                                        family: Theme.fontJp
-                                        px: 20
-                                        color: Theme.accent
-                                    }
-                                }
-
-                                Column {
-                                    width: parent.width - mark.implicitWidth - 8
+                                    width: parent.width
                                     spacing: 2
 
                                     Item {

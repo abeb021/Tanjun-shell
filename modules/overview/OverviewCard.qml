@@ -27,7 +27,7 @@ Rectangle {
     height: 176
     color: Theme.surface
     border.width: 1
-    border.color: selected ? Theme.accent : Theme.bg
+    border.color: selected ? Theme.accent : Theme.hairline
     radius: Theme.radius
 
     Column {

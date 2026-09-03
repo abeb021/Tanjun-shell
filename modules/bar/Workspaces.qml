@@ -54,10 +54,9 @@ Row {
             }
             onRightClicked: Quickshell.execDetached(["hyprctl", "dispatch", "movetoworkspace", `${wsId}`])
             BarText {
-                text: wsBtn.active ? "" : (wsBtn.ws ? `${wsBtn.wsId}` : "")
+                text: `${wsBtn.wsId}`
                 px: 11
                 color: wsBtn.active ? Theme.accent : (wsBtn.ws ? Theme.fg : Theme.fgSub)
-                icon: wsBtn.active || !wsBtn.ws
             }
         }
     }

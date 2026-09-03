@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v2.0**
+Current: **v2.1**
 
 ## v1.0 — host (shipping)
 
@@ -100,3 +100,12 @@ A settings surface, not more bar polish. Summon it; live pins in `config.json`.
 - [x] Clock, weather, session lock, backlight / keyboard
 - [x] Color page: From wall + named presets with swatches (same Theme singleton)
 - [x] Lookup: search box, Ctrl+K, jump across pages
+
+## v2.1 — face
+
+単純. Unmix the cloned cards. Same rice (frame off, 1px, JetBrains, 単). No new look, no second skin system.
+
+- [x] One recipe per job: popout from the glyph, launcher rest card, settings panel, drawer strip — stop cloning the same accent-bordered rect
+- [x] Rest card is one object: clock, weather, track. Not boxes inside boxes. Prefixes stay a quiet legend
+- [x] Motion from the glyph you touched, not generic scale from the corner
+- [x] OSD and toasts speak the same language. No leftover bars

@@ -6,7 +6,7 @@ Rectangle {
     id: root
     color: Theme.surface
     border.width: 1
-    border.color: Theme.bg
+    border.color: Theme.hairline
     radius: Theme.radius
     implicitWidth: Math.max(280, 20 + Time.zones.length * 120)
     implicitHeight: col.implicitHeight + 16
@@ -66,7 +66,7 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: 1
-            color: Theme.bg
+            color: Theme.hairline
         }
 
         Row {

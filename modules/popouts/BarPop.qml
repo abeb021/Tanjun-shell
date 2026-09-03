@@ -9,6 +9,7 @@ PopupWindow {
     required property string name
     required property Item anchorItem
     required property var barWindow
+    property int growFrom: Item.TopLeft
 
     default property alias popChildren: morph.data
 
@@ -47,7 +48,7 @@ PopupWindow {
     Item {
         id: morph
         anchors.fill: parent
-        transformOrigin: Item.TopLeft
+        transformOrigin: root.growFrom
         opacity: root.open ? 1 : 0
         scale: root.open ? 1 : Motion.popFrom
 
