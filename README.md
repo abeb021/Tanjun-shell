@@ -103,6 +103,7 @@ quickshell ipc call tanjun toggleClipboard
 quickshell ipc call tanjun toggleSettings
 quickshell ipc call tanjun toggleOverview
 quickshell ipc call tanjun toggleDnd
+quickshell ipc call tanjun closeMenus
 ```
 
 ## Config
@@ -174,6 +175,7 @@ shell/                       Quickshell host → ~/.config/quickshell
   scripts/                   paint / calc / clip / host
 config.example.json          sparse pin reference (do not dump)
 scripts/setup.sh             attach to XDG, start host, check the chain
+scripts/shots.sh             grim + magick → docs/*.webp (README)
 scripts/hyprland.conf.example
 ```
 

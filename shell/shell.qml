@@ -86,5 +86,9 @@ ShellRoot {
         function toggleDnd(): void {
             ShellState.dnd = !ShellState.dnd;
         }
+
+        function closeMenus(): void {
+            ShellState.closeMenus();
+        }
     }
 }
