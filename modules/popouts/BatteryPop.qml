@@ -1,6 +1,5 @@
 import QtQuick
-import Quickshell
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Rectangle {
@@ -30,15 +29,21 @@ Rectangle {
             px: 22
             color: Battery.percent <= 15 ? Theme.critical : Theme.fg
         }
-        Rectangle {
+        VolumeBar {
             width: parent.width
-            height: 8
-            color: Theme.bg
-            Rectangle {
-                width: parent.width * Battery.percent / 100
-                height: parent.height
-                color: Battery.percent <= 15 ? Theme.critical : Theme.accent
-            }
+            value: Battery.percent / 100
+            fill: Battery.percent <= 15 ? Theme.critical : Theme.accent
+            interactive: false
+        }
+
+        BarText {
+            text: `light  ${Math.max(0, Backlight.percent)}%`
+            px: 12
+        }
+        VolumeBar {
+            width: parent.width
+            value: Math.max(0, Backlight.percent) / 100
+            onMoved: v => Backlight.setPercent(v * 100)
         }
     }
 }

@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Scope {
@@ -89,7 +89,7 @@ Scope {
                     highlightMoveDuration: 0
                     highlightResizeDuration: 0
                     reuseItems: true
-                    cacheBuffer: 480
+                    cacheBuffer: 200
                     maximumFlickVelocity: 12000
                     flickDeceleration: 3500
                     boundsBehavior: Flickable.StopAtBounds
@@ -133,6 +133,8 @@ Scope {
                                 height: 64
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
+                                cache: true
+                                sourceSize: Qt.size(64, 64)
                                 source: decoded.path.length ? `file://${decoded.path}` : ""
                             }
 

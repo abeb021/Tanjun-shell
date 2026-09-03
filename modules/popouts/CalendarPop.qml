@@ -1,6 +1,5 @@
 import QtQuick
-import Quickshell
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Rectangle {

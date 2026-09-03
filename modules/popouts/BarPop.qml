@@ -18,7 +18,7 @@ PopupWindow {
     color: "transparent"
     anchor.window: barWindow
     anchor.item: anchorItem
-    anchor.edges: Edges.Top | Edges.Left
+    anchor.edges: Edges.Bottom | Edges.Left
     anchor.gravity: Edges.Bottom | Edges.Right
     anchor.adjustment: PopupAdjustment.Slide
 

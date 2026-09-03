@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Qt.labs.folderlistmodel
 import Quickshell
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Item {

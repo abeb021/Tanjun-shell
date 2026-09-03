@@ -2,7 +2,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import "../bar"
+import Quickshell.Widgets
+import "../widgets"
 import "../../services"
 
 Scope {
@@ -37,6 +38,7 @@ Scope {
             readonly property string body: mode === "apps" ? raw : raw.slice(1).trim()
             property string calcOut: ""
             property var clipLines: []
+            property bool browse: false
 
             WlrLayershell.namespace: "tanjun-launcher"
             WlrLayershell.layer: WlrLayer.Overlay
@@ -49,9 +51,12 @@ Scope {
                 bottom: true
             }
 
-            onOpenChanged: if (open) {
-                query.text = "";
-                query.forceActiveFocus();
+            onOpenChanged: {
+                browse = false;
+                if (open) {
+                    query.text = "";
+                    query.forceActiveFocus();
+                }
             }
 
             Shortcut {
@@ -69,7 +74,7 @@ Scope {
             Rectangle {
                 id: card
                 width: 560
-                height: Math.min(parent.height * 0.72, query.text.length ? 520 : 460)
+                height: Math.min(parent.height * 0.72, (query.text.length || win.browse) ? 520 : 460)
                 anchors.centerIn: parent
                 color: Theme.bg
                 border.width: 1
@@ -128,12 +133,21 @@ Scope {
                                 clip: true
                                 Keys.onEscapePressed: ShellState.closeMenus()
                                 Keys.onDownPressed: {
-                                    if (results.filtered.length === 0)
+                                    if (query.text.length === 0 && win.mode === "apps" && !win.browse) {
+                                        win.browse = true;
+                                        results.currentIndex = 0;
                                         return;
-                                    results.currentIndex = Math.min(results.filtered.length - 1, results.currentIndex + 1);
+                                    }
+                                    if (results.count === 0)
+                                        return;
+                                    results.currentIndex = Math.min(results.count - 1, results.currentIndex + 1);
                                 }
                                 Keys.onUpPressed: {
-                                    if (results.filtered.length === 0)
+                                    if (win.browse && query.text.length === 0 && results.currentIndex <= 0) {
+                                        win.browse = false;
+                                        return;
+                                    }
+                                    if (results.count === 0)
                                         return;
                                     results.currentIndex = Math.max(0, results.currentIndex - 1);
                                 }
@@ -141,6 +155,8 @@ Scope {
                                 Keys.onEnterPressed: win.activate()
                                 onTextChanged: {
                                     results.currentIndex = 0;
+                                    if (query.text.length)
+                                        win.browse = false;
                                     if (win.mode === "calc")
                                         calcTimer.restart();
                                 }
@@ -149,28 +165,38 @@ Scope {
                     }
 
                     RestCard {
-                        visible: query.text.length === 0
+                        visible: query.text.length === 0 && !win.browse
                         width: parent.width
                         height: parent.height - 52
                     }
 
                     ListView {
                         id: results
-                        visible: query.text.length > 0
+                        visible: query.text.length > 0 || win.browse
                         width: parent.width
                         height: parent.height - 52
                         clip: true
-                        property var filtered: {
-                            win.calcOut;
-                            win.clipLines;
-                            win.mode;
-                            win.body;
-                            Media.line;
-                            Media.active;
-                            ShellState.dnd;
-                            return win.rows();
+                        reuseItems: true
+                        model: ScriptModel {
+                            objectProp: "key"
+                            values: {
+                                win.calcOut;
+                                win.clipLines;
+                                win.mode;
+                                win.body;
+                                win.browse;
+                                win.open;
+                                Launches.gen;
+                                Media.line;
+                                Media.active;
+                                ShellState.dnd;
+                                if (!win.open)
+                                    return [];
+                                if (win.mode === "apps" && query.text.length === 0 && !win.browse)
+                                    return [];
+                                return win.rows();
+                            }
                         }
-                        model: filtered
                         currentIndex: 0
                         highlightMoveDuration: 0
                         delegate: Rectangle {
@@ -182,11 +208,23 @@ Scope {
                             radius: Theme.radius
                             border.width: results.currentIndex === index ? 1 : 0
                             border.color: Theme.accent
-                            BarText {
+                            readonly property string iconSrc: modelData.kind === "app" ? win.appIcon(modelData.entry) : ""
+                            IconImage {
+                                id: appIcon
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.left: parent.left
                                 anchors.leftMargin: 8
-                                width: parent.width - 16
+                                implicitSize: iconSrc.length ? 22 : 0
+                                visible: iconSrc.length > 0
+                                source: iconSrc
+                                asynchronous: true
+                            }
+                            BarText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: appIcon.visible ? appIcon.right : parent.left
+                                anchors.leftMargin: 8
+                                anchors.right: parent.right
+                                anchors.rightMargin: 8
                                 text: modelData.name
                                 px: 13
                                 color: modelData.kind === "hint" ? Theme.fgSub : Theme.fg
@@ -235,6 +273,47 @@ Scope {
                 }
             }
 
+            function appIcon(entry) {
+                if (!entry)
+                    return "";
+                const ic = entry.icon || "";
+                if (ic.indexOf("/") >= 0)
+                    return ic.startsWith("file:") ? ic : ("file://" + ic);
+                const name = ic.length ? ic : "application-x-executable";
+                const hit = Quickshell.iconPath(name, true);
+                if (hit.length)
+                    return hit;
+                return Quickshell.iconPath("application-x-executable", true);
+            }
+
+            function appHay(a) {
+                const bits = [a.name || "", a.genericName || "", a.comment || "", a.id || ""];
+                try {
+                    if (a.keywords && a.keywords.join)
+                        bits.push(a.keywords.join(" "));
+                } catch (e) {}
+                return bits.join(" ").toLowerCase();
+            }
+
+            function appMatch(a, low) {
+                if (!low.length)
+                    return true;
+                const name = (a.name || "").toLowerCase();
+                if (name.indexOf(low) >= 0)
+                    return true;
+                const id = (a.id || "").toLowerCase();
+                if (id.indexOf(low) >= 0)
+                    return true;
+                return appHay(a).indexOf(low) >= 0;
+            }
+
+            function rowAt(index) {
+                const vals = results.model ? results.model.values : null;
+                if (!vals || index < 0 || index >= vals.length)
+                    return null;
+                return vals[index];
+            }
+
             function rows() {
                 const mode = win.mode;
                 const q = win.body;
@@ -242,11 +321,11 @@ Scope {
                 if (mode === "calc") {
                     win.calcOut;
                     if (!q.length)
-                        out.push({ kind: "hint", name: "type an expression" });
+                        out.push({ kind: "hint", key: "hint:calc", name: "type an expression" });
                     else if (win.calcOut.length)
-                        out.push({ kind: "calc", name: win.calcOut, value: win.calcOut });
+                        out.push({ kind: "calc", key: "calc", name: win.calcOut, value: win.calcOut });
                     else
-                        out.push({ kind: "hint", name: "…" });
+                        out.push({ kind: "hint", key: "hint:wait", name: "…" });
                     return out;
                 }
                 if (mode === "clip") {
@@ -257,32 +336,32 @@ Scope {
                         const preview = line.indexOf("\t") >= 0 ? line.slice(line.indexOf("\t") + 1) : line;
                         if (low.length && preview.toLowerCase().indexOf(low) < 0 && line.toLowerCase().indexOf(low) < 0)
                             continue;
-                        out.push({ kind: "clip", name: preview, line: line });
+                        out.push({ kind: "clip", key: "clip:" + i, name: preview, line: line });
                     }
                     if (!out.length)
-                        out.push({ kind: "hint", name: q.length ? "no clips" : "no clipboard history" });
+                        out.push({ kind: "hint", key: "hint:clip", name: q.length ? "no clips" : "no clipboard history" });
                     return out;
                 }
                 if (mode === "web") {
                     if (!q.length) {
-                        out.push({ kind: "hint", name: "type a search or url" });
+                        out.push({ kind: "hint", key: "hint:web", name: "type a search or url" });
                         return out;
                     }
                     const url = /^https?:\/\//i.test(q) || (/^[a-z0-9.-]+\.[a-z]{2,}/i.test(q) && q.indexOf(" ") < 0);
                     if (url)
-                        out.push({ kind: "web", name: "open  " + q, url: /^https?:\/\//i.test(q) ? q : `https://${q}` });
-                    out.push({ kind: "web", name: "search  " + q, url: `https://duckduckgo.com/?q=${encodeURIComponent(q)}` });
+                        out.push({ kind: "web", key: "web:open", name: "open  " + q, url: /^https?:\/\//i.test(q) ? q : `https://${q}` });
+                    out.push({ kind: "web", key: "web:search", name: "search  " + q, url: `https://duckduckgo.com/?q=${encodeURIComponent(q)}` });
                     return out;
                 }
                 if (mode === "act") {
                     const acts = [
-                        { kind: "act", name: "lock", id: "lock" },
-                        { kind: "act", name: "logout", id: "logout" },
-                        { kind: "act", name: "reboot", id: "reboot" },
-                        { kind: "act", name: "sleep", id: "sleep" },
-                        { kind: "act", name: ShellState.dnd ? "do not disturb · off" : "do not disturb · on", id: "dnd" },
-                        { kind: "act", name: "clipboard", id: "clipboard" },
-                        { kind: "act", name: "system", id: "sidebar" }
+                        { kind: "act", key: "act:lock", name: "lock", id: "lock" },
+                        { kind: "act", key: "act:logout", name: "logout", id: "logout" },
+                        { kind: "act", key: "act:reboot", name: "reboot", id: "reboot" },
+                        { kind: "act", key: "act:shutdown", name: "shutdown", id: "shutdown" },
+                        { kind: "act", key: "act:dnd", name: ShellState.dnd ? "do not disturb · off" : "do not disturb · on", id: "dnd" },
+                        { kind: "act", key: "act:clipboard", name: "clipboard", id: "clipboard" },
+                        { kind: "act", key: "act:sidebar", name: "system", id: "sidebar" }
                     ];
                     const low = q.toLowerCase();
                     for (let i = 0; i < acts.length; i++) {
@@ -290,49 +369,73 @@ Scope {
                             out.push(acts[i]);
                     }
                     if (!out.length)
-                        out.push({ kind: "hint", name: "no actions" });
+                        out.push({ kind: "hint", key: "hint:act", name: "no actions" });
                     return out;
                 }
                 if (mode === "music") {
                     if (Media.active) {
-                        out.push({ kind: "music", name: (Media.player && Media.player.isPlaying ? "pause  " : "play  ") + (Media.line || "now"), id: "toggle" });
-                        out.push({ kind: "music", name: "next", id: "next" });
-                        out.push({ kind: "music", name: "previous", id: "prev" });
+                        out.push({ kind: "music", key: "music:toggle", name: (Media.player && Media.player.isPlaying ? "pause  " : "play  ") + (Media.line || "now"), id: "toggle" });
+                        out.push({ kind: "music", key: "music:next", name: "next", id: "next" });
+                        out.push({ kind: "music", key: "music:prev", name: "previous", id: "prev" });
                     }
                     if (q.length)
-                        out.push({ kind: "music", name: "spotify  " + q, id: "search", query: q });
+                        out.push({ kind: "music", key: "music:search", name: "spotify  " + q, id: "search", query: q });
                     else if (!out.length)
-                        out.push({ kind: "hint", name: "nothing playing · type to search spotify" });
+                        out.push({ kind: "hint", key: "hint:music", name: "nothing playing · type to search spotify" });
                     return out;
                 }
                 const apps = DesktopEntries.applications.values;
                 const low = q.toLowerCase();
                 if (apps) {
-                    for (let i = 0; i < apps.length && out.length < 30; i++) {
+                    for (let i = 0; i < apps.length; i++) {
                         const a = apps[i];
-                        if (a.noDisplay)
+                        if (!a || a.noDisplay)
                             continue;
-                        const n = (a.name || "").toLowerCase();
-                        if (!low || n.indexOf(low) >= 0)
-                            out.push({ kind: "app", name: a.name, entry: a });
+                        if (!appMatch(a, low))
+                            continue;
+                        const id = a.id || a.name || `${i}`;
+                        out.push({ kind: "app", key: "app:" + id, name: a.name, entry: a });
                     }
+                    out.sort((a, b) => {
+                        const ia = a.entry && a.entry.id ? a.entry.id : a.name;
+                        const ib = b.entry && b.entry.id ? b.entry.id : b.name;
+                        const ca = Launches.count(ia);
+                        const cb = Launches.count(ib);
+                        if (cb !== ca)
+                            return cb - ca;
+                        const ta = Launches.last(ia);
+                        const tb = Launches.last(ib);
+                        if (tb !== ta)
+                            return tb - ta;
+                        if (low.length) {
+                            const na = (a.name || "").toLowerCase();
+                            const nb = (b.name || "").toLowerCase();
+                            const pa = na.startsWith(low) ? 1 : 0;
+                            const pb = nb.startsWith(low) ? 1 : 0;
+                            if (pb !== pa)
+                                return pb - pa;
+                        }
+                        return (a.name || "").localeCompare(b.name || "");
+                    });
                 }
                 if (!out.length)
-                    out.push({ kind: "hint", name: "no apps" });
+                    out.push({ kind: "hint", key: "hint:apps", name: "no apps" });
                 return out;
             }
 
             function activate() {
-                if (results.filtered.length === 0)
+                if (results.count === 0)
                     return;
                 activateAt(Math.max(0, results.currentIndex));
             }
 
             function activateAt(index) {
-                const row = results.filtered[index];
+                const row = rowAt(index);
                 if (!row || row.kind === "hint")
                     return;
                 if (row.kind === "app") {
+                    const id = row.entry && row.entry.id ? row.entry.id : row.name;
+                    Launches.bump(id);
                     try {
                         row.entry.execute();
                     } catch (e) {
@@ -393,9 +496,9 @@ Scope {
                     Quickshell.execDetached(["systemctl", "reboot"]);
                     return;
                 }
-                if (id === "sleep") {
+                if (id === "shutdown") {
                     ShellState.closeMenus();
-                    Quickshell.execDetached(["systemctl", "suspend"]);
+                    Quickshell.execDetached(["systemctl", "poweroff"]);
                     return;
                 }
                 if (id === "dnd") {

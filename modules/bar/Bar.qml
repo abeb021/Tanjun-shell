@@ -1,9 +1,10 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
 import Quickshell.Wayland
 import "../popouts"
+import "../sidebar"
+import "../widgets"
 import "../../services"
 
 Scope {
@@ -30,10 +31,11 @@ Scope {
                 id: left
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.leftMargin: 4
                 spacing: 2
 
-                LogoBtn {}
+                LogoBtn {
+                    id: logoBtn
+                }
                 Workspaces {}
             }
 
@@ -47,7 +49,6 @@ Scope {
                 id: right
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.rightMargin: 4
                 spacing: 2
 
                 LayoutBtn {}
@@ -77,6 +78,8 @@ Scope {
                             sourceSize.height: 16
                             width: 16
                             height: 16
+                            asynchronous: true
+                            cache: true
                         }
                     }
                 }
@@ -135,6 +138,11 @@ Scope {
                 BatteryPop {
                     id: bp
                 }
+            }
+
+            Sidebar {
+                barWindow: barWin
+                anchorItem: logoBtn
             }
         }
     }

@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 import "../../services"
 
 Text {
@@ -11,6 +10,9 @@ Text {
     font.family: family
     font.pixelSize: px
     font.weight: Font.Medium
+    horizontalAlignment: icon ? Text.AlignHCenter : Text.AlignLeft
     verticalAlignment: Text.AlignVCenter
     elide: Text.ElideRight
+    implicitWidth: icon ? 16 : contentWidth
+    implicitHeight: icon ? 16 : contentHeight
 }

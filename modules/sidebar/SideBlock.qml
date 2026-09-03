@@ -1,5 +1,5 @@
 import QtQuick
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Rectangle {

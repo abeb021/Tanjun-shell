@@ -18,17 +18,16 @@ Singleton {
     readonly property string tzLabel: zone.label || Config.prettyZone(tzId)
 
     readonly property string time: formatTime(tzId)
-    readonly property string timeFull: formatTime(tzId, true)
     readonly property string date: Qt.formatDateTime(clock.date, "dddd, d MMMM yyyy")
     readonly property string dateShort: Qt.formatDateTime(clock.date, "dd.MM")
     readonly property date now: clock.date
 
     SystemClock {
         id: clock
-        precision: SystemClock.Seconds
+        precision: SystemClock.Minutes
     }
 
-    function formatTime(tz, withSeconds) {
+    function formatTime(tz) {
         const opts = {
             hour: "2-digit",
             minute: "2-digit",
@@ -36,12 +35,10 @@ Singleton {
         };
         if (tz)
             opts.timeZone = tz;
-        if (withSeconds)
-            opts.second = "2-digit";
         try {
             return clock.date.toLocaleTimeString("en-GB", opts);
         } catch (e) {
-            return Qt.formatDateTime(clock.date, withSeconds ? "HH:mm:ss" : "HH:mm");
+            return Qt.formatDateTime(clock.date, "HH:mm");
         }
     }
 

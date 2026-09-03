@@ -1,6 +1,5 @@
 import QtQuick
-import Quickshell
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Item {
@@ -58,10 +57,11 @@ Item {
         PlayerCard {
             width: parent.width
             artSize: 88
+            live: ShellState.launcherOpen
         }
 
         BarText {
-            text: "= calc   ; clips   ? web   / act   @ music"
+            text: "↓ apps by use   = calc   ; clips   ? web   / act   @ music"
             sub: true
             px: 11
         }

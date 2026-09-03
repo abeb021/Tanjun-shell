@@ -1,16 +1,15 @@
 import QtQuick
-import Quickshell
 import "../../services"
 
 Item {
     id: root
     property string popoutName: ""
-    property string tooltip: ""
     property bool active: false
     implicitHeight: Theme.barHeight
     implicitWidth: Math.max(Theme.barHeight, content.implicitWidth + 10)
 
     default property alias contentData: content.data
+    property alias overlay: overlayLayer
 
     Rectangle {
         anchors.fill: parent
@@ -25,6 +24,12 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 4
+    }
+
+    Item {
+        id: overlayLayer
+        anchors.fill: parent
+        z: 1
     }
 
     MouseArea {

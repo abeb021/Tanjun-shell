@@ -1,96 +1,79 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Wayland
-import "../bar"
+import "../widgets"
 import "../../services"
 
-Scope {
-    Variants {
-        model: Quickshell.screens
+PopupWindow {
+    id: win
 
-        PanelWindow {
-            id: win
-            required property var modelData
-            screen: modelData
-            visible: ShellState.sidebarOpen || body.opacity > 0.02
-            color: "transparent"
-            exclusionMode: ExclusionMode.Ignore
-            focusable: true
+    required property var barWindow
+    required property Item anchorItem
 
-            readonly property bool open: ShellState.sidebarOpen
-            readonly property bool onFocusedScreen: {
-                const m = Hyprland.focusedMonitor;
-                if (!m || !modelData)
-                    return true;
-                return m.name === modelData.name;
-            }
+    readonly property bool open: ShellState.sidebarOpen
+    readonly property int maxH: {
+        const s = barWindow && barWindow.screen;
+        if (!s)
+            return 720;
+        return Math.max(240, s.height - Theme.barHeight - 8);
+    }
 
-            property bool grabOn: false
+    visible: open || body.opacity > 0.02
+    grabFocus: open
+    color: "transparent"
+    implicitWidth: 320
+    implicitHeight: maxH
+    anchor.window: barWindow
+    anchor.item: anchorItem
+    anchor.edges: Edges.Bottom | Edges.Left
+    anchor.gravity: Edges.Bottom | Edges.Right
+    anchor.adjustment: PopupAdjustment.Slide
 
-            WlrLayershell.namespace: "tanjun-sidebar"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    onOpenChanged: {
+        if (open)
+            escSink.forceActiveFocus();
+        else {
+            body.cpuOpen = false;
+            body.presetsOpen = false;
+            body.wallsOpen = false;
+        }
+    }
 
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
-            }
+    Item {
+        id: escSink
+        focus: true
+        Keys.onEscapePressed: {
+            if (body.wallsOpen)
+                body.wallsOpen = false;
+            else
+                ShellState.closeMenus();
+        }
+    }
 
-            onOpenChanged: {
-                if (open) {
-                    grabOn = false;
-                    grabDelay.restart();
-                } else {
-                    grabDelay.stop();
-                    grabOn = false;
-                    body.cpuOpen = false;
-                    body.presetsOpen = false;
-                    body.wallsOpen = false;
-                }
-            }
+    Shortcut {
+        sequence: "Escape"
+        enabled: win.open
+        onActivated: {
+            if (body.wallsOpen)
+                body.wallsOpen = false;
+            else
+                ShellState.closeMenus();
+        }
+    }
 
-            Timer {
-                id: grabDelay
-                interval: 180
-                onTriggered: grabOn = win.open
-            }
+    HyprlandFocusGrab {
+        active: win.open
+        windows: [win]
+        onCleared: if (win.open && ShellState.sidebarOpen)
+            ShellState.closeMenus()
+    }
 
-            Shortcut {
-                sequence: "Escape"
-                enabled: open
-                onActivated: {
-                    if (body.wallsOpen)
-                        body.wallsOpen = false;
-                    else
-                        ShellState.closeMenus();
-                }
-            }
-
-            HyprlandFocusGrab {
-                active: win.grabOn && win.onFocusedScreen
-                windows: [win]
-                onCleared: if (win.grabOn && ShellState.sidebarOpen)
-                    ShellState.closeMenus()
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                enabled: open
-                onClicked: ShellState.closeMenus()
-            }
-
-            Item {
-                id: body
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: 320
-                transformOrigin: Item.Left
-                opacity: open ? 1 : 0
-                scale: open ? 1 : Motion.panelFrom
+    Item {
+        id: body
+        anchors.fill: parent
+        transformOrigin: Item.TopLeft
+        opacity: open ? 1 : 0
+        scale: open ? 1 : Motion.popFrom
                 property bool cpuOpen: false
                 property bool netOpen: true
                 property bool presetsOpen: false
@@ -99,14 +82,14 @@ Scope {
                 Behavior on opacity {
                     enabled: Motion.ready
                     NumberAnimation {
-                        duration: Motion.panel
+                        duration: Motion.pop
                         easing.type: open ? Motion.easeOut : Motion.easeIn
                     }
                 }
                 Behavior on scale {
                     enabled: Motion.ready
                     NumberAnimation {
-                        duration: Motion.panel
+                        duration: Motion.pop
                         easing.type: open ? Motion.easeOut : Motion.easeIn
                     }
                 }
@@ -144,35 +127,106 @@ Scope {
 
                         SideBlock {
                             Row {
-                                spacing: 8
                                 width: parent.width
-                                BarText {
-                                    text: "単"
-                                    family: Theme.fontJp
-                                    px: 20
-                                    color: Theme.accent
-                                }
+                                spacing: 8
+
                                 Column {
+                                    id: mark
+                                    spacing: 0
+                                    BarText {
+                                        text: "単"
+                                        family: Theme.fontJp
+                                        px: 20
+                                        color: Theme.accent
+                                    }
+                                    BarText {
+                                        text: "純"
+                                        family: Theme.fontJp
+                                        px: 20
+                                        color: Theme.accent
+                                    }
+                                }
+
+                                Column {
+                                    width: parent.width - mark.implicitWidth - 8
                                     spacing: 2
-                                    width: parent.width - 28
-                                    BarText {
-                                        text: Host.user.length ? Host.user : "TANJUN"
-                                        px: 12
+
+                                    Item {
+                                        width: parent.width
+                                        height: 32
+                                        BarText {
+                                            anchors.left: parent.left
+                                            anchors.right: sess.left
+                                            anchors.rightMargin: 6
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: Host.user.length ? Host.user : ""
+                                            px: 13
+                                            wrapMode: Text.NoWrap
+                                            elide: Text.ElideRight
+                                        }
+                                        Row {
+                                            id: sess
+                                            anchors.right: parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            spacing: 2
+                                            BarButton {
+                                                implicitWidth: 32
+                                                implicitHeight: 32
+                                                onClicked: {
+                                                    ShellState.closeMenus();
+                                                    const cmd = Config.argv(Config.session.lock);
+                                                    if (cmd && cmd.length)
+                                                        Quickshell.execDetached(cmd);
+                                                }
+                                                BarText {
+                                                    text: ""
+                                                    icon: true
+                                                    px: 15
+                                                }
+                                            }
+                                            BarButton {
+                                                implicitWidth: 32
+                                                implicitHeight: 32
+                                                onClicked: Quickshell.execDetached(["hyprctl", "dispatch", "exit"])
+                                                BarText {
+                                                    text: "󰍃"
+                                                    icon: true
+                                                    px: 16
+                                                }
+                                            }
+                                            BarButton {
+                                                implicitWidth: 32
+                                                implicitHeight: 32
+                                                onClicked: Quickshell.execDetached(["systemctl", "reboot"])
+                                                BarText {
+                                                    text: "󰜉"
+                                                    icon: true
+                                                    px: 16
+                                                }
+                                            }
+                                            BarButton {
+                                                implicitWidth: 32
+                                                implicitHeight: 32
+                                                onClicked: {
+                                                    ShellState.closeMenus();
+                                                    Quickshell.execDetached(["systemctl", "poweroff"]);
+                                                }
+                                                BarText {
+                                                    text: ""
+                                                    icon: true
+                                                    px: 16
+                                                }
+                                            }
+                                        }
                                     }
+
                                     BarText {
-                                        visible: Host.machine.length > 0
-                                        text: Host.machine
+                                        width: parent.width
+                                        text: Time.dateShort + (Host.machine.length ? "  ·  " + Host.machine : "")
                                         sub: true
                                         px: 11
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
-                                    }
-                                    BarText {
-                                        text: Time.dateShort + "  ·  " + Layout.keymap + (Weather.text.length ? "  ·  " + Weather.text : "")
-                                        sub: true
-                                        px: 11
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
+                                        wrapMode: Text.NoWrap
+                                        elide: Text.ElideRight
                                     }
                                 }
                             }
@@ -181,6 +235,7 @@ Scope {
                         PlayerCard {
                             width: parent.width
                             artSize: 64
+                            live: win.open
                         }
 
                         SideBlock {
@@ -412,54 +467,6 @@ Scope {
                         }
 
                         SideBlock {
-                            title: "session"
-                            Row {
-                                spacing: 4
-                                readonly property real cell: (parent.width - 12) / 4
-                                BarButton {
-                                    implicitWidth: parent.cell
-                                    onClicked: {
-                                        ShellState.closeMenus();
-                                        const cmd = Config.argv(Config.session.lock);
-                                        if (cmd && cmd.length)
-                                            Quickshell.execDetached(cmd);
-                                    }
-                                    BarText {
-                                        text: "lock"
-                                        px: 11
-                                    }
-                                }
-                                BarButton {
-                                    implicitWidth: parent.cell
-                                    onClicked: Quickshell.execDetached(["hyprctl", "dispatch", "exit"])
-                                    BarText {
-                                        text: "logout"
-                                        px: 11
-                                    }
-                                }
-                                BarButton {
-                                    implicitWidth: parent.cell
-                                    onClicked: Quickshell.execDetached(["systemctl", "reboot"])
-                                    BarText {
-                                        text: "reboot"
-                                        px: 11
-                                    }
-                                }
-                                BarButton {
-                                    implicitWidth: parent.cell
-                                    onClicked: {
-                                        ShellState.closeMenus();
-                                        Quickshell.execDetached(["systemctl", "suspend"]);
-                                    }
-                                    BarText {
-                                        text: "sleep"
-                                        px: 11
-                                    }
-                                }
-                            }
-                        }
-
-                        SideBlock {
                             title: "skins"
                             Row {
                                 width: parent.width
@@ -535,5 +542,3 @@ Scope {
                 }
             }
         }
-    }
-}

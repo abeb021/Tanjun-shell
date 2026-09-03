@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 import json
 import os
+import sys
 import time
+from pathlib import Path
+
+TICK = "--tick" in sys.argv
+RT = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "tanjun-host.prev"
 
 
 def cpu_rows():
@@ -119,37 +124,67 @@ def pct(a, b):
     return max(0.0, min(100.0, 100.0 * (1.0 - (idle2 - idle1) / dt)))
 
 
-a1 = cpu_rows()
-r1, u1 = net()
-time.sleep(0.3)
+def load_prev():
+    try:
+        d = json.loads(RT.read_text())
+        if time.monotonic() - float(d.get("t", 0)) > 8:
+            return None
+        return d
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def save_prev(rows, rx, tx) -> None:
+    try:
+        RT.write_text(
+            json.dumps({"cpu": rows, "rx": rx, "tx": tx, "t": time.monotonic()})
+        )
+    except OSError:
+        pass
+
+
+prev = load_prev()
 a2 = cpu_rows()
 r2, u2 = net()
+if prev is None:
+    time.sleep(0.12)
+    a1 = a2
+    r1, u1 = r2, u2
+    a2 = cpu_rows()
+    r2, u2 = net()
+    span = 0.12
+else:
+    a1 = [tuple(x) for x in prev["cpu"]]
+    r1, u1 = int(prev["rx"]), int(prev["tx"])
+    span = max(0.05, time.monotonic() - float(prev["t"]))
+save_prev(a2, r2, u2)
+
 cpu = pct(a1[0], a2[0]) if a1 and a2 else 0.0
 core_pct = []
 for i in range(1, min(len(a1), len(a2))):
     core_pct.append(round(pct(a1[i], a2[i]), 1))
-span = 0.3
-down = max(0.0, (r2 - r1) / span)
-up = max(0.0, (u2 - u1) / span)
 used, total = mem()
-desc = cpu_desc()
 
-print(
-    json.dumps(
+out = {
+    "cpu": round(cpu, 1),
+    "corePct": core_pct,
+    "ramUsed": used,
+    "ramTotal": total,
+    "down": round(max(0.0, (r2 - r1) / span)),
+    "up": round(max(0.0, (u2 - u1) / span)),
+    "procs": procs(),
+}
+if not TICK:
+    desc = cpu_desc()
+    out.update(
         {
             "user": os.environ.get("USER") or os.environ.get("LOGNAME") or "",
             "distro": os_name(),
             "kernel": os.uname().release,
-            "cpu": round(cpu, 1),
-            "corePct": core_pct,
             "cores": desc["cores"],
             "threads": desc["threads"],
             "cpuModel": desc["model"],
-            "ramUsed": used,
-            "ramTotal": total,
-            "down": round(down),
-            "up": round(up),
-            "procs": procs(),
         }
     )
-)
+
+print(json.dumps(out))

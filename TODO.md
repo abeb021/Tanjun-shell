@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v1.8**
+Current: **v1.9**
 
 ## v1.0 — host (shipping)
 
@@ -87,9 +87,9 @@ Host facts and a real player in the left System drawer.
 
 No new surfaces. Tighten what shipped.
 
-- [ ] Motion, layout, and poll cost
-- [ ] Visual consistency across bar, popouts, drawer
-- [ ] Dead paths, leftover jank
+- [x] Motion, layout, and poll cost
+- [x] Visual consistency across bar, popouts, drawer
+- [x] Dead paths, leftover jank
 
 ## v2.0 — settings
 

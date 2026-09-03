@@ -19,6 +19,7 @@ Singleton {
     property int threads: 0
     property string cpuModel: ""
     property var corePct: []
+    property bool facts: false
 
     readonly property real ramRatio: ramTotal > 0 ? ramUsed / ramTotal : 0
     readonly property string ramText: `${fmtGiB(ramUsed)} / ${fmtGiB(ramTotal)}`
@@ -82,8 +83,8 @@ Singleton {
 
     Process {
         id: proc
-        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`]
-        running: true
+        command: root.facts ? ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`, "--tick"] : ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`]
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -109,6 +110,8 @@ Singleton {
                         root.cpuModel = d.cpuModel;
                     if (d.corePct)
                         root.corePct = d.corePct;
+                    if (d.distro || d.cpu !== undefined)
+                        root.facts = true;
                 } catch (e) {}
             }
         }
@@ -123,7 +126,7 @@ Singleton {
     }
 
     Timer {
-        interval: 1500
+        interval: 2000
         running: ShellState.sidebarOpen
         repeat: true
         onTriggered: root.refresh()

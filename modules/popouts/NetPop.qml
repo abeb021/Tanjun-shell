@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Networking
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Rectangle {

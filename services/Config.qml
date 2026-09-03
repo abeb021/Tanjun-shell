@@ -17,7 +17,6 @@ Singleton {
     readonly property alias clock: adapter.clock
     readonly property alias services: adapter.services
     readonly property alias session: adapter.session
-    readonly property alias theme: adapter.theme
 
     readonly property string localId: {
         try {
@@ -86,8 +85,6 @@ Singleton {
             services.keyboard = `${obj.keyboard}`;
         if (obj.lock !== undefined)
             session.lock = argv(obj.lock);
-        if (obj.themeHook !== undefined)
-            theme.hook = `${obj.themeHook}`;
     }
 
     function plainZones(z) {
@@ -121,8 +118,6 @@ Singleton {
         const lock = argv(session.lock);
         if (lock.length && !sameArgv(lock, ["loginctl", "lock-session"]))
             out.session = { lock: lock };
-        if (theme.hook.length)
-            out.theme = { hook: theme.hook };
         return out;
     }
 
@@ -175,10 +170,6 @@ Singleton {
 
             property JsonObject session: JsonObject {
                 property var lock: ["loginctl", "lock-session"]
-            }
-
-            property JsonObject theme: JsonObject {
-                property string hook: ""
             }
         }
     }

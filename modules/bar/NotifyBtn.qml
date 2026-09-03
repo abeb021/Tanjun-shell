@@ -1,5 +1,5 @@
 import QtQuick
-import Quickshell
+import "../widgets"
 import "../../services"
 
 BarButton {
@@ -13,13 +13,14 @@ BarButton {
         px: 13
     }
     Rectangle {
+        parent: root.overlay
         visible: Notifs.unread > 0 && !ShellState.dnd
-        width: 6
-        height: 6
-        radius: 3
+        width: 5
+        height: 5
+        radius: 2.5
         color: Theme.critical
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 4
+        anchors.margins: 6
     }
 }

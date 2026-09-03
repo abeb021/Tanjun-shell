@@ -1,10 +1,10 @@
 import QtQuick
-import Quickshell
 import "../../services"
 
 Item {
     id: root
     property int artSize: 64
+    property bool live: true
     implicitHeight: artSize + 20
     implicitWidth: parent ? parent.width : 280
 
@@ -30,11 +30,13 @@ Item {
             radius: Theme.radius
             clip: true
             Image {
-                visible: Media.artUrl.length > 0
+                visible: root.live && Media.artUrl.length > 0
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                source: Media.artUrl
+                cache: true
+                sourceSize: Qt.size(root.artSize, root.artSize)
+                source: root.live && Media.artUrl.length > 0 ? Media.artUrl : ""
             }
             BarText {
                 visible: Media.artUrl.length === 0

@@ -6,7 +6,6 @@ Singleton {
     id: root
 
     property string popout: ""
-    property real popoutX: 0
     property var popoutAnchor: null
 
     property bool launcherOpen: false
@@ -14,6 +13,10 @@ Singleton {
     property bool overviewOpen: false
     property bool sidebarOpen: false
     property bool dnd: false
+
+    property bool launcherReady: false
+    property bool clipboardReady: false
+    property bool overviewReady: false
 
     property string osdKind: ""
     property real osdValue: 0
@@ -57,6 +60,8 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
+        if (!launcherOpen)
+            launcherReady = true;
         launcherOpen = !launcherOpen;
     }
 
@@ -65,6 +70,8 @@ Singleton {
         launcherOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
+        if (!clipboardOpen)
+            clipboardReady = true;
         clipboardOpen = !clipboardOpen;
     }
 
@@ -80,6 +87,7 @@ Singleton {
         launcherOpen = false;
         clipboardOpen = false;
         sidebarOpen = false;
+        overviewReady = true;
         overviewOpen = true;
     }
 

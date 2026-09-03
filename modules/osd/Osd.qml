@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Scope {
@@ -30,7 +30,7 @@ Scope {
                 anchors.fill: parent
                 color: Theme.surface
                 border.width: 1
-                border.color: Theme.accent
+                border.color: Theme.bg
                 radius: Theme.radius
                 opacity: open ? 1 : 0
                 scale: open ? 1 : Motion.osdFrom
@@ -67,7 +67,7 @@ Scope {
                             height: parent.height
                             color: Theme.accent
                             Behavior on width {
-                                enabled: Motion.ready
+                                enabled: Motion.ready && body.opacity > 0.95
                                 NumberAnimation {
                                     duration: Motion.fast
                                     easing.type: Motion.easeOut

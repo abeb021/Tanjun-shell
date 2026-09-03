@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
-import "../bar"
+import "../widgets"
 import "../../services"
 
 Scope {
@@ -39,6 +39,8 @@ Scope {
 
             readonly property var monitor: Hyprland.monitorFor(modelData)
             readonly property var desks: {
+                if (!win.open)
+                    return [];
                 const occupied = {};
                 const list = Hyprland.workspaces.values;
                 if (list) {
@@ -60,6 +62,8 @@ Scope {
                 return out;
             }
             readonly property var windows: {
+                if (!win.open)
+                    return [];
                 const mon = win.monitor;
                 const list = Hyprland.toplevels.values;
                 const out = [];
