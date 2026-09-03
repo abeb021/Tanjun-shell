@@ -131,9 +131,6 @@ Singleton {
             svc.keyboard = services.keyboard;
         if (Object.keys(svc).length)
             out.services = svc;
-        const lock = argv(session.lock);
-        if (lock.length && !sameArgv(lock, ["loginctl", "lock-session"]))
-            out.session = { lock: lock };
         const ap = {};
         if (appearance.fontUi.length && appearance.fontUi !== defaultFontUi)
             ap.fontUi = appearance.fontUi;
@@ -198,7 +195,7 @@ Singleton {
             }
 
             property JsonObject session: JsonObject {
-                property var lock: ["loginctl", "lock-session"]
+                property var lock: []
             }
 
             property JsonObject appearance: JsonObject {

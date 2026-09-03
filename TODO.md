@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v2.2**
+Current: **v2.3**
 
 ## v1.0 — host (shipping)
 
@@ -116,4 +116,11 @@ One clone. Hyprland and the shell ship together. Screen is a settings page.
 
 - [x] Compositor in `hyprland/` (one module per concern); Quickshell in `shell/`. `scripts/setup.sh` plants XDG links on any Arch + Hyprland
 - [x] Screen page: output, mode, scale, gamma (hyprsunset). Mode/scale persist in `~/.config/hypr/monitors.lua`
+
+## v2.3 — lock
+
+The host is the locker. Super+L, idle, and sleep.
+
+- [x] Session lock in the Quickshell process (wallpaper, clock, 単, password, fingerprint)
+- [x] Super+L / session row / `/lock`; hypridle lock_cmd
 

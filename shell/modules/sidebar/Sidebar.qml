@@ -170,12 +170,7 @@ PopupWindow {
                                             BarButton {
                                                 implicitWidth: 32
                                                 implicitHeight: 32
-                                                onClicked: {
-                                                    ShellState.closeMenus();
-                                                    const cmd = Config.argv(Config.session.lock);
-                                                    if (cmd && cmd.length)
-                                                        Quickshell.execDetached(cmd);
-                                                }
+                                                onClicked: Lock.request()
                                                 BarText {
                                                     text: ""
                                                     icon: true

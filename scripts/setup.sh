@@ -122,6 +122,15 @@ EOF
   fi
 
   chmod +x "$ROOT/hyprland/scripts/"*.sh "$ROOT/shell/scripts/"*.sh 2>/dev/null || true
+
+  idle="$HYPR/hypridle.conf"
+  src="$ROOT/hyprland/hypridle.conf"
+  if [[ -L "$idle" ]] || [[ ! -f "$idle" ]]; then
+    link "$src" "$idle" || true
+  elif grep -qE 'lock_cmd\s*=\s*hyprlock' "$idle"; then
+    sed -i 's|lock_cmd = hyprlock.*|lock_cmd = quickshell ipc call tanjun lock|' "$idle"
+    echo "idle   lock_cmd -> tanjun lock"
+  fi
 }
 
 echo "Tanjun setup"

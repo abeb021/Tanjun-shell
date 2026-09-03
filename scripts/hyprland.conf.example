@@ -22,6 +22,8 @@ bind = SUPER CTRL, N, exec, quickshell ipc call tanjun toggleNotify
 bind = SUPER CTRL, S, exec, quickshell ipc call tanjun toggleSidebar
 bind = SUPER CTRL, comma, exec, quickshell ipc call tanjun toggleSettings
 bind = SUPER CTRL, D, exec, quickshell ipc call tanjun toggleDnd
+bind = SUPER, L, exec, quickshell ipc call tanjun lock
+bind = SUPER, P, exec, quickshell ipc call tanjun lock
 bind = SUPER SHIFT, R, exec, ~/.local/share/tanjun/hyprland/scripts/reload-shell.sh
 
 layerrule = noanim, tanjun-bar

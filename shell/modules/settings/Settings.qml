@@ -43,8 +43,7 @@ Scope {
                     { title: "12 hour", sub: "clock", page: "clock", hay: "12 hour am pm clock" },
                     { title: "24 hour", sub: "clock", page: "clock", hay: "24 hour clock" },
                     { title: "weather", sub: "page", page: "weather", hay: "weather city wttr moscow" },
-                    { title: "session", sub: "page", page: "session", hay: "session lock hyprlock loginctl" },
-                    { title: "hyprlock", sub: "session", page: "session", hay: "hyprlock lock session" },
+                    { title: "session", sub: "page", page: "session", hay: "session lock fingerprint password" },
                     { title: "devices", sub: "page", page: "devices", hay: "devices backlight keyboard intel_backlight" },
                     { title: "intel_backlight", sub: "devices", page: "devices", hay: "intel_backlight brightness light" },
                     { title: "screen", sub: "page", page: "screen", hay: "screen monitor display scale gamma output edp" },
@@ -71,7 +70,6 @@ Scope {
             property var fonts: []
             property string zoneDraft: ""
             property string weatherDraft: Config.services.weatherCity
-            property string lockDraft: Config.argv(Config.session.lock).join(" ")
             property string blDraft: Config.services.backlight
             property string kbDraft: Config.services.keyboard
 
@@ -92,7 +90,6 @@ Scope {
                 query = "";
                 find.text = "";
                 weatherDraft = Config.services.weatherCity;
-                lockDraft = Config.argv(Config.session.lock).join(" ");
                 blDraft = Config.services.backlight;
                 kbDraft = Config.services.keyboard;
                 Screens.refresh();
@@ -566,65 +563,11 @@ Scope {
                                     width: parent.width
                                     spacing: 8
                                     BarText {
-                                        text: "lock command as argv, space split."
+                                        text: "Super+L locks in this process. Wallpaper, clock, password, fingerprint. Idle and sleep call the same lock."
                                         sub: true
                                         px: 11
                                         width: parent.width
                                         wrapMode: Text.Wrap
-                                    }
-                                    Rectangle {
-                                        width: parent.width
-                                        height: 28
-                                        color: Theme.surface
-                                        border.width: 1
-                                        border.color: Theme.hairline
-                                        radius: Theme.radius
-                                        TextInput {
-                                            anchors.fill: parent
-                                            anchors.margins: 4
-                                            font.family: Config.defaultFontUi
-                                            font.pixelSize: 13
-                                            color: Theme.fg
-                                            text: win.lockDraft
-                                            onTextChanged: win.lockDraft = text
-                                            Keys.onReturnPressed: win.saveLock()
-                                            Keys.onEnterPressed: win.saveLock()
-                                        }
-                                    }
-                                    Row {
-                                        spacing: 4
-                                        BarButton {
-                                            implicitWidth: 88
-                                            active: lockDraft.trim() === "hyprlock"
-                                            onClicked: {
-                                                win.lockDraft = "hyprlock";
-                                                win.saveLock();
-                                            }
-                                            BarText {
-                                                text: "hyprlock"
-                                                px: 11
-                                            }
-                                        }
-                                        BarButton {
-                                            implicitWidth: 160
-                                            active: lockDraft.trim() === "loginctl lock-session"
-                                            onClicked: {
-                                                win.lockDraft = "loginctl lock-session";
-                                                win.saveLock();
-                                            }
-                                            BarText {
-                                                text: "loginctl"
-                                                px: 11
-                                            }
-                                        }
-                                        BarButton {
-                                            implicitWidth: 72
-                                            onClicked: win.saveLock()
-                                            BarText {
-                                                text: "save"
-                                                px: 11
-                                            }
-                                        }
                                     }
                                 }
 
@@ -856,12 +799,6 @@ Scope {
 
             function saveWeather() {
                 Config.services.weatherCity = weatherDraft.trim();
-                Config.writeSparse();
-            }
-
-            function saveLock() {
-                const parts = lockDraft.trim().split(/\s+/).filter(s => s.length);
-                Config.session.lock = parts.length ? parts : ["loginctl", "lock-session"];
                 Config.writeSparse();
             }
 

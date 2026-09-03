@@ -2,7 +2,7 @@
 
 Frame off. Quiet bar. One process.
 
-Tanjun is a Hyprland desktop: compositor config and the Quickshell host ship in this clone. Bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, overview, and settings run in one [Quickshell](https://quickshell.outfoxxed.me) process. Summon a panel with IPC; do not spawn a new process. Color follows the wallpaper (**From wall**) or a named preset.
+Tanjun is a Hyprland desktop: compositor config and the Quickshell host ship in this clone. Bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, overview, settings, and lock run in one [Quickshell](https://quickshell.outfoxxed.me) process. Summon a panel with IPC; do not spawn a new process. Color follows the wallpaper (**From wall**) or a named preset.
 
 単純 means simple in structure, unmixed. **単** is the seal.
 
@@ -28,7 +28,8 @@ Tanjun is a Hyprland desktop: compositor config and the Quickshell host ship in 
 | Clipboard    | Super+V. cliphist, including images.                                                                    |
 | Overview     | Super+Tab. Live window previews, desks 1–10.                                                            |
 | Settings     | Super+Ctrl+, . Search (Ctrl+K) jumps pages. Screen: output, mode, scale, gamma. Color chips show the palette. Live pins in `config.json`. |
-| Toasts + OSD | Notifications and volume / backlight. No dim behind menus.                                              |
+| Lock         | Super+L. Wallpaper, clock, password, fingerprint. Same rice. Idle and sleep go through this lock.                                        |
+| Toasts + OSD | Notifications and volume / backlight. No dim behind menus.                                                                              |
 
 
 Widgets are verbs. Left click opens the panel. Scroll, right, and middle do the obvious job on that glyph (volume, mute, TZ, DND, brightness, …).
@@ -55,7 +56,7 @@ Pins stay separate: `~/.config/tanjun/config.json`. Super+Shift+R reloads both.
 
 The Tanjun config file is optional. Defaults live in the shell. Create `~/.config/tanjun/config.json` only for the keys you want to pin. Omit a key and the default stays. Do not copy the whole example — it is a reference, and dumped keys go stale.
 
-Empty / omitted means auto: local timezone, `wttr.in` from IP, default `brightnessctl` device, Hyprland’s main keyboard, `loginctl lock-session`. Last-used palette: `~/.local/state/tanjun/state.json`. Palettes are `shell/themes/dark/*.json` and `shell/themes/white/*.json`.
+Empty / omitted means auto: local timezone, `wttr.in` from IP, default `brightnessctl` device, Hyprland’s main keyboard, Tanjun lock. Last-used palette: `~/.local/state/tanjun/state.json`. Palettes are `shell/themes/dark/*.json` and `shell/themes/white/*.json`.
 
 ## Hands
 
@@ -78,7 +79,7 @@ Reload the session: **Super+Shift+R**.
 | Super+Ctrl+, | Settings        |
 | Ctrl+K       | Search in settings (while open) |
 | Super+Ctrl+D | Do not disturb  |
-| Super+L      | Lock (see config) |
+| Super+L      | Lock            |
 | Super+1 … 0  | Desks           |
 | Escape       | Close the open surface |
 
@@ -104,6 +105,7 @@ quickshell ipc call tanjun toggleSettings
 quickshell ipc call tanjun toggleOverview
 quickshell ipc call tanjun toggleDnd
 quickshell ipc call tanjun closeMenus
+quickshell ipc call tanjun lock
 ```
 
 ## Config
@@ -131,7 +133,6 @@ quickshell ipc call tanjun closeMenus
 | `services.weatherCity` | `wttr.in` lookup from IP              |
 | `services.backlight`   | Default `brightnessctl` device        |
 | `services.keyboard`    | Hyprland main keyboard                |
-| `session.lock`         | `["loginctl", "lock-session"]`        |
 | `appearance.fontUi`    | JetBrains Mono                        |
 | `appearance.fontJp`    | Noto Sans CJK JP                      |
 | `appearance.fontIcons` | Symbols Nerd Font                     |
@@ -139,7 +140,7 @@ quickshell ipc call tanjun closeMenus
 | `screens.gamma`        | hyprsunset as-is (profile / 100)      |
 
 
-`session.lock` is an argv list (`["hyprlock"]` if that is your locker). A previous flat `config.json` is rewritten to nested sparse on load.
+A previous flat `config.json` is rewritten to nested sparse on load.
 
 ## From wall
 
@@ -155,7 +156,7 @@ Dark: Monochrome, Obsidian, Gray, Deep Blue, Emerald, Golden Amber, Fiery Sunset
 
 White: Mocha, Macchiato.
 
-Face: JetBrains Mono, 1px radius, Nerd Fonts, 単. Change the three families and the size from settings; that pin stays in-shell (kitty / lock keep their own files).
+Face: JetBrains Mono, 1px radius, Nerd Fonts, 単. Change the three families and the size from settings; that pin stays in-shell (kitty keeps its own file).
 
 Toasts carry notification actions, not dismiss-only.
 
@@ -164,13 +165,15 @@ Toasts carry notification actions, not dismiss-only.
 ```
 hyprland/                    compositor (lua). one concern per module
   hyprland.lua               entry. install writes a stub in ~/.config/hypr
+  hypridle.conf              idle → lock / dpms / sleep
   modules/                   binds, autostart, rules, rice
   themes/                    compositor palettes
   scripts/                   compositor helpers (buds, reload)
 shell/                       Quickshell host → ~/.config/quickshell
   shell.qml                  host + IPC
-  modules/                   bar, popouts, drawer, launcher, settings, …
-  services/                  singletons (config, theme, screens, …)
+  modules/                   bar, popouts, drawer, launcher, settings, lock
+  services/                  singletons (config, theme, screens, lock, …)
+  pam/                       lock auth (password, fingerprint)
   themes/                    named palettes (json)
   scripts/                   paint / calc / clip / host
 config.example.json          sparse pin reference (do not dump)
@@ -179,4 +182,4 @@ scripts/shots.sh             grim + magick → docs/*.webp (README)
 scripts/hyprland.conf.example
 ```
 
-Next work is in `TODO.md`. Current: **v2.2**.
+Next work is in `TODO.md`. Current: **v2.3**.

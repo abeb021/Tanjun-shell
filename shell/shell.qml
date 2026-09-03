@@ -10,11 +10,13 @@ import "modules/notifs"
 import "modules/clipboard"
 import "modules/overview"
 import "modules/settings"
+import "modules/lock"
 
 ShellRoot {
     Bar {}
     Osd {}
     Toasts {}
+    SessionLock {}
 
     LazyLoader {
         active: ShellState.launcherReady
@@ -89,6 +91,10 @@ ShellRoot {
 
         function closeMenus(): void {
             ShellState.closeMenus();
+        }
+
+        function lock(): void {
+            Lock.request();
         }
     }
 }

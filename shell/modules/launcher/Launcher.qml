@@ -474,10 +474,7 @@ Scope {
 
             function runAct(id) {
                 if (id === "lock") {
-                    ShellState.closeMenus();
-                    const cmd = Config.argv(Config.session.lock);
-                    if (cmd.length)
-                        Quickshell.execDetached(cmd);
+                    Lock.request();
                     return;
                 }
                 if (id === "logout") {
