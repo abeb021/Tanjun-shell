@@ -48,6 +48,10 @@ Singleton {
             if (ShellState.sidebarOpen)
                 root.ensure();
         }
+        function onSettingsOpenChanged() {
+            if (ShellState.settingsOpen)
+                root.ensure();
+        }
     }
 
     Timer {

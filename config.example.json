@@ -6,5 +6,8 @@
   },
   "services": {
     "weatherCity": "Berlin"
+  },
+  "appearance": {
+    "fontPx": 14
   }
 }

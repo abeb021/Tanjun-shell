@@ -464,6 +464,14 @@ PopupWindow {
                                     px: 12
                                 }
                             }
+                            BarButton {
+                                implicitWidth: parent.width
+                                onClicked: ShellState.toggleSettings()
+                                BarText {
+                                    text: "settings"
+                                    px: 12
+                                }
+                            }
                         }
 
                         SideBlock {

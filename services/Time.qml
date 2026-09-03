@@ -17,7 +17,13 @@ Singleton {
     readonly property string tzId: zone.id || Config.localId
     readonly property string tzLabel: zone.label || Config.prettyZone(tzId)
 
-    readonly property string time: formatTime(tzId)
+    readonly property bool hour12: !!Config.clock.twelveHour
+    readonly property string time: {
+        clock.date;
+        hour12;
+        return formatTime(tzId);
+    }
+
     readonly property string date: Qt.formatDateTime(clock.date, "dddd, d MMMM yyyy")
     readonly property string dateShort: Qt.formatDateTime(clock.date, "dd.MM")
     readonly property date now: clock.date
@@ -31,7 +37,7 @@ Singleton {
         const opts = {
             hour: "2-digit",
             minute: "2-digit",
-            hour12: !!Config.clock.twelveHour
+            hour12: root.hour12
         };
         if (tz)
             opts.timeZone = tz;

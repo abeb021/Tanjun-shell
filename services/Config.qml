@@ -17,6 +17,12 @@ Singleton {
     readonly property alias clock: adapter.clock
     readonly property alias services: adapter.services
     readonly property alias session: adapter.session
+    readonly property alias appearance: adapter.appearance
+
+    readonly property string defaultFontUi: "JetBrains Mono"
+    readonly property string defaultFontJp: "Noto Sans CJK JP"
+    readonly property string defaultFontIcons: "Symbols Nerd Font"
+    readonly property int defaultFontPx: 13
 
     readonly property string localId: {
         try {
@@ -69,7 +75,7 @@ Singleton {
     function isFlat(obj) {
         if (!obj || typeof obj !== "object")
             return false;
-        if (obj.clock || obj.services || obj.session || obj.theme)
+        if (obj.clock || obj.services || obj.session || obj.theme || obj.appearance)
             return false;
         return obj.zones !== undefined || obj.weatherCity !== undefined || obj.backlight !== undefined || obj.keyboard !== undefined || obj.lock !== undefined || obj.themeHook !== undefined;
     }
@@ -101,11 +107,20 @@ Singleton {
         return out;
     }
 
+    function localeTwelve() {
+        return Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("a") >= 0;
+    }
+
     function sparseObject() {
         const out = {};
         const z = plainZones(clock.zones);
+        const clk = {};
         if (z.length)
-            out.clock = { zones: z };
+            clk.zones = z;
+        if (clock.twelveHour !== localeTwelve())
+            clk.twelveHour = !!clock.twelveHour;
+        if (Object.keys(clk).length)
+            out.clock = clk;
         const svc = {};
         if (services.weatherCity.length)
             svc.weatherCity = services.weatherCity;
@@ -118,6 +133,17 @@ Singleton {
         const lock = argv(session.lock);
         if (lock.length && !sameArgv(lock, ["loginctl", "lock-session"]))
             out.session = { lock: lock };
+        const ap = {};
+        if (appearance.fontUi.length && appearance.fontUi !== defaultFontUi)
+            ap.fontUi = appearance.fontUi;
+        if (appearance.fontJp.length && appearance.fontJp !== defaultFontJp)
+            ap.fontJp = appearance.fontJp;
+        if (appearance.fontIcons.length && appearance.fontIcons !== defaultFontIcons)
+            ap.fontIcons = appearance.fontIcons;
+        if (appearance.fontPx > 0 && appearance.fontPx !== defaultFontPx)
+            ap.fontPx = appearance.fontPx;
+        if (Object.keys(ap).length)
+            out.appearance = ap;
         return out;
     }
 
@@ -170,6 +196,13 @@ Singleton {
 
             property JsonObject session: JsonObject {
                 property var lock: ["loginctl", "lock-session"]
+            }
+
+            property JsonObject appearance: JsonObject {
+                property string fontUi: ""
+                property string fontJp: ""
+                property string fontIcons: ""
+                property int fontPx: 0
             }
         }
     }

@@ -2,7 +2,7 @@
 
 Frame off. Quiet bar. One process.
 
-Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, and overview in a single [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland stays compositor. Summon a panel with IPC; do not spawn a new process. Color follows the wallpaper (**From wall**) or a named preset.
+Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, overview, and settings in a single [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland stays compositor. Summon a panel with IPC; do not spawn a new process. Color follows the wallpaper (**From wall**) or a named preset.
 
 単純 means simple in structure, unmixed. **単** is the seal.
 
@@ -17,6 +17,7 @@ Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, 
 | Launcher     | Super+A. Rest card is clock / weather / art + transport. Type to search apps (ranked by use). Down lists every app the same way. Prefixes: `=` calc, `;` clips, `?` web, `/` act, `@` music. |
 | Clipboard    | Super+V. cliphist, including images.                                                                    |
 | Overview     | Super+Tab. Live window previews, desks 1–10.                                                            |
+| Settings     | Super+Ctrl+, . Search (Ctrl+K) jumps pages. Color chips show the palette. Live pins in `config.json`. |
 | Toasts + OSD | Notifications and volume / backlight. No dim behind menus.                                              |
 
 
@@ -55,6 +56,8 @@ Reload the session: **Super+Shift+R**.
 | Super+Ctrl+B | Battery         |
 | Super+Ctrl+N | Notifications   |
 | Super+Ctrl+S | System drawer   |
+| Super+Ctrl+, | Settings        |
+| Ctrl+K       | Search in settings (while open) |
 | Super+Ctrl+D | Do not disturb  |
 | Super+L      | Lock (see config) |
 | Super+1 … 0  | Desks           |
@@ -63,7 +66,7 @@ Reload the session: **Super+Shift+R**.
 
 Bar chords worth knowing: scroll audio = volume, right-click = mute; scroll clock = timezone; middle-click clock = first zone; right-click notify = DND; scroll battery = backlight; right-click a desk number = move the focused window there.
 
-Launcher prefixes: `=` calc (qalc, else python), `;` cliphist, `?` web, `/` session actions, `@` now-playing + Spotify search. Enter on a calc row copies the result.
+Launcher prefixes: `=` calc (qalc, else python), `;` cliphist, `?` web, `/` actions (lock, settings, system, …), `@` now-playing + Spotify search. Enter on a calc row copies the result.
 
 ## IPC
 
@@ -78,6 +81,7 @@ quickshell ipc -p "$ROOT" call tanjun toggleCalendar
 quickshell ipc -p "$ROOT" call tanjun toggleBattery
 quickshell ipc -p "$ROOT" call tanjun toggleNotify
 quickshell ipc -p "$ROOT" call tanjun toggleClipboard
+quickshell ipc -p "$ROOT" call tanjun toggleSettings
 quickshell ipc -p "$ROOT" call tanjun toggleOverview
 quickshell ipc -p "$ROOT" call tanjun toggleDnd
 ```
@@ -108,6 +112,10 @@ quickshell ipc -p "$ROOT" call tanjun toggleDnd
 | `services.backlight`   | Default `brightnessctl` device        |
 | `services.keyboard`    | Hyprland main keyboard                |
 | `session.lock`         | `["loginctl", "lock-session"]`        |
+| `appearance.fontUi`    | JetBrains Mono                        |
+| `appearance.fontJp`    | Noto Sans CJK JP                      |
+| `appearance.fontIcons` | Symbols Nerd Font                     |
+| `appearance.fontPx`    | 13                                    |
 
 
 `session.lock` is an argv list (`["hyprlock"]` if that is your locker). A previous flat `config.json` is rewritten to nested sparse on load.
@@ -126,7 +134,7 @@ Dark: Monochrome, Obsidian, Gray, Deep Blue, Emerald, Golden Amber, Fiery Sunset
 
 White: Mocha, Macchiato.
 
-Face: JetBrains Mono, 1px radius, Nerd Fonts, 単.
+Face: JetBrains Mono, 1px radius, Nerd Fonts, 単. Change the three families and the size from settings; that pin stays in-shell (kitty / lock keep their own files).
 
 Toasts carry notification actions, not dismiss-only.
 
@@ -142,6 +150,7 @@ modules/sidebar              left System + wallpaper picker
 modules/launcher             rest card, then search
 modules/clipboard            cliphist
 modules/overview             Super+Tab
+modules/settings             rail + pages (type, clock, weather, session, devices, color)
 modules/notifs               toasts
 modules/osd                  volume / backlight
 services/                    singletons (config, theme, audio, net, motion, …)
@@ -151,4 +160,4 @@ scripts/install-hypr.sh      optional lua-hypr patcher
 scripts/hyprland.conf.example
 ```
 
-Next work is in `TODO.md`. Current: **v1.9**.
+Next work is in `TODO.md`. Current: **v2.0**.

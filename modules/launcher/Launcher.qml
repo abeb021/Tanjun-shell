@@ -361,7 +361,8 @@ Scope {
                         { kind: "act", key: "act:shutdown", name: "shutdown", id: "shutdown" },
                         { kind: "act", key: "act:dnd", name: ShellState.dnd ? "do not disturb · off" : "do not disturb · on", id: "dnd" },
                         { kind: "act", key: "act:clipboard", name: "clipboard", id: "clipboard" },
-                        { kind: "act", key: "act:sidebar", name: "system", id: "sidebar" }
+                        { kind: "act", key: "act:sidebar", name: "system", id: "sidebar" },
+                        { kind: "act", key: "act:settings", name: "settings", id: "settings" }
                     ];
                     const low = q.toLowerCase();
                     for (let i = 0; i < acts.length; i++) {
@@ -514,6 +515,11 @@ Scope {
                 if (id === "sidebar") {
                     ShellState.closeMenus();
                     ShellState.toggleSidebar();
+                    return;
+                }
+                if (id === "settings") {
+                    ShellState.closeMenus();
+                    ShellState.toggleSettings();
                 }
             }
         }

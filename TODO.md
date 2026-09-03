@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v1.9**
+Current: **v2.0**
 
 ## v1.0 — host (shipping)
 
@@ -93,6 +93,10 @@ No new surfaces. Tighten what shipped.
 
 ## v2.0 — settings
 
-A settings surface, not more bar polish.
+A settings surface, not more bar polish. Summon it; live pins in `config.json`.
 
-- [ ] Font picker inside the shell
+- [x] In-shell settings panel (rail + pages), IPC / Super+Ctrl+, / 単
+- [x] Font picker: UI, Japanese, icons; size; fc-list
+- [x] Clock, weather, session lock, backlight / keyboard
+- [x] Color page: From wall + named presets with swatches (same Theme singleton)
+- [x] Lookup: search box, Ctrl+K, jump across pages

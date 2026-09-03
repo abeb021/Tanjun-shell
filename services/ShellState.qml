@@ -12,11 +12,13 @@ Singleton {
     property bool clipboardOpen: false
     property bool overviewOpen: false
     property bool sidebarOpen: false
+    property bool settingsOpen: false
     property bool dnd: false
 
     property bool launcherReady: false
     property bool clipboardReady: false
     property bool overviewReady: false
+    property bool settingsReady: false
 
     property string osdKind: ""
     property real osdValue: 0
@@ -30,6 +32,7 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
+        settingsOpen = false;
         popoutAnchor = anchor ?? popoutAnchor;
         popout = name;
     }
@@ -45,6 +48,7 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
+        settingsOpen = false;
     }
 
     function toggleSidebar() {
@@ -52,6 +56,7 @@ Singleton {
         launcherOpen = false;
         clipboardOpen = false;
         overviewOpen = false;
+        settingsOpen = false;
         sidebarOpen = !sidebarOpen;
     }
 
@@ -60,6 +65,7 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
+        settingsOpen = false;
         if (!launcherOpen)
             launcherReady = true;
         launcherOpen = !launcherOpen;
@@ -70,9 +76,21 @@ Singleton {
         launcherOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
+        settingsOpen = false;
         if (!clipboardOpen)
             clipboardReady = true;
         clipboardOpen = !clipboardOpen;
+    }
+
+    function toggleSettings() {
+        closePopout();
+        launcherOpen = false;
+        clipboardOpen = false;
+        overviewOpen = false;
+        sidebarOpen = false;
+        if (!settingsOpen)
+            settingsReady = true;
+        settingsOpen = !settingsOpen;
     }
 
     property int overviewNudge: 0
@@ -87,6 +105,7 @@ Singleton {
         launcherOpen = false;
         clipboardOpen = false;
         sidebarOpen = false;
+        settingsOpen = false;
         overviewReady = true;
         overviewOpen = true;
     }

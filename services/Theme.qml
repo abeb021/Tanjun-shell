@@ -24,22 +24,22 @@ Singleton {
 
     readonly property int radius: 1
     readonly property int barHeight: 28
-    readonly property int fontPx: 13
-    readonly property string fontUi: "JetBrains Mono"
-    readonly property string fontJp: "Noto Sans CJK JP"
-    readonly property string fontIcons: "Symbols Nerd Font"
+    readonly property int fontPx: Config.appearance.fontPx > 0 ? Config.appearance.fontPx : Config.defaultFontPx
+    readonly property string fontUi: Config.appearance.fontUi.length ? Config.appearance.fontUi : Config.defaultFontUi
+    readonly property string fontJp: Config.appearance.fontJp.length ? Config.appearance.fontJp : Config.defaultFontJp
+    readonly property string fontIcons: Config.appearance.fontIcons.length ? Config.appearance.fontIcons : Config.defaultFontIcons
 
     readonly property var presets: [
-        { kind: "dark", name: "monochrome", label: "Monochrome" },
-        { kind: "dark", name: "obsidian", label: "Obsidian" },
-        { kind: "dark", name: "gray", label: "Gray" },
-        { kind: "dark", name: "deepblue", label: "Deep Blue" },
-        { kind: "dark", name: "emerald", label: "Emerald" },
-        { kind: "dark", name: "goldenamber", label: "Golden Amber" },
-        { kind: "dark", name: "fierysunset", label: "Fiery Sunset" },
-        { kind: "dark", name: "rosepink", label: "Rose Pink" },
-        { kind: "white", name: "mocha", label: "Mocha" },
-        { kind: "white", name: "macchiato", label: "Macchiato" }
+        { kind: "dark", name: "monochrome", label: "Monochrome", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#e0e0e0" },
+        { kind: "dark", name: "obsidian", label: "Obsidian", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#8b5cf6" },
+        { kind: "dark", name: "gray", label: "Gray", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#94a3b8" },
+        { kind: "dark", name: "deepblue", label: "Deep Blue", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#3b82f6" },
+        { kind: "dark", name: "emerald", label: "Emerald", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#10b981" },
+        { kind: "dark", name: "goldenamber", label: "Golden Amber", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#f59e0b" },
+        { kind: "dark", name: "fierysunset", label: "Fiery Sunset", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#f97316" },
+        { kind: "dark", name: "rosepink", label: "Rose Pink", bg: "#1b1b1f", surface: "#252525", fg: "#d4d4d4", accent: "#ec4899" },
+        { kind: "white", name: "mocha", label: "Mocha", bg: "#1e1e2e", surface: "#313244", fg: "#cdd6f4", accent: "#cba6f7" },
+        { kind: "white", name: "macchiato", label: "Macchiato", bg: "#24273a", surface: "#363a4f", fg: "#cad3f5", accent: "#c6a0f6" }
     ]
 
     readonly property bool fromWall: name === "wall"

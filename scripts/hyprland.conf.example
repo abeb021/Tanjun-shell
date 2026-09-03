@@ -15,6 +15,7 @@ bind = SUPER CTRL, C, exec, quickshell ipc -p $tanjun call tanjun toggleCalendar
 bind = SUPER CTRL, B, exec, quickshell ipc -p $tanjun call tanjun toggleBattery
 bind = SUPER CTRL, N, exec, quickshell ipc -p $tanjun call tanjun toggleNotify
 bind = SUPER CTRL, S, exec, quickshell ipc -p $tanjun call tanjun toggleSidebar
+bind = SUPER CTRL, comma, exec, quickshell ipc -p $tanjun call tanjun toggleSettings
 bind = SUPER CTRL, D, exec, quickshell ipc -p $tanjun call tanjun toggleDnd
 bind = SUPER SHIFT, R, exec, hyprctl reload; killall quickshell; quickshell -p $tanjun &
 
@@ -24,5 +25,6 @@ layerrule = noanim, tanjun-sidebar
 layerrule = noanim, tanjun-launcher
 layerrule = noanim, tanjun-clipboard
 layerrule = noanim, tanjun-overview
+layerrule = noanim, tanjun-settings
 layerrule = noanim, tanjun-osd
 layerrule = noanim, tanjun-toast

@@ -9,6 +9,7 @@ import "modules/osd"
 import "modules/notifs"
 import "modules/clipboard"
 import "modules/overview"
+import "modules/settings"
 
 ShellRoot {
     Bar {}
@@ -28,6 +29,11 @@ ShellRoot {
     LazyLoader {
         active: ShellState.overviewReady
         Overview {}
+    }
+
+    LazyLoader {
+        active: ShellState.settingsReady
+        Settings {}
     }
 
     IpcHandler {
@@ -63,6 +69,10 @@ ShellRoot {
 
         function toggleClipboard(): void {
             ShellState.toggleClipboard();
+        }
+
+        function toggleSettings(): void {
+            ShellState.toggleSettings();
         }
 
         function toggleOverview(): void {

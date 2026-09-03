@@ -69,6 +69,7 @@ block = "\n".join([
     f'hl.bind(mainMod .. " + CTRL + B", hl.dsp.exec_cmd("{ipc} toggleBattery"))',
     f'hl.bind(mainMod .. " + CTRL + N", hl.dsp.exec_cmd("{ipc} toggleNotify"))',
     f'hl.bind(mainMod .. " + CTRL + S", hl.dsp.exec_cmd("{ipc} toggleSidebar"))',
+    f'hl.bind(mainMod .. " + CTRL + comma", hl.dsp.exec_cmd("{ipc} toggleSettings"))',
     f'hl.bind(mainMod .. " + CTRL + D", hl.dsp.exec_cmd("{ipc} toggleDnd"))',
     end,
 ])
@@ -96,6 +97,7 @@ rblock = "\n".join([
     '    "tanjun-launcher",',
     '    "tanjun-clipboard",',
     '    "tanjun-overview",',
+    '    "tanjun-settings",',
     '    "tanjun-osd",',
     '    "tanjun-toast",',
     "}) do",
@@ -129,6 +131,7 @@ echo "  $QS"
 echo "IPC:"
 echo "  $IPC toggleLauncher"
 echo "  $IPC toggleSidebar"
+echo "  $IPC toggleSettings"
 echo "  $IPC toggleAudio"
 echo "  $IPC toggleNetwork"
 echo "  $IPC toggleCalendar"
