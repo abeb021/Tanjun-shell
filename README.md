@@ -2,7 +2,7 @@
 
 Frame off. Quiet bar. One process.
 
-Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, and overview in a single [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland stays compositor. Summon a panel with IPC; do not spawn a new process.
+Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, notifications, OSD, clipboard, and overview in a single [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland stays compositor. Summon a panel with IPC; do not spawn a new process. Color follows the wallpaper (**From wall**) or a named preset.
 
 単純 means simple in structure, unmixed. **単** is the seal.
 
@@ -13,7 +13,7 @@ Tanjun is a Hyprland desktop shell: bar, popouts, left System drawer, launcher, 
 | ------------ | ------------------------------------------------------------------------------------------------------- |
 | Bar          | Flush to the top. 単, numbered desks, clock, layout, a few glyphs, tray.                                 |
 | Popouts      | Grow from the glyph you touched: calendar, mixer, wifi, notifications, battery.                         |
-| System       | Left drawer from 単 or Super+Ctrl+S. User / distro / kernel, player with art, CPU, RAM, processes, net speed, mixer, session, palettes. |
+| System       | Left drawer from 単 or Super+Ctrl+S. User / distro / kernel, player with art, CPU, RAM, processes, net speed, mixer, session, From wall / pick / presets. |
 | Launcher     | Super+A. Rest card is clock / weather / art + transport. Type to search apps. Prefixes: `=` calc, `;` clips, `?` web, `/` act, `@` music. |
 | Clipboard    | Super+V. cliphist, including images.                                                                    |
 | Overview     | Super+Tab. Live window previews, desks 1–10.                                                            |
@@ -108,20 +108,27 @@ quickshell ipc -p "$ROOT" call tanjun toggleDnd
 | `services.backlight`   | Default `brightnessctl` device        |
 | `services.keyboard`    | Hyprland main keyboard                |
 | `session.lock`         | `["loginctl", "lock-session"]`        |
-| `theme.hook`           | Do not call an external palette switcher |
 
 
-`session.lock` is an argv list (`["hyprlock"]` if that is your locker). `theme.hook` is a script that receives the palette name. A previous flat `config.json` is rewritten to this shape on load.
+`session.lock` is an argv list (`["hyprlock"]` if that is your locker). A previous flat `config.json` is rewritten to nested sparse on load.
 
-## Palettes
+## From wall
 
-Nine named looks, switched together from the System drawer. An optional `theme.hook` can still drive wallpaper / kitty / lock until the shell paints those itself.
+The live look is the wallpaper. Named presets stay as a fallback.
+
+**From wall** samples the current file into a full palette: background, cards, type, accent. Hue stays with the image — an Emerald wall stays teal, a Fiery Sunset stays brown. Pitch-black walls get a small lightness lift so glyphs stay readable; crushed gray is not the fallback. Click again to resample.
+
+**pick** opens a thumbnail grid (folders in place, chips for the wallpaper dir and Pictures). Choosing a file sets hyprpaper and runs From wall.
+
+**presets** are the nine named looks. A named chip paints kitty, Hyprland, hyprlock, and the matching file under `~/.config/hypr/assets/wallpapers/`.
 
 Dark: Monochrome, Obsidian, Gray, Deep Blue, Emerald, Golden Amber, Fiery Sunset, Rose Pink.
 
 White: Mocha, Macchiato.
 
 Face: JetBrains Mono, 1px radius, Nerd Fonts, 単.
+
+Toasts carry notification actions, not dismiss-only.
 
 ## Tree
 
@@ -130,7 +137,7 @@ shell.qml                    host + IPC
 config.example.json          sparse pin reference (do not dump)
 modules/bar                  quiet strip + buttons
 modules/popouts              panels from the glyph
-modules/sidebar              left System
+modules/sidebar              left System + wallpaper picker
 modules/launcher             rest card, then search
 modules/clipboard            cliphist
 modules/overview             Super+Tab
@@ -138,8 +145,9 @@ modules/notifs               toasts
 modules/osd                  volume / backlight
 services/                    singletons (config, theme, audio, net, motion, …)
 themes/                      named palettes
+scripts/tanjun-paint.py      kitty / hypr / lock / wallpaper
 scripts/install-hypr.sh      optional lua-hypr patcher
 scripts/hyprland.conf.example
 ```
 
-Next work is in `TODO.md`. Current: **v1.7**.
+Next work is in `TODO.md`. Current: **v1.8**.

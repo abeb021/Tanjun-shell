@@ -47,6 +47,8 @@ Scope {
                     grabDelay.stop();
                     grabOn = false;
                     body.cpuOpen = false;
+                    body.presetsOpen = false;
+                    body.wallsOpen = false;
                 }
             }
 
@@ -59,7 +61,12 @@ Scope {
             Shortcut {
                 sequence: "Escape"
                 enabled: open
-                onActivated: ShellState.closeMenus()
+                onActivated: {
+                    if (body.wallsOpen)
+                        body.wallsOpen = false;
+                    else
+                        ShellState.closeMenus();
+                }
             }
 
             HyprlandFocusGrab {
@@ -86,6 +93,8 @@ Scope {
                 scale: open ? 1 : Motion.panelFrom
                 property bool cpuOpen: false
                 property bool netOpen: true
+                property bool presetsOpen: false
+                property bool wallsOpen: false
 
                 Behavior on opacity {
                     enabled: Motion.ready
@@ -452,26 +461,77 @@ Scope {
 
                         SideBlock {
                             title: "skins"
-                            Flow {
+                            Row {
                                 width: parent.width
                                 spacing: 4
-                                Repeater {
-                                    model: Theme.catalog
-                                    delegate: BarButton {
-                                        required property var modelData
-                                        implicitWidth: 92
-                                        active: Theme.name === modelData.name
-                                        onClicked: Theme.setTheme(modelData.kind, modelData.name)
-                                        BarText {
-                                            text: modelData.label
-                                            px: 11
-                                            color: Theme.name === modelData.name ? Theme.accent : Theme.fg
+                                BarButton {
+                                    implicitWidth: parent.width - 52
+                                    active: Theme.fromWall
+                                    onClicked: {
+                                        body.presetsOpen = false;
+                                        Theme.setTheme("wall", "wall");
+                                    }
+                                    BarText {
+                                        text: "From wall"
+                                        px: 12
+                                        color: Theme.fromWall ? Theme.accent : Theme.fg
+                                    }
+                                }
+                                BarButton {
+                                    implicitWidth: 48
+                                    active: body.wallsOpen
+                                    onClicked: body.wallsOpen = true
+                                    BarText {
+                                        text: "pick"
+                                        px: 11
+                                    }
+                                }
+                            }
+                            Column {
+                                width: parent.width
+                                spacing: 8
+                                BarButton {
+                                    implicitWidth: parent.width
+                                    active: body.presetsOpen || !Theme.fromWall
+                                    onClicked: body.presetsOpen = !body.presetsOpen
+                                    BarText {
+                                        text: body.presetsOpen ? "presets  ▾" : (!Theme.fromWall && Theme.label.length ? "presets  ·  " + Theme.label : "presets  ▸")
+                                        px: 11
+                                        color: !Theme.fromWall ? Theme.accent : Theme.fgSub
+                                    }
+                                }
+                                Flow {
+                                    visible: body.presetsOpen
+                                    width: parent.width
+                                    spacing: 4
+                                    Repeater {
+                                        model: Theme.presets
+                                        delegate: BarButton {
+                                            required property var modelData
+                                            implicitWidth: 92
+                                            active: Theme.name === modelData.name
+                                            onClicked: Theme.setTheme(modelData.kind, modelData.name)
+                                            BarText {
+                                                text: modelData.label
+                                                px: 11
+                                                color: Theme.name === modelData.name ? Theme.accent : Theme.fg
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                }
+            }
+
+            WallPick {
+                anchors.fill: parent
+                open: body.wallsOpen
+                onCanceled: body.wallsOpen = false
+                onPicked: path => {
+                    body.wallsOpen = false;
+                    Theme.setWallpaper(path);
                 }
             }
         }

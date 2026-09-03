@@ -1,0 +1,395 @@
+#!/usr/bin/env python3
+"""Point kitty, Hyprland, hyprlock, and hyprpaper at a named Tanjun palette."""
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+HOME = Path.home()
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config"))
+EXTS = ("png", "jpg", "jpeg", "webp", "bmp", "gif")
+
+
+def rewrite_line(path: Path, pattern: str, repl: str) -> bool:
+    if not path.is_file():
+        return False
+    text = path.read_text()
+    new, n = re.subn(pattern, repl, text, count=1, flags=re.M)
+    if n and new != text:
+        path.write_text(new)
+        return True
+    return False
+
+
+def current_wall() -> Path | None:
+    conf = CONFIG / "hypr/hyprpaper.conf"
+    if conf.is_file():
+        for line in conf.read_text().splitlines():
+            m = re.match(r"\s*path\s*=\s*(.+)", line)
+            if not m:
+                continue
+            p = Path(os.path.expanduser(m.group(1).strip()))
+            if p.is_file():
+                return p
+    bg = CONFIG / "background"
+    if bg.exists():
+        try:
+            return bg.resolve()
+        except OSError:
+            return None
+    return None
+
+
+def find_wall(name: str) -> Path | None:
+    folder = CONFIG / "hypr/assets/wallpapers"
+    if folder.is_dir():
+        for ext in EXTS:
+            p = folder / f"{name}.{ext}"
+            if p.is_file():
+                return p
+        hits = sorted(folder.glob(f"{name}.*"))
+        if hits:
+            return hits[0]
+    return current_wall()
+
+
+def paint_kitty(kind: str, name: str) -> None:
+    conf = CONFIG / "kitty/kitty.conf"
+    rewrite_line(
+        conf,
+        r"include themes/[^/\s]+/[^\s]+\.conf",
+        f"include themes/{kind}/{name}.conf",
+    )
+    subprocess.run(["pkill", "-USR1", "-x", "kitty"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def paint_hypr(kind: str, name: str) -> None:
+    lua = CONFIG / "hypr/hyprland/active_theme.lua"
+    if lua.is_file():
+        lua.write_text(f'return "hyprland.themes.{kind}.{name}"\n')
+    subprocess.run(["hyprctl", "reload"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def paint_lock(kind: str, name: str) -> None:
+    rewrite_line(
+        CONFIG / "hypr/hyprlock.conf",
+        r"source = \$HOME/\.config/hypr/hyprlockThemes/[^/\s]+/[^\s]+\.conf",
+        f"source = $HOME/.config/hypr/hyprlockThemes/{kind}/{name}.conf",
+    )
+
+
+def apply_wall_file(wall: Path) -> Path | None:
+    wall = wall.expanduser().resolve()
+    if not wall.is_file():
+        return None
+    home = str(HOME)
+    raw = str(wall)
+    shown = f"~{raw[len(home):]}" if raw.startswith(home + os.sep) else raw
+    conf = CONFIG / "hypr/hyprpaper.conf"
+    if conf.is_file():
+        lines = conf.read_text().splitlines(True)
+        out = []
+        in_block = False
+        for line in lines:
+            if re.match(r"^preload\s*=", line):
+                line = f"preload = {shown}\n"
+            if re.match(r"^wallpaper\s*\{", line):
+                in_block = True
+            elif in_block and re.match(r"^\s*path\s*=", line):
+                indent = re.match(r"^(\s*)", line).group(1)
+                line = f"{indent}path = {shown}\n"
+            if in_block and line.strip() == "}":
+                in_block = False
+            out.append(line)
+        conf.write_text("".join(out))
+        subprocess.run(["killall", "hyprpaper"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen(
+            ["hyprpaper", "--config", str(conf)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    bg = CONFIG / "background"
+    try:
+        if bg.is_symlink() or bg.exists():
+            bg.unlink()
+        bg.symlink_to(wall)
+    except OSError:
+        pass
+    return wall
+
+
+def paint_wall(name: str) -> Path | None:
+    wall = find_wall(name)
+    if wall is None:
+        return None
+    return apply_wall_file(wall)
+
+
+def lift(rgb: tuple[int, int, int], amt: int = 28) -> tuple[int, int, int]:
+    return tuple(min(255, c + amt) for c in rgb)
+
+
+def hexc(rgb: tuple[int, int, int]) -> str:
+    return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+
+def sat(rgb: tuple[int, int, int]) -> float:
+    mx, mn = max(rgb), min(rgb)
+    return (mx - mn) / (mx or 1)
+
+
+def rgb_to_hsl(rgb: tuple[int, int, int]) -> tuple[float, float, float]:
+    r, g, b = (c / 255 for c in rgb)
+    mx, mn = max(r, g, b), min(r, g, b)
+    l = (mx + mn) / 2
+    if mx == mn:
+        return 0.0, 0.0, l
+    d = mx - mn
+    s = d / (1 - abs(2 * l - 1))
+    if mx == r:
+        h = ((g - b) / d) % 6
+    elif mx == g:
+        h = (b - r) / d + 2
+    else:
+        h = (r - g) / d + 4
+    return h / 6, s, l
+
+
+def hsl_to_rgb(h: float, s: float, l: float) -> tuple[int, int, int]:
+    def f(n: float) -> float:
+        k = (n + h * 12) % 12
+        a = s * min(l, 1 - l)
+        return l - a * max(-1.0, min(k - 3, 9 - k, 1.0))
+
+    return tuple(max(0, min(255, int(round(f(n) * 255)))) for n in (0, 8, 4))
+
+
+def pale(rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+    h, s, _ = rgb_to_hsl(rgb)
+    return hsl_to_rgb(h, min(1.0, s * 0.85), 0.92)
+
+
+def chrome(
+    rgb: tuple[int, int, int],
+    donor: tuple[int, int, int],
+    s_scale: float,
+    min_l: float = 0.0,
+) -> tuple[int, int, int]:
+    h, s, l = rgb_to_hsl(rgb)
+    dh, ds, _ = rgb_to_hsl(donor)
+    if s < 0.2 and ds >= 0.12:
+        h, s = dh, max(s, ds * s_scale)
+    return hsl_to_rgb(h, s, max(l, min_l))
+
+
+def rel_lum(rgb: tuple[int, int, int]) -> float:
+    def ch(c: int) -> float:
+        x = c / 255
+        return x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4
+
+    r, g, b = rgb
+    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b)
+
+
+def contrast(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
+    hi, lo = max(rel_lum(a), rel_lum(b)), min(rel_lum(a), rel_lum(b))
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def mix(a: tuple[int, int, int], b: tuple[int, int, int], t: float) -> tuple[int, int, int]:
+    return tuple(int(a[i] * (1 - t) + b[i] * t) for i in range(3))
+
+
+def nudge(rgb: tuple[int, int, int], toward: tuple[int, int, int], t: float) -> tuple[int, int, int]:
+    return mix(rgb, toward, t)
+
+
+def until_contrast(
+    color: tuple[int, int, int],
+    against: tuple[int, int, int],
+    ratio: float,
+    toward: tuple[int, int, int],
+    max_mix: float = 0.2,
+) -> tuple[int, int, int]:
+    out = color
+    used = 0.0
+    for _ in range(16):
+        if contrast(out, against) >= ratio or used >= max_mix:
+            return out
+        out = nudge(out, toward, 0.07)
+        used += 0.07
+    return out
+
+
+def sample_palette(path: Path) -> dict:
+    from PIL import Image
+
+    im = Image.open(path).convert("RGB")
+    im.thumbnail((160, 160))
+    px = im.load()
+    w, h = im.size
+    pixels: list[tuple[float, int, int, int]] = []
+    scored: list[tuple[float, int, int, int]] = []
+    for y in range(h):
+        for x in range(w):
+            r, g, b = px[x, y]
+            lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            pixels.append((lum, r, g, b))
+            if lum < 14:
+                continue
+            chroma = (max(r, g, b) - min(r, g, b)) / (max(r, g, b) or 1)
+            scored.append((chroma * 0.55 + (lum / 255) * 0.45, r, g, b))
+    pixels.sort()
+    n = len(pixels) or 1
+
+    def band(lo: float, hi: float) -> tuple[int, int, int]:
+        chunk = pixels[int(n * lo) : max(int(n * lo) + 1, int(n * hi))]
+        if not chunk:
+            chunk = pixels
+        colored = [p for p in chunk if max(p[1], p[2], p[3]) > 12]
+        use = colored or chunk
+        return tuple(sum(p[i] for p in use) // len(use) for i in range(1, 4))  # type: ignore[return-value]
+
+    if scored:
+        scored.sort(reverse=True)
+        topn = max(1, len(scored) // 12)
+        top = scored[:topn]
+        accent = tuple(sum(t[i] for t in top) // topn for i in range(1, 4))
+        if max(accent) < 48:
+            accent = tuple(min(255, c + 80) for c in accent)
+    else:
+        accent = (196, 196, 196)
+
+    cast = [
+        (p[1], p[2], p[3])
+        for p in pixels
+        if p[0] > 10 and sat((p[1], p[2], p[3])) > 0.2
+    ]
+    if cast:
+        hue = tuple(sum(c[i] for c in cast) // len(cast) for i in range(3))
+        if sat(accent) >= sat(hue):
+            hue = accent
+    else:
+        hue = accent
+
+    mean_lum = sum(p[0] for p in pixels) / n
+    dark = mean_lum < 140
+    BLACK = (0, 0, 0)
+    if dark:
+        raw_bg = band(0.0, 0.22)
+        crush = 1.0 - min(1.0, rel_lum(raw_bg) / 0.03)
+        lift_l = (0.07 + 0.03 * crush) if crush > 0.15 else 0.0
+        bg = chrome(raw_bg, hue, 0.5, lift_l)
+        surface = chrome(band(0.18, 0.4), hue, 0.48, rgb_to_hsl(bg)[2] + 0.06)
+        hover = chrome(band(0.32, 0.55), hue, 0.45, rgb_to_hsl(surface)[2] + 0.05)
+        fg = chrome(band(0.82, 1.0), hue, 0.28, 0.0)
+        sub = chrome(band(0.62, 0.82), hue, 0.32, 0.0)
+        if crush > 0.15:
+            dl = 0.04 + 0.06 * crush
+            if contrast(fg, bg) < 5:
+                fg = chrome(fg, hue, 0.28, rgb_to_hsl(fg)[2] + dl)
+            if contrast(sub, bg) < 3.2:
+                sub = chrome(sub, hue, 0.32, rgb_to_hsl(sub)[2] + dl * 0.8)
+            if contrast(accent, bg) < 3.2:
+                accent = chrome(accent, hue, 0.7, rgb_to_hsl(accent)[2] + dl * 0.5)
+        light = pale(hue if sat(hue) > 0.12 else fg)
+        if contrast(fg, bg) < 3.6:
+            fg = until_contrast(fg, bg, 3.6, light, 0.18)
+        if contrast(sub, bg) < 2.4:
+            sub = until_contrast(sub, bg, 2.4, light, 0.16)
+        if contrast(surface, bg) < 1.1:
+            surface = until_contrast(surface, bg, 1.12, pale(surface), 0.12)
+        if rel_lum(hover) <= rel_lum(surface) or contrast(hover, surface) < 1.08:
+            hover = chrome(surface, hue, 0.45, rgb_to_hsl(surface)[2] + 0.05)
+        if contrast(accent, bg) < 2.2:
+            accent = until_contrast(accent, bg, 2.4, pale(accent), 0.16)
+        hover_acc = lift(accent)
+        if contrast(hover_acc, bg) < 2.2:
+            hover_acc = until_contrast(hover_acc, bg, 2.4, pale(accent), 0.16)
+    else:
+        bg = band(0.78, 1.0)
+        surface = band(0.62, 0.82)
+        hover = band(0.48, 0.68)
+        fg = band(0.0, 0.2)
+        sub = band(0.2, 0.4)
+        if contrast(fg, bg) < 4.5:
+            fg = until_contrast(fg, bg, 4.5, BLACK)
+        if contrast(sub, bg) < 2.8:
+            sub = until_contrast(sub, bg, 2.8, BLACK)
+        if contrast(surface, bg) < 1.12:
+            surface = until_contrast(surface, bg, 1.15, BLACK)
+        if rel_lum(hover) >= rel_lum(surface) or contrast(hover, surface) < 1.08:
+            hover = until_contrast(hover, surface, 1.1, BLACK)
+        if contrast(accent, bg) < 2.6:
+            accent = until_contrast(accent, bg, 2.8, BLACK)
+        hover_acc = lift(accent, 20)
+        if contrast(hover_acc, bg) < 2.6:
+            hover_acc = until_contrast(hover_acc, bg, 2.8, BLACK)
+
+    pal = {
+        "kind": "wall",
+        "name": "wall",
+        "label": "From wall",
+        "accent": hexc(accent),
+        "accentHover": hexc(hover_acc),
+        "critical": "#ef4444",
+        "warning": "#eab308",
+        "info": "#808080",
+        "good": "#7bc379",
+        "fg": hexc(fg),
+        "fgSub": hexc(sub),
+        "bg": hexc(bg),
+        "surface": hexc(surface),
+        "surfaceHover": hexc(hover),
+        "wall": str(path),
+    }
+    return pal
+
+
+def cmd_sample() -> None:
+    wall = current_wall()
+    if wall is None:
+        print("{}", flush=True)
+        return
+    print(json.dumps(sample_palette(wall)), flush=True)
+
+
+def cmd_set(path: str) -> None:
+    wall = apply_wall_file(Path(path))
+    if wall is None:
+        print("{}", flush=True)
+        return
+    print(json.dumps(sample_palette(wall)), flush=True)
+
+
+def cmd_paint(kind: str, name: str) -> None:
+    paint_kitty(kind, name)
+    paint_lock(kind, name)
+    paint_wall(name)
+    paint_hypr(kind, name)
+
+
+def main() -> None:
+    args = sys.argv[1:]
+    if not args:
+        sys.exit(1)
+    if args[0] == "sample":
+        cmd_sample()
+        return
+    if args[0] == "set" and len(args) > 1:
+        cmd_set(args[1])
+        return
+    kind, name = args[0], args[1] if len(args) > 1 else "monochrome"
+    if name == "wall" or kind == "wall":
+        cmd_sample()
+        return
+    cmd_paint(kind, name)
+
+
+if __name__ == "__main__":
+    main()

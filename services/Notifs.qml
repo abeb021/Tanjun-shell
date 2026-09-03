@@ -12,6 +12,7 @@ Singleton {
     NotificationServer {
         id: server
         actionsSupported: true
+        actionIconsSupported: true
         bodyMarkupSupported: true
         imageSupported: true
         persistenceSupported: true

@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v1.7**
+Current: **v1.8**
 
 ## v1.0 — host (shipping)
 
@@ -62,7 +62,7 @@ Sparse overlay. Defaults in the shell. Pin only this machine.
 ## v1.6 — launcher
 
 - [x] Rest card: weather card, art + transport, not four labels
-- [x] Prefixes: `=` calc, `;` clipboard, `?` web, `/` actions, `@` music
+- [x] Prefixes: `=` calc, `;` clipboard, `?` web, `/` act, `@` music
 
 
 
@@ -76,15 +76,23 @@ Host facts and a real player in the left System drawer.
 - [x] Distro, kernel, username
 - [x] Audio player with art preview (not a one-line label)
 
-## v1.8 — paint
+## v1.8 — color
 
-- [ ] Theme singleton paints kitty / hypr / lock / wallpaper; drop the old switcher script
-- [ ] Notification actions, not dismiss-only
+- [x] Theme singleton paints kitty / hypr / lock / wallpaper; drop the old switcher script
+- [x] Wallpaper-driven accent **plus a lock** so the palette cannot jump
+- [x] Notification actions, not dismiss-only
+- [x] Wallpaper picker; choosing a file paints it and runs From wall
 
-## v1.9 — color lock
+## v1.9 — polish
 
-- [ ] Wallpaper-driven accent **plus a lock** so the palette cannot jump
+No new surfaces. Tighten what shipped.
 
-## v1.10 — type
+- [ ] Motion, layout, and poll cost
+- [ ] Visual consistency across bar, popouts, drawer
+- [ ] Dead paths, leftover jank
+
+## v2.0 — settings
+
+A settings surface, not more bar polish.
 
 - [ ] Font picker inside the shell

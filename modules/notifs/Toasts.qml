@@ -14,7 +14,7 @@ Scope {
             visible: (!ShellState.dnd && toast.count > 0) || toast.opacity > 0.02
             color: "transparent"
             implicitWidth: 320
-            implicitHeight: Math.min(240, Math.max(1, toast.count) * 64)
+            implicitHeight: Math.min(320, Math.max(1, toast.contentHeight) + 4)
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "tanjun-toast"
             WlrLayershell.layer: WlrLayer.Overlay
@@ -73,14 +73,23 @@ Scope {
                 delegate: Rectangle {
                     required property var modelData
                     width: toast.width
-                    height: 58
+                    implicitHeight: col.implicitHeight + 16
+                    height: implicitHeight
                     color: Theme.surface
                     border.width: 1
                     border.color: Theme.bg
                     radius: Theme.radius
-                    Column {
+                    MouseArea {
                         anchors.fill: parent
+                        onClicked: modelData.dismiss()
+                    }
+                    Column {
+                        id: col
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
                         anchors.margins: 8
+                        spacing: 4
                         BarText {
                             text: modelData.summary || modelData.appName
                             px: 12
@@ -93,10 +102,24 @@ Scope {
                             width: parent.width
                             elide: Text.ElideRight
                         }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: modelData.dismiss()
+                        Row {
+                            visible: actRep.count > 0
+                            spacing: 4
+                            Repeater {
+                                id: actRep
+                                model: modelData.actions
+                                BarButton {
+                                    required property var modelData
+                                    implicitWidth: Math.max(52, actLabel.implicitWidth + 12)
+                                    onClicked: modelData.invoke()
+                                    BarText {
+                                        id: actLabel
+                                        text: modelData.text
+                                        px: 10
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

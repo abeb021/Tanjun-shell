@@ -52,13 +52,17 @@ Rectangle {
             implicitHeight: col.implicitHeight + 10
             color: Theme.bg
             radius: Theme.radius
+            MouseArea {
+                anchors.fill: parent
+                onClicked: modelData.dismiss()
+            }
             Column {
                 id: col
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.margins: 6
-                spacing: 2
+                spacing: 4
                 BarText {
                     text: modelData.summary || modelData.appName
                     px: 12
@@ -71,10 +75,24 @@ Rectangle {
                     width: parent.width
                     wrapMode: Text.Wrap
                 }
-            }
-            MouseArea {
-                anchors.fill: parent
-                onClicked: modelData.dismiss()
+                Row {
+                    visible: actRep.count > 0
+                    spacing: 4
+                    Repeater {
+                        id: actRep
+                        model: modelData.actions
+                        BarButton {
+                            required property var modelData
+                            implicitWidth: Math.max(52, actLabel.implicitWidth + 12)
+                            onClicked: modelData.invoke()
+                            BarText {
+                                id: actLabel
+                                text: modelData.text
+                                px: 10
+                            }
+                        }
+                    }
+                }
             }
         }
 
