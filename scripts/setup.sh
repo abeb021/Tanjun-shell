@@ -13,6 +13,54 @@ STATE="${XDG_STATE_HOME:-$HOME/.local/state}/tanjun"
 QS="$CFG/quickshell"
 STUB="$HYPR/hyprland.lua"
 
+banner() {
+  local r d s t n
+  if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+    r=$'\033[0m'
+    d=$'\033[38;2;150;150;150m'
+    s=$'\033[38;2;224;224;224m'
+    t=$'\033[1;38;2;220;220;220m'
+    n=$'\033[38;2;90;90;90m'
+  else
+    r= d= s= t= n=
+  fi
+
+  local art=(
+    " █▄     █▄     ▄█   "
+    " ▀██    ▀██   ██▀   "
+    "  ████████████████  "
+    "  ██     ██     ██  "
+    "  ████████████████  "
+    "  ██     ██     ██  "
+    "  ████████████████  "
+    "         ██         "
+    " ██████████████████ "
+    "         ██         "
+    "         ▀▀         "
+  )
+  local copy=(
+    "${t}単純${r}  ${t}Tanjun${r}"
+    ""
+    "${d}simple in structure${r}"
+    "${d}unmixed, one quiet process${r}"
+    "${d}seal opens, frame off${r}"
+    ""
+    ""
+    ""
+    ""
+    ""
+    ""
+  )
+
+  printf '\n'
+  local i
+  for i in "${!art[@]}"; do
+    printf '  %s%s%s    %s\n' "$s" "${art[$i]}" "$r" "${copy[$i]}"
+  done
+  printf '  %sclone  %s%s%s\n' "$n" "$d" "$ROOT" "$r"
+  printf '\n'
+}
+
 # extra (and AUR fallback). --needed skips what is already there.
 PKGS=(
   hyprland
@@ -127,14 +175,19 @@ EOF
   src="$ROOT/hyprland/hypridle.conf"
   if [[ -L "$idle" ]] || [[ ! -f "$idle" ]]; then
     link "$src" "$idle" || true
-  elif grep -qE 'lock_cmd\s*=\s*hyprlock' "$idle"; then
-    sed -i 's|lock_cmd = hyprlock.*|lock_cmd = quickshell ipc call tanjun lock|' "$idle"
-    echo "idle   lock_cmd -> tanjun lock"
+  else
+    # Keep their timeouts. Lock and sleep always go through the host.
+    if grep -qE '^\s*lock_cmd\s*=' "$idle"; then
+      sed -i 's|^\s*lock_cmd\s*=.*|    lock_cmd = quickshell ipc call tanjun lock|' "$idle"
+    fi
+    if grep -qE '^\s*before_sleep_cmd\s*=' "$idle"; then
+      sed -i 's|^\s*before_sleep_cmd\s*=.*|    before_sleep_cmd = quickshell ipc call tanjun lock|' "$idle"
+    fi
+    echo "idle   lock/sleep -> tanjun lock (kept $idle)"
   fi
 }
 
-echo "Tanjun setup"
-echo "clone  $ROOT"
+banner
 install_pkgs
 attach
 echo

@@ -40,6 +40,7 @@ hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("hyprshot -m window -o ~/Pictures
 hl.bind(mainMod .. " + O", hl.dsp.exit())
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(ipc .. " lock"))
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd(ipc .. " lock"))
+hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd(ipc .. " lock"), { locked = true })
 
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(ipc .. " toggleClipboard"))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd('cliphist wipe && notify-send "Clipboard" "All clipboard history cleared"'))
