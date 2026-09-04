@@ -1,0 +1,29 @@
+hotkey-overlay {
+    skip-at-startup
+}
+
+input {
+    keyboard {
+        xkb {
+            layout "us,ru"
+            options "caps:escape,grp:win_space_toggle"
+        }
+        repeat-delay 200
+        repeat-rate 30
+    }
+    touchpad {
+        tap
+        natural-scroll
+        dwt
+        accel-profile "flat"
+        scroll-factor 0.2
+    }
+    mouse {
+        accel-profile "flat"
+        accel-speed 0.3
+    }
+}
+
+switch-events {
+    lid-close { spawn "quickshell" "ipc" "call" "tanjun" "lock"; }
+}

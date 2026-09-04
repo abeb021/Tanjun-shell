@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Point kitty, Hyprland, hyprlock, and hyprpaper at a named Tanjun palette."""
+"""Point kitty and the live compositor at a named Tanjun palette."""
 from __future__ import annotations
 
 import json
@@ -12,6 +12,10 @@ from pathlib import Path
 HOME = Path.home()
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config"))
 EXTS = ("png", "jpg", "jpeg", "webp", "bmp", "gif")
+
+
+def on_niri() -> bool:
+    return bool(os.environ.get("NIRI_SOCKET"))
 
 
 def rewrite_line(path: Path, pattern: str, repl: str) -> bool:
@@ -68,6 +72,8 @@ def paint_kitty(kind: str, name: str) -> None:
 
 
 def paint_hypr(kind: str, name: str) -> None:
+    if on_niri():
+        return
     lua = CONFIG / "hypr/hyprland/active_theme.lua"
     if lua.is_file():
         lua.write_text(f'return "hyprland.themes.{kind}.{name}"\n')
@@ -96,6 +102,8 @@ def lua_pair(key: str, rgb: tuple[int, int, int]) -> str:
 
 
 def paint_hypr_from_pal(pal: dict) -> None:
+    if on_niri():
+        return
     fg = parse_rgb(pal.get("fg", "#dcdcdc"))
     sub = parse_rgb(pal.get("fgSub", "#b4b4b4"))
     bg = parse_rgb(pal.get("bg", "#1e1e1e"))
@@ -128,6 +136,8 @@ def paint_hypr_from_pal(pal: dict) -> None:
 
 
 def paint_lock(kind: str, name: str) -> None:
+    if on_niri():
+        return
     rewrite_line(
         CONFIG / "hypr/hyprlock.conf",
         r"source = \$HOME/\.config/hypr/hyprlockThemes/[^/\s]+/[^\s]+\.conf",
@@ -159,9 +169,18 @@ def apply_wall_file(wall: Path) -> Path | None:
                 in_block = False
             out.append(line)
         conf.write_text("".join(out))
-        subprocess.run(["killall", "hyprpaper"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if not on_niri():
+            subprocess.run(["killall", "hyprpaper"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(
+                ["hyprpaper", "--config", str(conf)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+    if on_niri():
+        subprocess.run(["killall", "swaybg"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.Popen(
-            ["hyprpaper", "--config", str(conf)],
+            ["swaybg", "-i", str(wall), "-m", "fill"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,

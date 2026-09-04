@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../widgets"
 import "../../services"
 
@@ -9,22 +8,14 @@ Row {
     spacing: 2
 
     readonly property var items: {
-        const occupied = {};
-        const list = Hyprland.workspaces.values;
-        if (list) {
-            for (let i = 0; i < list.length; i++) {
-                const id = list[i].id;
-                if (id > 0 && id <= 10)
-                    occupied[id] = list[i];
-            }
-        }
+        const occupied = Compositor.occupied || {};
         const out = [];
         for (let i = 1; i <= 10; i++) {
-            const ws = occupied[i] || null;
+            const ws = occupied[i] ? true : occupied[`${i}`] ? true : false;
             if (i <= 3 || ws)
                 out.push({
                     id: i,
-                    ws: ws
+                    occupied: ws
                 });
         }
         return out;
@@ -32,7 +23,7 @@ Row {
 
     WheelHandler {
         onWheel: event => {
-            Quickshell.execDetached(["hyprctl", "dispatch", "workspace", event.angleDelta.y > 0 ? "e-1" : "e+1"]);
+            Compositor.cycleWorkspace(event.angleDelta.y > 0 ? 1 : -1);
             event.accepted = true;
         }
     }
@@ -43,20 +34,15 @@ Row {
             id: wsBtn
             required property var modelData
             property int wsId: modelData.id
-            property var ws: modelData.ws
-            active: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === wsId
+            property bool occupied: modelData.occupied
+            active: Compositor.focusedWorkspaceId === wsId
             implicitWidth: 22
-            onClicked: {
-                if (ws)
-                    ws.activate();
-                else
-                    Quickshell.execDetached(["hyprctl", "dispatch", "workspace", `${wsId}`]);
-            }
-            onRightClicked: Quickshell.execDetached(["hyprctl", "dispatch", "movetoworkspace", `${wsId}`])
+            onClicked: Compositor.activateWorkspace(wsId)
+            onRightClicked: Compositor.moveToWorkspace(wsId)
             BarText {
                 text: `${wsBtn.wsId}`
                 px: 11
-                color: wsBtn.active ? Theme.accent : (wsBtn.ws ? Theme.fg : Theme.fgSub)
+                color: wsBtn.active ? Theme.accent : (wsBtn.occupied ? Theme.fg : Theme.fgSub)
             }
         }
     }

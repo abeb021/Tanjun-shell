@@ -78,7 +78,7 @@ ShellRoot {
         }
 
         function toggleOverview(): void {
-            ShellState.toggleOverview();
+            Compositor.toggleOverview();
         }
 
         function confirmOverview(): void {

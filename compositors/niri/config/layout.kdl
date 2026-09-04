@@ -1,0 +1,15 @@
+layout {
+    gaps 0
+    background-color "#1b1b1f"
+    focus-ring {
+        off
+    }
+    border {
+        width 2
+        active-color "#e0e0e0"
+        inactive-color "#252525"
+    }
+}
+
+prefer-no-csd
+screenshot-path "~/Pictures/Screenshots/screenshot_%Y-%m-%d_%H-%M-%S.png"

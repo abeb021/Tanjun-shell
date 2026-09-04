@@ -3,7 +3,7 @@
 local T = require("path")
 local ipc = "quickshell ipc call tanjun"
 local reload = T.hyprland .. "scripts/reload-shell.sh"
-local buds = T.hyprland .. "scripts/bluetooth.sh"
+local buds = T.root .. "/scripts/bluetooth.sh"
 local mainMod = "SUPER"
 local terminal = "kitty"
 local explorer = "kitty --title='Yazi' -e yazi"

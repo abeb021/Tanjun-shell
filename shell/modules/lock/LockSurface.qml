@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../widgets"
 import "../../services"
 
@@ -8,12 +7,7 @@ Item {
     id: root
 
     readonly property var lockScreen: parent.screen
-    readonly property bool isFocused: {
-        const m = Hyprland.focusedMonitor;
-        if (!m || !lockScreen)
-            return true;
-        return m.name === lockScreen.name;
-    }
+    readonly property bool isFocused: Compositor.isScreenFocused(lockScreen)
     readonly property string wallSrc: {
         const p = Theme.wallFile.length ? Theme.wallFile : `${Config.configHome}/background`;
         if (!p.length)

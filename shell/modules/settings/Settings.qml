@@ -21,12 +21,7 @@ Scope {
             focusable: true
 
             readonly property bool open: ShellState.settingsOpen
-            readonly property bool isFocused: {
-                const m = Hyprland.focusedMonitor;
-                if (!m || !modelData)
-                    return true;
-                return m.name === modelData.name;
-            }
+            readonly property bool isFocused: Compositor.isScreenFocused(modelData)
             property string page: "type"
             property string face: "ui"
             property string query: ""
@@ -103,7 +98,7 @@ Scope {
             onPageChanged: restFlick.contentY = 0
 
             HyprlandFocusGrab {
-                active: win.open && win.isFocused
+                active: Compositor.isHypr && win.open && win.isFocused
                 windows: [win]
                 onCleared: if (win.open && ShellState.settingsOpen)
                     ShellState.closeMenus()
@@ -576,7 +571,7 @@ Scope {
                                     width: parent.width
                                     spacing: 8
                                     BarText {
-                                        text: "empty = auto (sysfs backlight, Hyprland main keyboard)."
+                                        text: "empty = auto (sysfs backlight, compositor keyboard)."
                                         sub: true
                                         px: 11
                                         width: parent.width

@@ -1,0 +1,7 @@
+spawn-at-startup "sh" "-c" "wl-paste --type text --watch cliphist store"
+spawn-at-startup "sh" "-c" "wl-paste --type image --watch cliphist store"
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+spawn-at-startup "xwayland-satellite"
+spawn-at-startup "sh" "-c" "swaybg -i \"$HOME/.config/background\" -m fill"
+spawn-at-startup "sh" "-c" "exec \"$HOME/.local/share/tanjun/compositors/niri/scripts/idle.sh\""
+spawn-at-startup "quickshell"

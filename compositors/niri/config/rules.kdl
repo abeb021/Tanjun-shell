@@ -1,0 +1,28 @@
+window-rule {
+    match title="^Yazi$"
+    open-floating true
+    default-column-width { proportion 0.7; }
+    default-window-height { proportion 0.7; }
+}
+
+window-rule {
+    match is-floating=true
+    default-column-width { proportion 0.5; }
+}
+
+window-rule {
+    match title="Picture-in-Picture"
+    open-floating true
+}
+
+window-rule {
+    match app-id="mpv"
+    open-floating true
+}
+
+window-rule {
+    match app-id="org.telegram.desktop" title="Media viewer"
+    open-floating true
+    default-column-width { proportion 0.7; }
+    default-window-height { proportion 0.7; }
+}

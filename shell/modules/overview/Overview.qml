@@ -19,12 +19,7 @@ Scope {
             focusable: true
 
             readonly property bool open: ShellState.overviewOpen
-            readonly property bool isFocused: {
-                const m = Hyprland.focusedMonitor;
-                if (!m || !modelData)
-                    return true;
-                return m.name === modelData.name;
-            }
+            readonly property bool isFocused: Compositor.isScreenFocused(modelData)
 
             WlrLayershell.namespace: "tanjun-overview"
             WlrLayershell.layer: WlrLayer.Overlay

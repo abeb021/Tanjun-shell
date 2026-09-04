@@ -39,7 +39,7 @@ PopupWindow {
     }
 
     HyprlandFocusGrab {
-        active: root.open
+        active: Compositor.isHypr && root.open
         windows: [root]
         onCleared: if (root.open && ShellState.popout === root.name)
             ShellState.closePopout()

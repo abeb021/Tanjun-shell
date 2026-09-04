@@ -2,7 +2,7 @@
 
 単純. One process. Frame off.
 
-Current: **v2.3**
+Current: **v2.4**
 
 ## v1.0 — host (shipping)
 
@@ -123,4 +123,12 @@ The host is the locker. Super+L, idle, and sleep.
 
 - [x] Session lock in the Quickshell process (wallpaper, clock, 単, password, fingerprint)
 - [x] Super+L / session row / `/lock`; hypridle lock_cmd
+
+## v2.4 — compositors
+
+The host is a shell. Hyprland and niri are rice under `compositors/`.
+
+- [x] `hyprland/` moved to `compositors/hyprland/`
+- [x] niri rice: binds, autostart, idle, screens, wallpaper
+- [x] `scripts/setup.sh` attaches the shell always; compositor picker TUI; `--hyprland` / `--niri` skip it
 

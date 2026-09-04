@@ -1,5 +1,6 @@
 module services
 singleton Config 1.0 Config.qml
+singleton Compositor 1.0 Compositor.qml
 singleton ShellState 1.0 ShellState.qml
 singleton Theme 1.0 Theme.qml
 singleton Time 1.0 Time.qml

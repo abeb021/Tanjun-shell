@@ -479,7 +479,7 @@ Scope {
                 }
                 if (id === "logout") {
                     ShellState.closeMenus();
-                    Quickshell.execDetached(["hyprctl", "dispatch", "exit"]);
+                    Compositor.exitSession();
                     return;
                 }
                 if (id === "reboot") {

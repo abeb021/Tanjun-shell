@@ -62,7 +62,7 @@ PopupWindow {
     }
 
     HyprlandFocusGrab {
-        active: win.open
+        active: Compositor.isHypr && win.open
         windows: [win]
         onCleared: if (win.open && ShellState.sidebarOpen)
             ShellState.closeMenus()
@@ -180,7 +180,7 @@ PopupWindow {
                                             BarButton {
                                                 implicitWidth: 32
                                                 implicitHeight: 32
-                                                onClicked: Quickshell.execDetached(["hyprctl", "dispatch", "exit"])
+                                                onClicked: Compositor.exitSession()
                                                 BarText {
                                                     text: "󰍃"
                                                     icon: true
