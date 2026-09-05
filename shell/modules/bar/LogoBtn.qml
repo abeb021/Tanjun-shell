@@ -4,9 +4,9 @@ import "../../services"
 
 BarButton {
     mark: true
+    drawer: true
     implicitWidth: 32
     active: ShellState.sidebarOpen
-    onClicked: ShellState.toggleSidebar()
     BarText {
         text: "単"
         role: "seal"

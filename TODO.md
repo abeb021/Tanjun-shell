@@ -1,134 +1,102 @@
-# Tanjun — TODO
+# TODO
 
-単純. One process. Frame off.
+Current: **v2.5**
 
-Current: **v2.4**
+## v1.0 — bar
 
-## v1.0 — host (shipping)
-
-- [x] Quickshell host + quiet bar, frame off (JetBrains, 1px, 単 seal)
-- [x] Popouts from the glyph; 単 menu hangs off the seal (not a right System sidebar)
-- [x] Launcher: empty query is clock / weather / track labels, then app search
-- [x] Notifications + do-not-disturb + volume / backlight OSD
-- [x] Color: nine named palettes
-- [x] Workspaces: numbers / dots on the bar
+- [x] Quickshell bar (JetBrains, 1px, 単)
+- [x] Popouts from bar icons; System from 単
+- [x] Launcher: clock / weather / track, then app search
+- [x] Notifications, DND, volume / backlight OSD
+- [x] Nine named palettes
+- [x] Workspaces on the bar
 - [x] Escape closes menus
 
-## v1.1 — hands
+## v1.1
 
-Super+A / Super+V and the audio popout, no kitty.
-
-- [x] Clipboard: cliphist images, not text-only
-- [x] Launcher: arrows + highlight, Enter launches the selection
-- [x] Mixer: per-app streams, not master-only
-
-
+- [x] Clipboard: cliphist images
+- [x] Launcher: arrows, Enter
+- [x] Mixer: per-app streams
 
 ## v1.2 — overview
 
-- [x] Super+Tab overview with live window previews
+- [x] Super+Tab, live window previews (Hyprland)
 
+## v1.3 — ipc
 
-
-## v1.3 — summon
-
-Panels from the keyboard, not only the 16px glyph.
-
-- [x] IPC + binds for audio, network, calendar, battery, notify, 単
-- [x] Finish widget chords (scroll / right / middle) where the verb is obvious
-- [x] Bind 単 and DND; finish `scripts/install-hypr.sh`
-
-
+- [x] Super+Ctrl+… for audio, network, calendar, battery, notify, System
+- [x] Scroll / right / middle on bar icons
+- [x] DND bind; `scripts/setup.sh`
 
 ## v1.4 — system
 
-- [x] Real left System sidebar (not the 単 popout)
-- [x] Session row: lock, logout, reboot, sleep
-- [x] Mixer: mic / default source, not sink-only
-- [x] Motion tokens, morphing popouts
-
-
+- [x] Left System drawer
+- [x] Lock, logout, reboot, sleep
+- [x] Mic in the mixer
+- [x] Popout motion
 
 ## v1.5 — config
 
-Sparse overlay. Defaults in the shell. Pin only this machine.
-
-- [x] `~/.config/tanjun/config.json` via JsonAdapter; omit = auto
-- [x] Nested pins: clock zones, weather, backlight, keyboard, lock, theme hook
-- [x] Palette last-used in `~/.local/state/tanjun/`; vanilla hypr snippet
-
-
+- [x] `~/.config/tanjun/config.json`; omit = default
+- [x] Clock zones, weather, backlight, keyboard, lock, theme
+- [x] Last palette in `~/.local/state/tanjun/`
 
 ## v1.6 — launcher
 
-- [x] Rest card: weather card, art + transport, not four labels
+- [x] Rest card: weather, art, transport
 - [x] Prefixes: `=` calc, `;` clipboard, `?` web, `/` act, `@` music
-
-
 
 ## v1.7 — system
 
-Host facts and a real player in the left System drawer.
-
-- [x] RAM + CPU
-- [x] Running processes
-- [x] Internet speed
-- [x] Distro, kernel, username
-- [x] Audio player with art preview (not a one-line label)
+- [x] RAM, CPU, processes, net speed
+- [x] Distro, kernel, user
+- [x] Player with art
 
 ## v1.8 — color
 
-- [x] Theme singleton paints kitty / hypr / lock / wallpaper; drop the old switcher script
-- [x] Wallpaper-driven accent **plus a lock** so the palette cannot jump
-- [x] Notification actions, not dismiss-only
-- [x] Wallpaper picker; choosing a file paints it and runs From wall
+- [x] Theme paints kitty / compositor / lock / wallpaper
+- [x] From wall + lock so the palette stays
+- [x] Notification actions
+- [x] Wallpaper picker
 
-## v1.9 — polish
+## v1.9
 
-No new surfaces. Tighten what shipped.
-
-- [x] Motion, layout, and poll cost
-- [x] Visual consistency across bar, popouts, drawer
-- [x] Dead paths, leftover jank
+- [x] Motion and poll cost
+- [x] Same look on bar, popouts, drawer
+- [x] Dead paths
 
 ## v2.0 — settings
 
-A settings surface, not more bar polish. Summon it; live pins in `config.json`.
+- [x] Settings panel, Super+Ctrl+,
+- [x] Fonts: UI, Japanese, icons, size
+- [x] Clock, weather, lock, backlight, keyboard
+- [x] Color: From wall + presets
+- [x] Search, Ctrl+K
 
-- [x] In-shell settings panel (rail + pages), IPC / Super+Ctrl+, / 単
-- [x] Font picker: UI, Japanese, icons; size; fc-list
-- [x] Clock, weather, session lock, backlight / keyboard
-- [x] Color page: From wall + named presets with swatches (same Theme singleton)
-- [x] Lookup: search box, Ctrl+K, jump across pages
+## v2.1
 
-## v2.1 — face
+- [x] Popout / rest card / settings / drawer each have their own layout
+- [x] Rest card: clock, weather, track
+- [x] Popouts grow from the icon
+- [x] OSD and toasts match
 
-単純. Unmix the cloned cards. Same rice (frame off, 1px, JetBrains, 単). No new look, no second skin system.
+## v2.2
 
-- [x] One recipe per job: popout from the glyph, launcher rest card, settings panel, drawer strip — stop cloning the same accent-bordered rect
-- [x] Rest card is one object: clock, weather, track. Not boxes inside boxes. Prefixes stay a quiet legend
-- [x] Motion from the glyph you touched, not generic scale from the corner
-- [x] OSD and toasts speak the same language. No leftover bars
-
-## v2.2 — desktop
-
-One clone. Hyprland and the shell ship together. Screen is a settings page.
-
-- [x] Compositor in `hyprland/` (one module per concern); Quickshell in `shell/`. `scripts/setup.sh` plants XDG links on any Arch + Hyprland
-- [x] Screen page: output, mode, scale, gamma (hyprsunset). Mode/scale persist in `~/.config/hypr/monitors.lua`
+- [x] `hyprland/` + `shell/`; `scripts/setup.sh`
+- [x] Settings → screen: output, mode, scale, gamma
 
 ## v2.3 — lock
 
-The host is the locker. Super+L, idle, and sleep.
-
-- [x] Session lock in the Quickshell process (wallpaper, clock, 単, password, fingerprint)
-- [x] Super+L / session row / `/lock`; hypridle lock_cmd
+- [x] Lock in Quickshell (wallpaper, clock, 単, password, fingerprint)
+- [x] Super+L, idle, sleep
 
 ## v2.4 — compositors
 
-The host is a shell. Hyprland and niri are rice under `compositors/`.
+- [x] `compositors/hyprland/` and `compositors/niri/`
+- [x] niri: binds, autostart, idle, screens, wallpaper
+- [x] setup picker; `--hyprland` / `--niri`
 
-- [x] `hyprland/` moved to `compositors/hyprland/`
-- [x] niri rice: binds, autostart, idle, screens, wallpaper
-- [x] `scripts/setup.sh` attaches the shell always; compositor picker TUI; `--hyprland` / `--niri` skip it
+## v2.5 — niri menus
 
+- [x] Popouts and System: click-away + card overlay; Escape closes
+- [x] niri IPC `--any-display`; wallpaper in overview backdrop

@@ -25,5 +25,5 @@ input {
 }
 
 switch-events {
-    lid-close { spawn "quickshell" "ipc" "call" "tanjun" "lock"; }
+    lid-close { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "lock"; }
 }

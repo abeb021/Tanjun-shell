@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Super+Shift+R: restart the host. niri reloads its own config on save.
+# Super+Shift+R: restart Quickshell. niri reloads its config on save.
 killall -q swayidle 2>/dev/null || true
 killall -q quickshell 2>/dev/null || true
 for _ in 1 2 3 4 5 6 7 8 9 10; do

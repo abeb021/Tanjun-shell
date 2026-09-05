@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Super+Shift+R: reload Hyprland, then bring the host back.
+# Super+Shift+R: reload Hyprland, then restart Quickshell.
 # Host is ~/.config/quickshell (install plants that link). No clone path.
 hyprctl reload >/dev/null 2>&1 || true
 killall -q hypridle 2>/dev/null || true

@@ -4,6 +4,7 @@ import "../../services"
 Item {
     id: root
     property string popoutName: ""
+    property bool drawer: false
     property bool active: false
     property bool mark: false
     implicitHeight: Theme.barHeight
@@ -44,6 +45,7 @@ Item {
 
     MouseArea {
         id: mouse
+        z: 2
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -69,7 +71,9 @@ Item {
     signal wheeled(int steps)
 
     onClicked: {
-        if (popoutName.length)
+        if (drawer)
+            ShellState.toggleSidebar();
+        else if (popoutName.length)
             ShellState.togglePopout(popoutName, root);
     }
 

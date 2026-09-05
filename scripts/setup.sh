@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Attach Tanjun: the Quickshell host always, compositor rice by choice.
-# Clone can live anywhere. This script never kills processes.
+# Link Quickshell and the chosen compositor config. Does not kill processes.
 #
 #   bash scripts/setup.sh              # pick compositor (tty) or detect
 #   bash scripts/setup.sh --hyprland
@@ -306,12 +305,12 @@ install_pkgs() {
 
 attach_hypr() {
   mkdir -p "$HYPR/hyprland/themes/wall"
-  if [[ -f "$STUB" ]] && ! grep -q "Tanjun compositor" "$STUB"; then
+  if [[ -f "$STUB" ]] && ! grep -q "Tanjun" "$STUB"; then
     cp "$STUB" "$STUB.bak-before-tanjun"
     echo "backup $STUB.bak-before-tanjun"
   fi
   cat > "$STUB" <<'EOF'
--- Tanjun compositor. Do not edit this stub.
+-- Tanjun. Monitors: ~/.config/hypr/monitors.lua
 local home = os.getenv("HOME") or ""
 local data = os.getenv("XDG_DATA_HOME") or (home .. "/.local/share")
 dofile(data .. "/tanjun/compositors/hyprland/hyprland.lua")
@@ -341,13 +340,13 @@ EOF
 attach_niri() {
   mkdir -p "$NIRI"
   local stub="$NIRI/config.kdl"
-  if [[ -f "$stub" ]] && ! grep -q "Tanjun compositor" "$stub"; then
+  if [[ -f "$stub" ]] && ! grep -q "Tanjun" "$stub"; then
     cp "$stub" "$stub.bak-before-tanjun"
     echo "backup $stub.bak-before-tanjun"
   fi
   link "$ROOT/compositors/niri" "$NIRI/tanjun" || true
   cat > "$stub" <<'EOF'
-// Tanjun compositor. Do not edit this stub.
+// Tanjun. Outputs: output.kdl
 include "tanjun/config.kdl"
 include "output.kdl"
 EOF

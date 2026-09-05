@@ -11,75 +11,79 @@ Scope {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
-            id: barWin
+        Scope {
+            id: desk
             required property var modelData
-            screen: modelData
-            color: Theme.bg
-            implicitHeight: Theme.barHeight
 
-            WlrLayershell.namespace: "tanjun-bar"
-            WlrLayershell.layer: WlrLayer.Top
+            PanelWindow {
+                id: barWin
+                screen: desk.modelData
+                color: Theme.bg
+                implicitHeight: Theme.barHeight
 
-            anchors {
-                top: true
-                left: true
-                right: true
-            }
+                WlrLayershell.namespace: "tanjun-bar"
+                WlrLayershell.layer: WlrLayer.Top
 
-            Row {
-                id: left
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-
-                LogoBtn {
-                    id: logoBtn
-                }
-                Workspaces {}
-            }
-
-            ClockBtn {
-                id: clockBtn
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Row {
-                id: right
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-
-                LayoutBtn {}
-                AudioBtn {
-                    id: audioBtn
-                }
-                NetBtn {
-                    id: netBtn
-                }
-                NotifyBtn {
-                    id: notifyBtn
-                }
-                BatteryBtn {
-                    id: batteryBtn
+                anchors {
+                    top: true
+                    left: true
+                    right: true
                 }
 
-                Repeater {
-                    model: SystemTray.items
-                    delegate: BarButton {
-                        required property var modelData
-                        implicitWidth: 22
-                        onClicked: modelData.activate()
-                        onRightClicked: modelData.secondaryActivate()
-                        Image {
-                            source: modelData.icon
-                            sourceSize.width: 16
-                            sourceSize.height: 16
-                            width: 16
-                            height: 16
-                            asynchronous: true
-                            cache: true
+                Row {
+                    id: left
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    LogoBtn {
+                        id: logoBtn
+                    }
+                    Workspaces {}
+                }
+
+                ClockBtn {
+                    id: clockBtn
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Row {
+                    id: right
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    LayoutBtn {}
+                    AudioBtn {
+                        id: audioBtn
+                    }
+                    NetBtn {
+                        id: netBtn
+                    }
+                    NotifyBtn {
+                        id: notifyBtn
+                    }
+                    BatteryBtn {
+                        id: batteryBtn
+                    }
+
+                    Repeater {
+                        model: SystemTray.items
+                        delegate: BarButton {
+                            required property var modelData
+                            implicitWidth: 22
+                            onClicked: modelData.activate()
+                            onRightClicked: modelData.secondaryActivate()
+                            Image {
+                                source: modelData.icon
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                                width: 16
+                                height: 16
+                                asynchronous: true
+                                cache: true
+                            }
                         }
                     }
                 }
@@ -90,8 +94,8 @@ Scope {
                 barWindow: barWin
                 anchorItem: clockBtn
                 growFrom: Item.Top
-                implicitWidth: cal.implicitWidth
-                implicitHeight: cal.implicitHeight
+                cardW: cal.implicitWidth
+                cardH: cal.implicitHeight
                 CalendarPop {
                     id: cal
                 }
@@ -102,8 +106,8 @@ Scope {
                 barWindow: barWin
                 anchorItem: audioBtn
                 growFrom: Item.TopRight
-                implicitWidth: ap.implicitWidth
-                implicitHeight: ap.implicitHeight
+                cardW: ap.implicitWidth
+                cardH: ap.implicitHeight
                 AudioPop {
                     id: ap
                 }
@@ -114,8 +118,8 @@ Scope {
                 barWindow: barWin
                 anchorItem: netBtn
                 growFrom: Item.TopRight
-                implicitWidth: np.implicitWidth
-                implicitHeight: np.implicitHeight
+                cardW: np.implicitWidth
+                cardH: np.implicitHeight
                 NetPop {
                     id: np
                 }
@@ -126,8 +130,8 @@ Scope {
                 barWindow: barWin
                 anchorItem: notifyBtn
                 growFrom: Item.TopRight
-                implicitWidth: ntp.implicitWidth
-                implicitHeight: ntp.implicitHeight
+                cardW: ntp.implicitWidth
+                cardH: ntp.implicitHeight
                 NotifyPop {
                     id: ntp
                 }
@@ -138,8 +142,8 @@ Scope {
                 barWindow: barWin
                 anchorItem: batteryBtn
                 growFrom: Item.TopRight
-                implicitWidth: bp.implicitWidth
-                implicitHeight: bp.implicitHeight
+                cardW: bp.implicitWidth
+                cardH: bp.implicitHeight
                 BatteryPop {
                     id: bp
                 }
@@ -147,7 +151,6 @@ Scope {
 
             Sidebar {
                 barWindow: barWin
-                anchorItem: logoBtn
             }
         }
     }

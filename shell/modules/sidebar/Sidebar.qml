@@ -1,16 +1,16 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
+import Quickshell.Wayland
 import "../widgets"
 import "../../services"
 
-PopupWindow {
+PanelWindow {
     id: win
 
     required property var barWindow
-    required property Item anchorItem
 
     readonly property bool open: ShellState.sidebarOpen
+    readonly property bool shown: open || body.opacity > 0.02
     readonly property int maxH: {
         const s = barWindow && barWindow.screen;
         if (!s)
@@ -18,35 +18,31 @@ PopupWindow {
         return Math.max(240, s.height - Theme.barHeight - 8);
     }
 
-    visible: open || body.opacity > 0.02
-    grabFocus: open
+    screen: barWindow ? barWindow.screen : null
+    visible: shown
     color: "transparent"
-    implicitWidth: 320
-    implicitHeight: maxH
-    anchor.window: barWindow
-    anchor.item: anchorItem
-    anchor.edges: Edges.Bottom | Edges.Left
-    anchor.gravity: Edges.Bottom | Edges.Right
-    anchor.adjustment: PopupAdjustment.Slide
+    exclusionMode: ExclusionMode.Ignore
+    exclusiveZone: -1
+    focusable: true
+
+    WlrLayershell.namespace: "tanjun-sidebar"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    anchors {
+        top: true
+        left: true
+        right: true
+        bottom: true
+    }
 
     onOpenChanged: {
         if (open)
-            escSink.forceActiveFocus();
+            body.forceActiveFocus();
         else {
             body.cpuOpen = false;
             body.presetsOpen = false;
             body.wallsOpen = false;
-        }
-    }
-
-    Item {
-        id: escSink
-        focus: true
-        Keys.onEscapePressed: {
-            if (body.wallsOpen)
-                body.wallsOpen = false;
-            else
-                ShellState.closeMenus();
         }
     }
 
@@ -61,19 +57,28 @@ PopupWindow {
         }
     }
 
-    HyprlandFocusGrab {
-        active: Compositor.isHypr && win.open
-        windows: [win]
-        onCleared: if (win.open && ShellState.sidebarOpen)
-            ShellState.closeMenus()
+    MouseArea {
+        anchors.fill: parent
+        enabled: win.open
+        onClicked: ShellState.closeMenus()
     }
 
     Item {
         id: body
-        anchors.fill: parent
+        x: 0
+        y: Theme.barHeight
+        width: 320
+        height: win.maxH
         transformOrigin: Item.TopLeft
         opacity: open ? 1 : 0
         scale: open ? 1 : Motion.popFrom
+        focus: true
+        Keys.onEscapePressed: {
+            if (body.wallsOpen)
+                body.wallsOpen = false;
+            else
+                ShellState.closeMenus();
+        }
                 property bool cpuOpen: false
                 property bool netOpen: true
                 property bool presetsOpen: false
@@ -543,3 +548,4 @@ PopupWindow {
                 }
             }
         }
+

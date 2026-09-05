@@ -7,6 +7,17 @@ Singleton {
 
     property string popout: ""
     property var popoutAnchor: null
+    property string popoutScreen: ""
+    property string sidebarScreen: ""
+
+    function screenNameOf(item) {
+        try {
+            const win = item && item.QsWindow ? item.QsWindow.window : null;
+            if (win && win.screen && win.screen.name)
+                return `${win.screen.name}`;
+        } catch (e) {}
+        return Compositor.focusedOutput;
+    }
 
     property bool launcherOpen: false
     property bool clipboardOpen: false
@@ -34,12 +45,14 @@ Singleton {
         sidebarOpen = false;
         settingsOpen = false;
         popoutAnchor = anchor ?? popoutAnchor;
+        popoutScreen = screenNameOf(anchor);
         popout = name;
     }
 
     function closePopout() {
         popout = "";
         popoutAnchor = null;
+        popoutScreen = "";
     }
 
     function closeMenus() {
@@ -49,6 +62,7 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        sidebarScreen = "";
     }
 
     function toggleSidebar() {

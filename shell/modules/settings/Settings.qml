@@ -70,7 +70,7 @@ Scope {
 
             WlrLayershell.namespace: "tanjun-settings"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: (open && isFocused) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: (open && isFocused) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             anchors {
                 top: true
@@ -305,7 +305,7 @@ Scope {
                                     width: parent.width
                                     spacing: 8
                                     BarText {
-                                        text: "live on the shell. omit a pin and the default stays."
+                                        text: "empty = default"
                                         sub: true
                                         px: 11
                                         family: Config.defaultFontUi
@@ -558,7 +558,7 @@ Scope {
                                     width: parent.width
                                     spacing: 8
                                     BarText {
-                                        text: "Super+L locks in this process. Wallpaper, clock, password, fingerprint. Idle and sleep call the same lock."
+                                        text: "Super+L. Idle and sleep use this lock."
                                         sub: true
                                         px: 11
                                         width: parent.width
@@ -571,7 +571,7 @@ Scope {
                                     width: parent.width
                                     spacing: 8
                                     BarText {
-                                        text: "empty = auto (sysfs backlight, compositor keyboard)."
+                                        text: "empty = auto"
                                         sub: true
                                         px: 11
                                         width: parent.width
@@ -679,7 +679,7 @@ Scope {
                                         }
                                     }
                                     BarText {
-                                        text: "swatches are the live palette. pick a file from 単 · skins."
+                                        text: "wallpaper from 単 · skins"
                                         sub: true
                                         px: 11
                                         family: Config.defaultFontUi

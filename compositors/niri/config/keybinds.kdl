@@ -16,17 +16,17 @@ binds {
 
     Mod+Q { spawn "kitty"; }
     Mod+E { spawn "kitty" "--title=Yazi" "-e" "yazi"; }
-    Mod+A { spawn "quickshell" "ipc" "call" "tanjun" "toggleLauncher"; }
+    Mod+A hotkey-overlay-title="Launcher" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleLauncher"; }
 
     Print { screenshot; }
     Mod+Print { screenshot-window; }
     Alt+Print { screenshot-screen; }
 
     Mod+O { quit; }
-    Mod+L { spawn "quickshell" "ipc" "call" "tanjun" "lock"; }
-    Mod+P { spawn "quickshell" "ipc" "call" "tanjun" "lock"; }
+    Mod+L hotkey-overlay-title="Lock" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "lock"; }
+    Mod+P hotkey-overlay-title="Lock" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "lock"; }
 
-    Mod+V { spawn "quickshell" "ipc" "call" "tanjun" "toggleClipboard"; }
+    Mod+V hotkey-overlay-title="Clipboard" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleClipboard"; }
     Mod+Shift+V { spawn "sh" "-c" "cliphist wipe && notify-send Clipboard 'All clipboard history cleared'"; }
     Mod+Shift+R { spawn "sh" "-c" "exec \"$HOME/.local/share/tanjun/compositors/niri/scripts/reload-shell.sh\""; }
 
@@ -64,12 +64,12 @@ binds {
 
     Mod+B { spawn "sh" "-c" "exec \"$HOME/.local/share/tanjun/scripts/bluetooth.sh\""; }
 
-    Mod+Ctrl+A { spawn "quickshell" "ipc" "call" "tanjun" "toggleAudio"; }
-    Mod+Ctrl+W { spawn "quickshell" "ipc" "call" "tanjun" "toggleNetwork"; }
-    Mod+Ctrl+C { spawn "quickshell" "ipc" "call" "tanjun" "toggleCalendar"; }
-    Mod+Ctrl+B { spawn "quickshell" "ipc" "call" "tanjun" "toggleBattery"; }
-    Mod+Ctrl+N { spawn "quickshell" "ipc" "call" "tanjun" "toggleNotify"; }
-    Mod+Ctrl+S { spawn "quickshell" "ipc" "call" "tanjun" "toggleSidebar"; }
-Mod+Ctrl+comma { spawn "quickshell" "ipc" "call" "tanjun" "toggleSettings"; }
-    Mod+Ctrl+D { spawn "quickshell" "ipc" "call" "tanjun" "toggleDnd"; }
+    Mod+Ctrl+A hotkey-overlay-title="Audio" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleAudio"; }
+    Mod+Ctrl+W hotkey-overlay-title="Network" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleNetwork"; }
+    Mod+Ctrl+C hotkey-overlay-title="Calendar" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleCalendar"; }
+    Mod+Ctrl+B hotkey-overlay-title="Battery" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleBattery"; }
+    Mod+Ctrl+N hotkey-overlay-title="Notifications" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleNotify"; }
+    Mod+Ctrl+S hotkey-overlay-title="System" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleSidebar"; }
+    Mod+Ctrl+comma hotkey-overlay-title="Settings" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleSettings"; }
+    Mod+Ctrl+D hotkey-overlay-title="DND" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleDnd"; }
 }
