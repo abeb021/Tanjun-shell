@@ -70,21 +70,7 @@ Scope {
 
                     Repeater {
                         model: SystemTray.items
-                        delegate: BarButton {
-                            required property var modelData
-                            implicitWidth: 22
-                            onClicked: modelData.activate()
-                            onRightClicked: modelData.secondaryActivate()
-                            Image {
-                                source: modelData.icon
-                                sourceSize.width: 16
-                                sourceSize.height: 16
-                                width: 16
-                                height: 16
-                                asynchronous: true
-                                cache: true
-                            }
-                        }
+                        delegate: TrayBtn {}
                     }
                 }
             }
@@ -146,6 +132,18 @@ Scope {
                 cardH: bp.implicitHeight
                 BatteryPop {
                     id: bp
+                }
+            }
+
+            BarPop {
+                name: "tray"
+                barWindow: barWin
+                anchorItem: ShellState.popoutAnchor || batteryBtn
+                growFrom: Item.TopRight
+                cardW: tp.implicitWidth
+                cardH: tp.implicitHeight
+                TrayPop {
+                    id: tp
                 }
             }
 

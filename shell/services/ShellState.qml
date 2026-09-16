@@ -7,6 +7,7 @@ Singleton {
 
     property string popout: ""
     property var popoutAnchor: null
+    property var trayItem: null
     property string popoutScreen: ""
     property string sidebarScreen: ""
 
@@ -44,15 +45,34 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        if (name !== "tray")
+            trayItem = null;
         popoutAnchor = anchor ?? popoutAnchor;
         popoutScreen = screenNameOf(anchor);
         popout = name;
+    }
+
+    function openTray(item, anchor) {
+        if (popout === "tray" && trayItem === item) {
+            closePopout();
+            return;
+        }
+        trayItem = item;
+        launcherOpen = false;
+        clipboardOpen = false;
+        overviewOpen = false;
+        sidebarOpen = false;
+        settingsOpen = false;
+        popoutAnchor = anchor ?? popoutAnchor;
+        popoutScreen = screenNameOf(anchor);
+        popout = "tray";
     }
 
     function closePopout() {
         popout = "";
         popoutAnchor = null;
         popoutScreen = "";
+        trayItem = null;
     }
 
     function closeMenus() {

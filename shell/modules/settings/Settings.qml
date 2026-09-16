@@ -98,7 +98,7 @@ Scope {
             onPageChanged: restFlick.contentY = 0
 
             HyprlandFocusGrab {
-                active: Compositor.isHypr && win.open && win.isFocused
+                active: Compositor.grabFocus && win.open && win.isFocused
                 windows: [win]
                 onCleared: if (win.open && ShellState.settingsOpen)
                     ShellState.closeMenus()

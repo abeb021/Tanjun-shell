@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v2.5**
+Current: **v2.6**
 
 ## v1.0 — bar
 
@@ -100,3 +100,11 @@ Current: **v2.5**
 
 - [x] Popouts and System: click-away + card overlay; Escape closes
 - [x] niri IPC `--any-display`; wallpaper in overview backdrop
+
+## v2.6
+
+- [x] Right-click tray icons for app actions
+- [x] Mouse wheel opens the app list and moves the selection
+- [x] Bar clicks switch desks (lua dispatch)
+- [x] Widgets call `Compositor` only. Hyprland and niri each implement that API in `shell/services/comp/`. No `if niri` in the bar, launcher, or settings.
+- [x] `bash tests/run.sh` — contract checks; score is success

@@ -100,6 +100,18 @@ Scope {
                     onClicked: {}
                 }
 
+                WheelHandler {
+                    enabled: win.open
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    onWheel: event => {
+                        const dy = event.angleDelta.y !== 0 ? event.angleDelta.y : event.pixelDelta.y;
+                        if (!dy)
+                            return;
+                        win.nudgeList(dy > 0 ? -1 : 1);
+                        event.accepted = true;
+                    }
+                }
+
                 Column {
                     anchors.fill: parent
                     anchors.margins: Theme.pad
@@ -121,25 +133,8 @@ Scope {
                             color: Theme.fg
                             clip: true
                             Keys.onEscapePressed: ShellState.closeMenus()
-                            Keys.onDownPressed: {
-                                if (query.text.length === 0 && win.mode === "apps" && !win.browse) {
-                                    win.browse = true;
-                                    results.currentIndex = 0;
-                                    return;
-                                }
-                                if (results.count === 0)
-                                    return;
-                                results.currentIndex = Math.min(results.count - 1, results.currentIndex + 1);
-                            }
-                            Keys.onUpPressed: {
-                                if (win.browse && query.text.length === 0 && results.currentIndex <= 0) {
-                                    win.browse = false;
-                                    return;
-                                }
-                                if (results.count === 0)
-                                    return;
-                                results.currentIndex = Math.max(0, results.currentIndex - 1);
-                            }
+                            Keys.onDownPressed: win.nudgeList(1)
+                            Keys.onUpPressed: win.nudgeList(-1)
                             Keys.onReturnPressed: win.activate()
                             Keys.onEnterPressed: win.activate()
                             onTextChanged: {
@@ -165,6 +160,9 @@ Scope {
                         height: parent.height - 52
                         clip: true
                         reuseItems: true
+                        interactive: false
+                        boundsBehavior: Flickable.StopAtBounds
+                        highlightFollowsCurrentItem: true
                         model: ScriptModel {
                             objectProp: "key"
                             values: {
@@ -415,6 +413,27 @@ Scope {
                 if (!out.length)
                     out.push({ kind: "hint", key: "hint:apps", name: "no apps" });
                 return out;
+            }
+
+            function nudgeList(dir) {
+                if (query.text.length === 0 && win.mode === "apps" && !win.browse) {
+                    if (dir > 0) {
+                        win.browse = true;
+                        results.currentIndex = 0;
+                    }
+                    return;
+                }
+                if (results.count === 0)
+                    return;
+                if (dir > 0) {
+                    results.currentIndex = Math.min(results.count - 1, results.currentIndex + 1);
+                    return;
+                }
+                if (win.browse && query.text.length === 0 && results.currentIndex <= 0) {
+                    win.browse = false;
+                    return;
+                }
+                results.currentIndex = Math.max(0, results.currentIndex - 1);
             }
 
             function activate() {

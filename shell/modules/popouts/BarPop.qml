@@ -41,6 +41,8 @@ PanelWindow {
         Qt.callLater(root.place);
         morph.forceActiveFocus();
     }
+    onAnchorItemChanged: if (open)
+        place()
     onCardWChanged: if (open)
         place()
     onCardHChanged: if (open)

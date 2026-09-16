@@ -7,7 +7,7 @@ Column {
     spacing: 10
 
     BarText {
-        text: Compositor.isNiri ? "live on niri. scale and mode persist in ~/.config/niri/output.kdl." : "live on Hyprland. scale and mode persist in ~/.config/hypr/monitors.lua."
+        text: Compositor.screenNote
         role: "caption"
         family: Config.defaultFontUi
         width: parent.width
@@ -103,21 +103,21 @@ Column {
     }
 
     BarText {
-        visible: Compositor.isHypr
+        visible: Compositor.hasGamma
         text: "gamma  " + Screens.gamma
         px: 12
         family: Config.defaultFontUi
     }
 
     VolumeBar {
-        visible: Compositor.isHypr
+        visible: Compositor.hasGamma
         width: parent.width
         value: (Screens.gamma - 50) / 100
         onMoved: v => Screens.setGamma(50 + v * 100)
     }
 
     Row {
-        visible: Compositor.isHypr
+        visible: Compositor.hasGamma
         spacing: 6
         BarButton {
             implicitWidth: 72

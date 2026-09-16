@@ -97,9 +97,9 @@ Scope {
                 repeat: false
                 onTriggered: {
                     if (win.pendingWs > 0)
-                        Quickshell.execDetached(["hyprctl", "dispatch", `hl.dsp.focus({ workspace = ${win.pendingWs} })`]);
+                        Compositor.activateWorkspace(win.pendingWs);
                     if (win.pendingAddr.length)
-                        Quickshell.execDetached(["hyprctl", "dispatch", `hl.dsp.focus({ window = "address:${win.pendingAddr}" })`]);
+                        Compositor.focusWindow(win.pendingAddr);
                     win.pendingAddr = "";
                     win.pendingWs = 0;
                 }
