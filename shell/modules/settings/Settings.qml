@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "../widgets"
@@ -70,7 +69,12 @@ Scope {
 
             WlrLayershell.namespace: "tanjun-settings"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: (open && isFocused) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: keys.mode
+
+            KeyPrime {
+                id: keys
+                open: win.open && win.isFocused
+            }
 
             anchors {
                 top: true
@@ -96,13 +100,6 @@ Scope {
             }
 
             onPageChanged: restFlick.contentY = 0
-
-            HyprlandFocusGrab {
-                active: Compositor.grabFocus && win.open && win.isFocused
-                windows: [win]
-                onCleared: if (win.open && ShellState.settingsOpen)
-                    ShellState.closeMenus()
-            }
 
             Shortcut {
                 sequence: "Escape"

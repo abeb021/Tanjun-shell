@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import "../widgets"
 import "../../services"
 
 PanelWindow {
@@ -27,7 +28,12 @@ PanelWindow {
 
     WlrLayershell.namespace: "tanjun-pop-" + name
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: keys.mode
+
+    KeyPrime {
+        id: keys
+        open: root.open
+    }
 
     anchors {
         top: true

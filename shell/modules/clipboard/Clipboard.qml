@@ -21,7 +21,12 @@ Scope {
 
             WlrLayershell.namespace: "tanjun-clipboard"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: keys.mode
+
+            KeyPrime {
+                id: keys
+                open: ShellState.clipboardOpen
+            }
 
             anchors {
                 top: true

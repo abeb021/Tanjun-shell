@@ -7,7 +7,7 @@ Rectangle {
     border.width: 1
     border.color: Theme.hairline
     radius: Theme.radius
-    implicitWidth: 260
+    implicitWidth: 280
     implicitHeight: Math.min(col.implicitHeight + 16, 420)
     focus: true
     Keys.onEscapePressed: ShellState.closeMenus()
@@ -23,11 +23,29 @@ Rectangle {
         Column {
             id: col
             width: parent.width
-            spacing: 10
+            spacing: 8
 
             BarText {
                 text: Audio.muted ? "muted" : `${Math.round(Audio.volume * 100)}%`
                 px: 12
+            }
+
+            Repeater {
+                model: Audio.sinks
+                delegate: BarButton {
+                    required property var modelData
+                    implicitWidth: col.width
+                    implicitHeight: 24
+                    active: Audio.isCurrent(modelData, Audio.sink)
+                    onClicked: Audio.setSink(modelData)
+                    BarText {
+                        text: (Audio.isCurrent(modelData, Audio.sink) ? "●  " : "○  ") + Audio.deviceName(modelData)
+                        px: 12
+                        color: Audio.isCurrent(modelData, Audio.sink) ? Theme.accent : Theme.fg
+                        width: col.width - 16
+                        elide: Text.ElideRight
+                    }
+                }
             }
 
             VolumeBar {
@@ -47,13 +65,31 @@ Rectangle {
             }
 
             BarText {
-                visible: Audio.source
+                visible: Audio.sources.length > 0
                 text: Audio.micMuted ? "mic muted" : `mic  ${Math.round(Audio.micVolume * 100)}%`
                 px: 12
             }
 
+            Repeater {
+                model: Audio.sources
+                delegate: BarButton {
+                    required property var modelData
+                    implicitWidth: col.width
+                    implicitHeight: 24
+                    active: Audio.isCurrent(modelData, Audio.source)
+                    onClicked: Audio.setSource(modelData)
+                    BarText {
+                        text: (Audio.isCurrent(modelData, Audio.source) ? "●  " : "○  ") + Audio.deviceName(modelData)
+                        px: 12
+                        color: Audio.isCurrent(modelData, Audio.source) ? Theme.accent : Theme.fg
+                        width: col.width - 16
+                        elide: Text.ElideRight
+                    }
+                }
+            }
+
             VolumeBar {
-                visible: Audio.source
+                visible: Audio.sources.length > 0
                 width: parent.width
                 value: Audio.micVolume
                 fill: Audio.micMuted ? Theme.critical : Theme.accent
@@ -61,7 +97,7 @@ Rectangle {
             }
 
             BarButton {
-                visible: Audio.source
+                visible: Audio.sources.length > 0
                 implicitWidth: 72
                 onClicked: Audio.toggleMicMute()
                 BarText {

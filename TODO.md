@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v2.6**
+Current: **v2.7**
 
 ## v1.0 — bar
 
@@ -108,3 +108,7 @@ Current: **v2.6**
 - [x] Bar clicks switch desks (lua dispatch)
 - [x] Widgets call `Compositor` only. Hyprland and niri each implement that API in `shell/services/comp/`. No `if niri` in the bar, launcher, or settings.
 - [x] `bash tests/run.sh` — contract checks; score is success
+
+## v2.7 — mixer
+
+- [x] Mixer lists sinks and sources; click picks the device

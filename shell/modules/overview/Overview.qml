@@ -23,7 +23,12 @@ Scope {
 
             WlrLayershell.namespace: "tanjun-overview"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: (open && isFocused) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: keys.mode
+
+            KeyPrime {
+                id: keys
+                open: win.open && win.isFocused
+            }
 
             anchors {
                 top: true

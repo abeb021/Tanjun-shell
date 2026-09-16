@@ -12,17 +12,15 @@ Singleton {
 
     readonly property var tracked: {
         const out = [];
-        if (Pipewire.defaultAudioSink)
-            out.push(Pipewire.defaultAudioSink);
-        if (Pipewire.defaultAudioSource)
-            out.push(Pipewire.defaultAudioSource);
         const nodes = Pipewire.nodes.values;
-        if (nodes) {
-            for (let i = 0; i < nodes.length; i++) {
-                const n = nodes[i];
-                if (n && n.isStream)
-                    out.push(n);
-            }
+        if (!nodes)
+            return out;
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (!n)
+                continue;
+            if (n.isStream || n.audio)
+                out.push(n);
         }
         return out;
     }
@@ -46,6 +44,32 @@ Singleton {
     }
     readonly property bool micMuted: source?.audio?.muted ?? false
     readonly property string micLabel: micMuted ? "muted" : `${Math.round(micVolume * 100)}%`
+
+    readonly property var sinks: {
+        const nodes = Pipewire.nodes.values;
+        const out = [];
+        if (!nodes)
+            return out;
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (n && !n.isStream && n.isSink && n.audio && !hideSink(n))
+                out.push(n);
+        }
+        return out;
+    }
+
+    readonly property var sources: {
+        const nodes = Pipewire.nodes.values;
+        const out = [];
+        if (!nodes)
+            return out;
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (n && !n.isStream && !n.isSink && n.audio && !hideSource(n))
+                out.push(n);
+        }
+        return out;
+    }
 
     readonly property var streams: {
         const nodes = Pipewire.nodes.values;
@@ -71,6 +95,66 @@ Singleton {
             return;
         lastVolume = volume;
         ShellState.showOsd("volume", muted ? 0 : volume);
+    }
+
+    function deviceName(node) {
+        if (!node)
+            return "device";
+        return node.nickname || node.description || node.name || "device";
+    }
+
+    function hideSink(node) {
+        if (!node)
+            return true;
+        const nick = `${node.nickname || ""}`.toLowerCase();
+        const desc = `${node.description || ""}`.toLowerCase();
+        const name = `${node.name || ""}`.toLowerCase();
+        const t = `${nick} ${desc} ${name}`;
+        if (t.indexOf("headphone") >= 0)
+            return true;
+        if (/^hdmi\s*[2-9]$/.test(nick) || /^dp\s*[2-9]$/.test(nick))
+            return true;
+        if (!nick.length && /hdmi[2-9]/.test(name))
+            return true;
+        return false;
+    }
+
+    function hideSource(node) {
+        if (!node)
+            return true;
+        const t = `${node.nickname || ""} ${node.description || ""} ${node.name || ""}`.toLowerCase();
+        return t.indexOf("stereo microphone") >= 0;
+    }
+
+    function isCurrent(node, cur) {
+        if (!node || !cur)
+            return false;
+        if (node === cur)
+            return true;
+        return node.id !== undefined && node.id === cur.id;
+    }
+
+    function setDefaultNode(node) {
+        if (!node)
+            return;
+        const id = node.id;
+        if (id === undefined || id === null)
+            return;
+        Quickshell.execDetached(["wpctl", "set-default", `${id}`]);
+    }
+
+    function setSink(node) {
+        if (!node)
+            return;
+        Pipewire.preferredDefaultAudioSink = node;
+        setDefaultNode(node);
+    }
+
+    function setSource(node) {
+        if (!node)
+            return;
+        Pipewire.preferredDefaultAudioSource = node;
+        setDefaultNode(node);
     }
 
     function setVolume(v) {

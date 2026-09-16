@@ -182,7 +182,7 @@ Item {
 
     Process {
         id: layoutProc
-        command: ["bash", "-c", "hyprctl devices -j | python -c \"import json,sys; d=json.load(sys.stdin); ks=d.get('keyboards',[]); k=next((x for x in ks if x.get('main')), ks[0] if ks else {}); print(k.get('name',''))\""]
+        command: ["bash", "-c", "hyprctl devices -j | python -c \"import json,sys; d=json.load(sys.stdin); ks=d.get('keyboards',[]); k=next((x for x in ks if x.get('main')), ks[0] if ks else {}); print(k.get('active_keymap',''))\""]
         running: false
         stdout: StdioCollector {
             onStreamFinished: root.layoutName = text.trim()

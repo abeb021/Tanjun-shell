@@ -37,7 +37,7 @@ Singleton {
 
     function togglePopout(name, anchor) {
         if (popout === name) {
-            closePopout();
+            closeMenus();
             return;
         }
         launcherOpen = false;
@@ -54,7 +54,7 @@ Singleton {
 
     function openTray(item, anchor) {
         if (popout === "tray" && trayItem === item) {
-            closePopout();
+            closeMenus();
             return;
         }
         trayItem = item;
@@ -76,7 +76,10 @@ Singleton {
     }
 
     function closeMenus() {
-        closePopout();
+        popout = "";
+        popoutAnchor = null;
+        popoutScreen = "";
+        trayItem = null;
         launcherOpen = false;
         clipboardOpen = false;
         overviewOpen = false;
@@ -86,45 +89,58 @@ Singleton {
     }
 
     function toggleSidebar() {
+        if (sidebarOpen) {
+            closeMenus();
+            return;
+        }
         closePopout();
         launcherOpen = false;
         clipboardOpen = false;
         overviewOpen = false;
         settingsOpen = false;
-        sidebarOpen = !sidebarOpen;
+        sidebarOpen = true;
     }
 
     function toggleLauncher() {
+        if (launcherOpen) {
+            closeMenus();
+            return;
+        }
         closePopout();
         clipboardOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
-        if (!launcherOpen)
-            launcherReady = true;
-        launcherOpen = !launcherOpen;
+        launcherReady = true;
+        launcherOpen = true;
     }
 
     function toggleClipboard() {
+        if (clipboardOpen) {
+            closeMenus();
+            return;
+        }
         closePopout();
         launcherOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
-        if (!clipboardOpen)
-            clipboardReady = true;
-        clipboardOpen = !clipboardOpen;
+        clipboardReady = true;
+        clipboardOpen = true;
     }
 
     function toggleSettings() {
+        if (settingsOpen) {
+            closeMenus();
+            return;
+        }
         closePopout();
         launcherOpen = false;
         clipboardOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
-        if (!settingsOpen)
-            settingsReady = true;
-        settingsOpen = !settingsOpen;
+        settingsReady = true;
+        settingsOpen = true;
     }
 
     property int overviewNudge: 0

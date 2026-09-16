@@ -27,7 +27,12 @@ PanelWindow {
 
     WlrLayershell.namespace: "tanjun-sidebar"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: keys.mode
+
+    KeyPrime {
+        id: keys
+        open: win.open
+    }
 
     anchors {
         top: true
