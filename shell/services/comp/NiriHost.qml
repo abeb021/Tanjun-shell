@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 
 Item {
     id: root
@@ -13,8 +14,11 @@ Item {
     readonly property var gammaQuery: ["true"]
 
     signal applied
+    signal overviewWanted
 
     property var niriOccupied: ({})
+    property var niriIdToIdx: ({})
+    property var windowList: []
     property int niriFocusedId: 0
     property string niriFocusedOutput: ""
     property string layoutName: ""
@@ -22,6 +26,7 @@ Item {
     readonly property string focusedOutput: niriFocusedOutput
     readonly property int focusedWorkspaceId: niriFocusedId
     readonly property var occupied: niriOccupied
+    readonly property var windows: windowList
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
 
     function activateWorkspace(id) {
@@ -47,7 +52,59 @@ Item {
     }
 
     function toggleOverview() {
-        Quickshell.execDetached(["niri", "msg", "action", "toggle-overview"]);
+        overviewWanted();
+    }
+
+    function refreshWindows() {
+        if (!live)
+            return;
+        windowsProc.running = false;
+        Qt.callLater(() => {
+            windowsProc.running = true;
+        });
+    }
+
+    function setDpms(on) {
+        Quickshell.execDetached(["niri", "msg", "action", on ? "power-on-monitors" : "power-off-monitors"]);
+    }
+
+    function captureOf(appId, title) {
+        const list = ToplevelManager.toplevels.values;
+        if (!list)
+            return null;
+        const app = `${appId || ""}`;
+        const ttl = `${title || ""}`;
+        for (let i = 0; i < list.length; i++) {
+            const t = list[i];
+            if (`${t.appId}` === app && `${t.title}` === ttl)
+                return t;
+        }
+        for (let i = 0; i < list.length; i++) {
+            const t = list[i];
+            if (app.length && `${t.appId}` === app)
+                return t;
+        }
+        return null;
+    }
+
+    function ingestWindows(raw) {
+        const list = Array.isArray(raw) ? raw : (raw && raw.windows) || [];
+        const map = niriIdToIdx || {};
+        const out = [];
+        for (let i = 0; i < list.length; i++) {
+            const w = list[i];
+            const idx = Number(map[w.workspace_id]) || 0;
+            out.push({
+                title: `${w.title || ""}`,
+                appId: `${w.app_id || ""}`,
+                addr: `${w.id || ""}`,
+                workspaceId: idx,
+                output: `${w.output || ""}`,
+                capture: captureOf(w.app_id, w.title),
+                activated: !!w.is_focused
+            });
+        }
+        windowList = out;
     }
 
     function focusWindow(addr) {
@@ -65,11 +122,14 @@ Item {
         if (!list || !list.length)
             return;
         const occ = {};
+        const idMap = {};
         let focusId = 0;
         let focusOut = "";
         for (let i = 0; i < list.length; i++) {
             const ws = list[i];
             const idx = Number(ws.idx) || 0;
+            if (ws.id !== undefined)
+                idMap[ws.id] = idx;
             if (idx > 0 && idx <= 10)
                 occ[idx] = true;
             if (ws.is_focused) {
@@ -78,6 +138,7 @@ Item {
             }
         }
         niriOccupied = occ;
+        niriIdToIdx = idMap;
         if (focusId)
             niriFocusedId = focusId;
         if (focusOut.length)
@@ -100,6 +161,8 @@ Item {
             const ev = JSON.parse(s);
             if (ev.WorkspacesChanged && ev.WorkspacesChanged.workspaces)
                 ingestWorkspaces(ev.WorkspacesChanged.workspaces);
+            if (ev.WindowsChanged || ev.WindowOpenedOrChanged || ev.WindowClosed)
+                root.refreshWindows();
             if (ev.WorkspaceActivated && ev.WorkspaceActivated.focused) {
                 refreshProc.running = false;
                 Qt.callLater(() => {
@@ -192,6 +255,20 @@ Item {
     }
 
     Process {
+        id: windowsProc
+        command: ["niri", "msg", "--json", "windows"]
+        running: false
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                try {
+                    root.ingestWindows(JSON.parse(text));
+                } catch (e) {}
+            }
+        }
+    }
+
+    Process {
         id: refreshProc
         command: ["niri", "msg", "--json", "workspaces"]
         running: false
@@ -238,5 +315,6 @@ Item {
             return;
         refreshProc.running = true;
         layoutsProc.running = true;
+        windowsProc.running = true;
     }
 }

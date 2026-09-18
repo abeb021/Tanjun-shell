@@ -11,12 +11,16 @@ import "modules/clipboard"
 import "modules/overview"
 import "modules/settings"
 import "modules/lock"
+import "modules/polkit"
 
 ShellRoot {
+    property bool _idle: Idle.watching
+
     Bar {}
     Osd {}
     Toasts {}
     SessionLock {}
+    PolkitAsk {}
 
     LazyLoader {
         active: ShellState.launcherReady

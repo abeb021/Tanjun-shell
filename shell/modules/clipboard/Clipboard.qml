@@ -9,31 +9,12 @@ Scope {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
+        OverlayHost {
             required property var modelData
             screen: modelData
-            visible: ShellState.clipboardOpen || card.opacity > 0.02
-            color: "transparent"
-            exclusionMode: ExclusionMode.Ignore
-            focusable: true
-
-            readonly property bool open: ShellState.clipboardOpen
-
-            WlrLayershell.namespace: "tanjun-clipboard"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: keys.mode
-
-            KeyPrime {
-                id: keys
-                open: ShellState.clipboardOpen
-            }
-
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
-            }
+            open: ShellState.clipboardOpen
+            layerName: "tanjun-clipboard"
+            contentOpacity: card.opacity
 
             onOpenChanged: if (open)
                 clips.forceActiveFocus()
@@ -42,12 +23,6 @@ Scope {
                 sequence: "Escape"
                 enabled: open
                 onActivated: ShellState.closeMenus()
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                enabled: open
-                onClicked: ShellState.closeMenus()
             }
 
             Face {

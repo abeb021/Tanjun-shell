@@ -18,12 +18,14 @@ Singleton {
         id: niri
         live: !!Quickshell.env("NIRI_SOCKET")
         onApplied: root.monitorsDirty()
+        onOverviewWanted: ShellState.toggleOverview()
     }
 
     readonly property var host: niri.live ? niri : hypr
 
     readonly property int focusedWorkspaceId: host.focusedWorkspaceId
     readonly property var occupied: host.occupied
+    readonly property var windows: host.windows
     readonly property string focusedOutput: host.focusedOutput
     readonly property string layoutName: host.layoutName
     readonly property bool hasGamma: host.hasGamma
@@ -77,5 +79,11 @@ Singleton {
     }
     function readGamma(text) {
         return host.readGamma(text);
+    }
+    function setDpms(on) {
+        host.setDpms(on);
+    }
+    function refreshWindows() {
+        host.refreshWindows();
     }
 }

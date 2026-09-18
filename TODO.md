@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v2.9**
+Current: **v3.0**
 
 ## v1.0 — bar
 
@@ -126,3 +126,13 @@ Current: **v2.9**
 - [x] Lock uses a still frame; video pauses while locked
 - [x] Login restores the last still or video
 - [x] Pick a wall with pull colors, or keep the current palette and change only the wallpaper
+
+## v3.0 — host
+
+- [x] Settings, clipboard, and overview use the same overlay host (bar hole, key prime, other-output dismiss)
+- [x] Overview talks to `Compositor` only; Super+Tab lists windows on niri too
+- [x] Mixer and net lists take arrows / hjkl / Enter
+- [x] Polkit dialog lives in the shell
+- [x] Idle (dim / lock / DPMS / sleep) lives in the shell
+- [x] Mixer hides unplugged ports from PipeWire, not from nicknames
+

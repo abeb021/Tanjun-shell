@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../widgets"
 import "../../services"
@@ -9,54 +8,27 @@ Scope {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
+        OverlayHost {
             id: win
             required property var modelData
             screen: modelData
-            visible: ShellState.overviewOpen || stage.opacity > 0.02
-            color: "transparent"
-            exclusionMode: ExclusionMode.Ignore
-            focusable: true
+            open: ShellState.overviewOpen
+            layerName: "tanjun-overview"
+            grabKeys: Compositor.isScreenFocused(modelData)
+            contentOpacity: stage.opacity
+            dismissOthers: false
 
-            readonly property bool open: ShellState.overviewOpen
             readonly property bool isFocused: Compositor.isScreenFocused(modelData)
-
-            WlrLayershell.namespace: "tanjun-overview"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: keys.mode
-
-            KeyPrime {
-                id: keys
-                open: win.open && win.isFocused
-            }
-
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
-            }
-
-            readonly property var monitor: Hyprland.monitorFor(modelData)
+            readonly property string outputName: modelData && modelData.name ? `${modelData.name}` : ""
             readonly property var desks: {
                 if (!win.open)
                     return [];
-                const occupied = {};
-                const list = Hyprland.workspaces.values;
-                if (list) {
-                    for (let i = 0; i < list.length; i++) {
-                        const ws = list[i];
-                        if (ws && ws.id > 0 && ws.id <= 10)
-                            occupied[ws.id] = ws;
-                    }
-                }
+                const occ = Compositor.occupied || {};
                 const out = [];
                 for (let i = 1; i <= 10; i++) {
-                    const ws = occupied[i] || null;
-                    if (i <= 3 || ws)
+                    if (i <= 3 || occ[i])
                         out.push({
-                            id: i,
-                            ws: ws
+                            id: i
                         });
                 }
                 return out;
@@ -64,31 +36,25 @@ Scope {
             readonly property var windows: {
                 if (!win.open)
                     return [];
-                const mon = win.monitor;
-                const list = Hyprland.toplevels.values;
+                const list = Compositor.windows || [];
                 const out = [];
-                if (!list)
-                    return out;
                 for (let i = 0; i < list.length; i++) {
-                    const tl = list[i];
-                    if (!tl)
+                    const w = list[i];
+                    if (!w)
                         continue;
-                    const ipc = tl.lastIpcObject || {};
-                    if (ipc.hidden || ipc.mapped === false)
+                    const id = Number(w.workspaceId) || 0;
+                    if (id < 1 || id > 10)
                         continue;
-                    const ws = tl.workspace;
-                    if (!ws || ws.id < 1 || ws.id > 10)
+                    if (win.outputName.length && w.output && `${w.output}` !== win.outputName)
                         continue;
-                    if (mon && tl.monitor && tl.monitor !== mon)
-                        continue;
-                    out.push(tl);
+                    out.push(w);
                 }
                 out.sort((a, b) => {
-                    const wa = a.workspace ? a.workspace.id : 99;
-                    const wb = b.workspace ? b.workspace.id : 99;
+                    const wa = Number(a.workspaceId) || 99;
+                    const wb = Number(b.workspaceId) || 99;
                     if (wa !== wb)
                         return wa - wb;
-                    return (a.address || "").localeCompare(b.address || "");
+                    return `${a.addr || ""}`.localeCompare(`${b.addr || ""}`);
                 });
                 return out;
             }
@@ -137,24 +103,16 @@ Scope {
                 currentIndex = (currentIndex + delta % n + n) % n;
             }
 
-            function normAddr(a) {
-                const s = `${a || ""}`;
-                if (!s.length)
-                    return "";
-                return s.indexOf("0x") === 0 ? s : `0x${s}`;
-            }
-
             function activateCurrent() {
-                const tl = windows[currentIndex];
-                if (!tl) {
+                const w = windows[currentIndex];
+                if (!w) {
                     ShellState.closeMenus();
                     return;
                 }
-                const ipc = tl.lastIpcObject || {};
-                win.pendingAddr = win.normAddr(tl.address || ipc.address);
-                win.pendingWs = (tl.workspace && tl.workspace.id) ? tl.workspace.id : 0;
-                if (tl.wayland)
-                    tl.wayland.activate();
+                win.pendingAddr = `${w.addr || ""}`;
+                win.pendingWs = Number(w.workspaceId) || 0;
+                if (w.capture && w.capture.activate)
+                    w.capture.activate();
                 ShellState.closeMenus();
                 goTimer.restart();
             }
@@ -169,7 +127,7 @@ Scope {
             onOpenChanged: {
                 if (!open)
                     return;
-                Hyprland.refreshToplevels();
+                Compositor.refreshWindows();
                 selectActive();
                 if (windows.length > 1)
                     win.move(1);
@@ -201,11 +159,6 @@ Scope {
                         easing.type: win.open ? Motion.easeOut : Motion.easeIn
                     }
                 }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: ShellState.closeMenus()
             }
 
             Item {
@@ -248,10 +201,10 @@ Scope {
                                     const all = win.windows;
                                     const out = [];
                                     for (let i = 0; i < all.length; i++) {
-                                        const tl = all[i];
-                                        if (tl.workspace && tl.workspace.id === desk.deskId)
+                                        const w = all[i];
+                                        if (Number(w.workspaceId) === desk.deskId)
                                             out.push({
-                                                tl: tl,
+                                                tl: w,
                                                 index: i
                                             });
                                     }
@@ -274,7 +227,7 @@ Scope {
                                         anchors.centerIn: parent
                                         text: `${desk.deskId}`
                                         role: "title"
-                                        color: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id === desk.deskId ? Theme.accent : Theme.fgSub
+                                        color: Compositor.focusedWorkspaceId === desk.deskId ? Theme.accent : Theme.fgSub
                                     }
                                 }
 
@@ -321,6 +274,7 @@ Scope {
                 id: kb
                 anchors.fill: parent
                 focus: win.open && win.isFocused
+                Keys.priority: Keys.BeforeItem
                 Keys.onPressed: event => {
                     if (!win.open || !win.isFocused)
                         return;
@@ -328,10 +282,10 @@ Scope {
                     if (event.key === Qt.Key_Escape) {
                         ShellState.closeMenus();
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Right || event.key === Qt.Key_Down) {
+                    } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_J || event.key === Qt.Key_L) {
                         win.move(shift ? -1 : 1);
                         event.accepted = true;
-                    } else if (event.key === Qt.Key_Backtab || event.key === Qt.Key_Left || event.key === Qt.Key_Up) {
+                    } else if (event.key === Qt.Key_Backtab || event.key === Qt.Key_Left || event.key === Qt.Key_Up || event.key === Qt.Key_K || event.key === Qt.Key_H) {
                         win.move(-1);
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {

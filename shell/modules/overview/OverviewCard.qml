@@ -19,8 +19,7 @@ Rectangle {
         const t = client.title || "";
         if (t.length)
             return t;
-        const o = client.lastIpcObject || {};
-        return o.class || "";
+        return client.appId || "";
     }
 
     width: 280
@@ -45,7 +44,7 @@ Rectangle {
             ScreencopyView {
                 id: preview
                 anchors.centerIn: parent
-                captureSource: ShellState.overviewOpen && root.client ? root.client.wayland : null
+                captureSource: ShellState.overviewOpen && root.client ? root.client.capture : null
                 live: ShellState.overviewOpen
                 constraintSize.width: parent.width
                 constraintSize.height: parent.height

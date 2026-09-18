@@ -56,4 +56,5 @@ def register(s) -> None:
     overview = read(SHELL / "modules" / "overview" / "Overview.qml")
     s.has("overview activateWorkspace", overview, "Compositor.activateWorkspace")
     s.has("overview focusWindow", overview, "Compositor.focusWindow")
-    s.has("niri idle lock", read(COMP / "niri" / "scripts" / "idle.sh"), "tanjun lock")
+    s.has("overview compositor windows", overview, "Compositor.windows")
+    s.has("niri idle in shell", read(SHELL / "services" / "Idle.qml"), "IdleMonitor")

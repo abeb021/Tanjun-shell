@@ -54,3 +54,5 @@ def register(s) -> None:
     s.has("theme set wall or set", theme, 'Config.theme.sampleWall ? "set" : "wall"')
     s.has("sidebar colors keep", side, "colors · keep")
     s.has("picker colors keep", pick, "colors · keep")
+    settings = read(SHELL / "modules" / "settings" / "Settings.qml")
+    s.has("settings colors keep", settings, "colors · keep")

@@ -13,6 +13,7 @@ def register(s) -> None:
             s.lacks(f"face no isHypr {rel}", text, "isHypr")
             s.lacks(f"face no NIRI_SOCKET {rel}", text, "NIRI_SOCKET")
             s.lacks(f"face no HYPRLAND_INSTANCE {rel}", text, "HYPRLAND_INSTANCE_SIGNATURE")
+            s.lacks(f"face no Hyprland import {rel}", text, "import Quickshell.Hyprland")
         s.lacks(f"no isNiri leak {rel}", text, "Compositor.isNiri")
         s.lacks(f"no isHypr leak {rel}", text, "Compositor.isHypr")
 
@@ -83,7 +84,7 @@ def register(s) -> None:
     s.has("screens hasGamma", read(SHELL / "services" / "Screens.qml"), "Compositor.hasGamma")
     s.has("screen page note", read(SHELL / "modules" / "settings" / "ScreenPage.qml"), "Compositor.screenNote")
     s.has("screen page gamma cap", read(SHELL / "modules" / "settings" / "ScreenPage.qml"), "Compositor.hasGamma")
-    s.has("settings key prime", read(SHELL / "modules" / "settings" / "Settings.qml"), "KeyPrime")
+    s.has("settings overlay host", read(SHELL / "modules" / "settings" / "Settings.qml"), "OverlayHost")
     s.lacks("screen page no isNiri", read(SHELL / "modules" / "settings" / "ScreenPage.qml"), "isNiri")
     s.exists(COMP / "hyprland" / "hyprland.lua")
     s.exists(COMP / "niri" / "config.kdl")

@@ -39,6 +39,39 @@ Item {
         return out;
     }
 
+    readonly property var windows: {
+        if (!live)
+            return [];
+        const list = Hyprland.toplevels.values;
+        const out = [];
+        if (!list)
+            return out;
+        for (let i = 0; i < list.length; i++) {
+            const tl = list[i];
+            if (!tl)
+                continue;
+            const ipc = tl.lastIpcObject || {};
+            if (ipc.hidden || ipc.mapped === false)
+                continue;
+            const ws = tl.workspace;
+            const id = ws && ws.id ? ws.id : 0;
+            if (id < 1 || id > 10)
+                continue;
+            const mon = tl.monitor;
+            const addr = `${tl.address || ipc.address || ""}`;
+            out.push({
+                title: `${tl.title || ipc.title || ""}`,
+                appId: `${ipc.class || ""}`,
+                addr: addr.indexOf("0x") === 0 || !addr.length ? addr : `0x${addr}`,
+                workspaceId: id,
+                output: mon && mon.name ? `${mon.name}` : "",
+                capture: tl.wayland || null,
+                activated: !!tl.activated
+            });
+        }
+        return out;
+    }
+
     property string layoutName: ""
 
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
@@ -73,6 +106,15 @@ Item {
 
     function toggleOverview() {
         overviewWanted();
+    }
+
+    function refreshWindows() {
+        if (live)
+            Hyprland.refreshToplevels();
+    }
+
+    function setDpms(on) {
+        Quickshell.execDetached(["hyprctl", "dispatch", "dpms", on ? "on" : "off"]);
     }
 
     function focusWindow(addr) {

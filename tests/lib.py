@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,6 +42,8 @@ HOST_FUNCS = (
     "setGamma",
     "identityGamma",
     "readGamma",
+    "setDpms",
+    "refreshWindows",
 )
 
 HOST_PROPS = (
@@ -54,6 +57,7 @@ HOST_PROPS = (
     "focusedWorkspaceId",
     "occupied",
     "layoutName",
+    "windows",
 )
 
 IPC = (
@@ -133,3 +137,15 @@ def balanced(text: str) -> bool:
 
 def has_cyrillic(text: str) -> bool:
     return any(ord(c) in CYRILLIC for c in text)
+
+
+def bash_array(text: str, name: str) -> list[str]:
+    m = re.search(rf"^{re.escape(name)}=\((.*?)\)", text, re.M | re.S)
+    if not m:
+        return []
+    out: list[str] = []
+    for line in m.group(1).splitlines():
+        raw = line.split("#", 1)[0].strip()
+        if raw:
+            out.extend(raw.split())
+    return out

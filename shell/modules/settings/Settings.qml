@@ -10,16 +10,15 @@ Scope {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
+            OverlayHost {
             id: win
             required property var modelData
             screen: modelData
-            visible: ShellState.settingsOpen || card.opacity > 0.02
-            color: "transparent"
-            exclusionMode: ExclusionMode.Ignore
-            focusable: true
+            open: ShellState.settingsOpen
+            layerName: "tanjun-settings"
+            grabKeys: Compositor.isScreenFocused(modelData)
+            contentOpacity: card.opacity
 
-            readonly property bool open: ShellState.settingsOpen
             readonly property bool isFocused: Compositor.isScreenFocused(modelData)
             property string page: "type"
             property string face: "ui"
@@ -44,7 +43,8 @@ Scope {
                     { title: "scale", sub: "screen", page: "screen", hay: "scale 1.2 fractional scaling monitor" },
                     { title: "gamma", sub: "screen", page: "screen", hay: "gamma hyprsunset night identity" },
                     { title: "color", sub: "page", page: "color", hay: "color theme palette preset skin" },
-                    { title: "From wall", sub: "color", page: "color", kind: "wall", name: "wall", hay: "from wall wallpaper accent sample" }
+                    { title: "From wall", sub: "color", page: "color", kind: "wall", name: "wall", hay: "from wall wallpaper accent sample" },
+                    { title: "keep palette", sub: "color", page: "color", hay: "keep palette wallpaper colors pull sample" }
                 ];
                 const p = Theme.presets;
                 for (let i = 0; i < p.length; i++) {
@@ -66,22 +66,6 @@ Scope {
             property string weatherDraft: Config.services.weatherCity
             property string blDraft: Config.services.backlight
             property string kbDraft: Config.services.keyboard
-
-            WlrLayershell.namespace: "tanjun-settings"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: keys.mode
-
-            KeyPrime {
-                id: keys
-                open: win.open && win.isFocused
-            }
-
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
-            }
 
             onOpenChanged: if (open) {
                 page = "type";
@@ -123,12 +107,6 @@ Scope {
                 sequence: "Ctrl+F"
                 enabled: open
                 onActivated: find.forceActiveFocus()
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                enabled: open
-                onClicked: ShellState.closeMenus()
             }
 
             Face {
@@ -651,6 +629,19 @@ Scope {
                                     visible: win.page === "color"
                                     width: parent.width
                                     spacing: 10
+                                    BarButton {
+                                        implicitWidth: parent.width
+                                        implicitHeight: 28
+                                        active: Config.theme.sampleWall
+                                        onClicked: {
+                                            Config.theme.sampleWall = !Config.theme.sampleWall;
+                                            Config.writeSparse();
+                                        }
+                                        BarText {
+                                            text: Config.theme.sampleWall ? "colors · pull" : "colors · keep"
+                                            px: 12
+                                        }
+                                    }
                                     SkinChip {
                                         pal: ({
                                             label: "From wall",
@@ -676,7 +667,7 @@ Scope {
                                         }
                                     }
                                     BarText {
-                                        text: "wallpaper from 単 · skins"
+                                        text: Config.theme.sampleWall ? "pick a wall and pull colors" : "pick a wall, keep this palette"
                                         sub: true
                                         px: 11
                                         family: Config.defaultFontUi

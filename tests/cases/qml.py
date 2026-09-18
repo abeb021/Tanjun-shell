@@ -35,6 +35,7 @@ def register(s) -> None:
         "Motion",
         "Launches",
         "Screens",
+        "Idle",
         "Lock",
     ):
         s.has(f"qmldir {name}", qmldir, f"singleton {name}")

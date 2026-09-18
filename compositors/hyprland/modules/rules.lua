@@ -56,6 +56,7 @@ for _, ns in ipairs({
     "tanjun-clipboard",
     "tanjun-overview",
     "tanjun-settings",
+    "tanjun-polkit",
     "tanjun-osd",
     "tanjun-toast",
 }) do
