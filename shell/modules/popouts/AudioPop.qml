@@ -3,6 +3,7 @@ import "../widgets"
 import "../../services"
 
 Rectangle {
+    id: root
     color: Theme.surface
     border.width: 1
     border.color: Theme.hairline
@@ -10,15 +11,48 @@ Rectangle {
     implicitWidth: 280
     implicitHeight: Math.min(col.implicitHeight + 16, 420)
     focus: true
-    Keys.onEscapePressed: ShellState.closeMenus()
 
-    Flickable {
+    readonly property var picks: {
+        const out = [];
+        const sinks = Audio.sinks || [];
+        for (let i = 0; i < sinks.length; i++)
+            out.push({
+                kind: "sink",
+                node: sinks[i]
+            });
+        const src = Audio.sources || [];
+        for (let i = 0; i < src.length; i++)
+            out.push({
+                kind: "source",
+                node: src[i]
+            });
+        return out;
+    }
+
+    KeyCatcher {
+        id: catcher
+        anchors.fill: parent
+        focus: true
+        count: root.picks.length
+        onCancel: ShellState.closeMenus()
+        onPick: i => {
+            const it = root.picks[i];
+            if (!it)
+                return;
+            if (it.kind === "sink")
+                Audio.setSink(it.node);
+            else
+                Audio.setSource(it.node);
+        }
+
+        Flickable {
         anchors.fill: parent
         anchors.margins: 10
         contentWidth: width
         contentHeight: col.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        interactive: true
 
         Column {
             id: col
@@ -34,9 +68,10 @@ Rectangle {
                 model: Audio.sinks
                 delegate: BarButton {
                     required property var modelData
+                    required property int index
                     implicitWidth: col.width
                     implicitHeight: 24
-                    active: Audio.isCurrent(modelData, Audio.sink)
+                    active: Audio.isCurrent(modelData, Audio.sink) || catcher.currentIndex === index
                     onClicked: Audio.setSink(modelData)
                     BarText {
                         text: (Audio.isCurrent(modelData, Audio.sink) ? "●  " : "○  ") + Audio.deviceName(modelData)
@@ -74,9 +109,10 @@ Rectangle {
                 model: Audio.sources
                 delegate: BarButton {
                     required property var modelData
+                    required property int index
                     implicitWidth: col.width
                     implicitHeight: 24
-                    active: Audio.isCurrent(modelData, Audio.source)
+                    active: Audio.isCurrent(modelData, Audio.source) || catcher.currentIndex === (Audio.sinks.length + index)
                     onClicked: Audio.setSource(modelData)
                     BarText {
                         text: (Audio.isCurrent(modelData, Audio.source) ? "●  " : "○  ") + Audio.deviceName(modelData)
@@ -126,6 +162,15 @@ Rectangle {
                     }
                 }
             }
+        }
+        }
+    }
+
+    Connections {
+        target: ShellState
+        function onPopoutChanged() {
+            if (ShellState.popout === "audio")
+                catcher.forceActiveFocus();
         }
     }
 }

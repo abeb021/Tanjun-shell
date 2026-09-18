@@ -9,7 +9,14 @@ PanelWindow {
 
     required property var barWindow
 
-    readonly property bool open: ShellState.sidebarOpen
+    readonly property bool onThisScreen: {
+        const want = ShellState.sidebarScreen;
+        const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
+        if (!want.length)
+            return Compositor.isScreenFocused(barWindow ? barWindow.screen : null);
+        return mine === want;
+    }
+    readonly property bool open: ShellState.sidebarOpen && onThisScreen
     readonly property bool shown: open || body.opacity > 0.02
     readonly property int maxH: {
         const s = barWindow && barWindow.screen;
@@ -24,6 +31,10 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: -1
     focusable: true
+    mask: Region {
+        item: barHole
+        intersection: Intersection.Xor
+    }
 
     WlrLayershell.namespace: "tanjun-sidebar"
     WlrLayershell.layer: WlrLayer.Overlay
@@ -32,6 +43,41 @@ PanelWindow {
     KeyPrime {
         id: keys
         open: win.open
+    }
+
+    Item {
+        id: barHole
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: Theme.barHeight
+    }
+
+    Variants {
+        model: win.open ? Quickshell.screens : []
+        PanelWindow {
+            required property var modelData
+            screen: modelData
+            visible: {
+                const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
+                return win.open && !!modelData && `${modelData.name}` !== mine;
+            }
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.namespace: "tanjun-pop-away"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            anchors {
+                top: true
+                left: true
+                right: true
+                bottom: true
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: ShellState.closeMenus()
+            }
+        }
     }
 
     anchors {
@@ -503,6 +549,18 @@ PanelWindow {
                                         text: "pick"
                                         px: 11
                                     }
+                                }
+                            }
+                            BarButton {
+                                implicitWidth: parent.width
+                                active: Config.theme.sampleWall
+                                onClicked: {
+                                    Config.theme.sampleWall = !Config.theme.sampleWall;
+                                    Config.writeSparse();
+                                }
+                                BarText {
+                                    text: Config.theme.sampleWall ? "colors · pull" : "colors · keep"
+                                    px: 11
                                 }
                             }
                             Column {

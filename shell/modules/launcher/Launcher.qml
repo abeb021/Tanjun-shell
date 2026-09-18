@@ -18,6 +18,10 @@ Scope {
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             focusable: true
+            mask: Region {
+                item: barHole
+                intersection: Intersection.Xor
+            }
 
             readonly property bool open: ShellState.launcherOpen
             readonly property string raw: query.text
@@ -47,6 +51,14 @@ Scope {
             KeyPrime {
                 id: keys
                 open: win.open
+            }
+
+            Item {
+                id: barHole
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: Theme.barHeight
             }
 
             anchors {

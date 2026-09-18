@@ -103,18 +103,35 @@ Singleton {
         return node.nickname || node.description || node.name || "device";
     }
 
+    function attached(node) {
+        if (!node || !node.ready)
+            return false;
+        const p = node.properties || {};
+        const avail = `${p["port.available"] || p["port.availability"] || ""}`.toLowerCase();
+        if (avail === "no" || avail === "n/a" || avail === "unavailable" || avail === "unplugged")
+            return false;
+        if (avail === "yes" || avail === "available")
+            return true;
+        return null;
+    }
+
     function hideSink(node) {
         if (!node)
             return true;
+        const a = attached(node);
+        if (a === false)
+            return true;
+        if (a === true)
+            return false;
         const nick = `${node.nickname || ""}`.toLowerCase();
         const desc = `${node.description || ""}`.toLowerCase();
         const name = `${node.name || ""}`.toLowerCase();
         const t = `${nick} ${desc} ${name}`;
         if (t.indexOf("headphone") >= 0)
             return true;
-        if (/^hdmi\s*[2-9]$/.test(nick) || /^dp\s*[2-9]$/.test(nick))
+        if (/^hdmi\s*\d+$/.test(nick) || /^dp\s*\d+$/.test(nick))
             return true;
-        if (!nick.length && /hdmi[2-9]/.test(name))
+        if (!nick.length && /hdmi\d+/.test(name))
             return true;
         return false;
     }
@@ -122,6 +139,11 @@ Singleton {
     function hideSource(node) {
         if (!node)
             return true;
+        const a = attached(node);
+        if (a === false)
+            return true;
+        if (a === true)
+            return false;
         const t = `${node.nickname || ""} ${node.description || ""} ${node.name || ""}`.toLowerCase();
         return t.indexOf("stereo microphone") >= 0;
     }

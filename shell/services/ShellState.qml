@@ -49,6 +49,8 @@ Singleton {
             trayItem = null;
         popoutAnchor = anchor ?? popoutAnchor;
         popoutScreen = screenNameOf(anchor);
+        if (!popoutScreen.length)
+            popoutScreen = Compositor.focusedOutput;
         popout = name;
     }
 
@@ -65,6 +67,8 @@ Singleton {
         settingsOpen = false;
         popoutAnchor = anchor ?? popoutAnchor;
         popoutScreen = screenNameOf(anchor);
+        if (!popoutScreen.length)
+            popoutScreen = Compositor.focusedOutput;
         popout = "tray";
     }
 
@@ -98,6 +102,7 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         settingsOpen = false;
+        sidebarScreen = Compositor.focusedOutput;
         sidebarOpen = true;
     }
 

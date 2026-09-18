@@ -16,7 +16,14 @@ PanelWindow {
 
     default property alias popChildren: slot.data
 
-    readonly property bool open: ShellState.popout === name
+    readonly property bool onThisScreen: {
+        const want = ShellState.popoutScreen;
+        const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
+        if (!want.length)
+            return Compositor.isScreenFocused(barWindow ? barWindow.screen : null);
+        return mine === want;
+    }
+    readonly property bool open: ShellState.popout === name && onThisScreen
     readonly property bool shown: open || morph.opacity > 0.02
 
     screen: barWindow ? barWindow.screen : null
@@ -25,6 +32,10 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: -1
     focusable: true
+    mask: Region {
+        item: barHole
+        intersection: Intersection.Xor
+    }
 
     WlrLayershell.namespace: "tanjun-pop-" + name
     WlrLayershell.layer: WlrLayer.Overlay
@@ -33,6 +44,41 @@ PanelWindow {
     KeyPrime {
         id: keys
         open: root.open
+    }
+
+    Item {
+        id: barHole
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: Theme.barHeight
+    }
+
+    Variants {
+        model: root.open ? Quickshell.screens : []
+        PanelWindow {
+            required property var modelData
+            screen: modelData
+            visible: {
+                const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
+                return root.open && !!modelData && `${modelData.name}` !== mine;
+            }
+            color: "transparent"
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.namespace: "tanjun-pop-away"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+            anchors {
+                top: true
+                left: true
+                right: true
+                bottom: true
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: ShellState.closeMenus()
+            }
+        }
     }
 
     anchors {

@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v2.7**
+Current: **v2.8**
 
 ## v1.0 — bar
 
@@ -112,3 +112,10 @@ Current: **v2.7**
 ## v2.7 — mixer
 
 - [x] Mixer lists sinks and sources; click picks the device
+
+## v2.8 — panel host
+
+- [x] Popout overlay leaves the bar clickable
+- [x] Super+Ctrl popouts open on the focused screen, from that glyph
+- [x] Click on another output closes the popout
+- [x] Mixer lists attached devices (named HDMI, buds), not empty ports or the analog jack

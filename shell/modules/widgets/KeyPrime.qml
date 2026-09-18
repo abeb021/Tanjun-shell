@@ -9,12 +9,12 @@ Item {
     height: 0
 
     required property bool open
-
     property bool primed: false
+    property bool holdExclusive: false
     readonly property int mode: {
         if (!open)
             return WlrKeyboardFocus.None;
-        if (!Compositor.grabFocus)
+        if (holdExclusive || !Compositor.grabFocus)
             return WlrKeyboardFocus.Exclusive;
         return primed ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.Exclusive;
     }

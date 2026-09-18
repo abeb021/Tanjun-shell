@@ -5,6 +5,7 @@ import "../widgets"
 import "../../services"
 
 Rectangle {
+    id: root
     color: Theme.surface
     border.width: 1
     border.color: Theme.hairline
@@ -12,22 +13,31 @@ Rectangle {
     implicitWidth: 260
     implicitHeight: col.implicitHeight + 16
     focus: true
-    Keys.onEscapePressed: ShellState.closeMenus()
 
-    Connections {
-        target: ShellState
-        function onPopoutChanged() {
-            Net.setScanning(ShellState.popout === "network");
+    KeyCatcher {
+        id: catcher
+        anchors.fill: parent
+        focus: true
+        count: Net.networks ? Net.networks.length : 0
+        onCancel: ShellState.closeMenus()
+        onPick: i => {
+            const list = Net.networks;
+            if (!list || i < 0 || i >= list.length)
+                return;
+            const n = list[i];
+            if (n.connected)
+                n.disconnect();
+            else
+                n.connect();
         }
-    }
 
-    Column {
-        id: col
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: 10
-        spacing: 8
+        Column {
+            id: col
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 10
+            spacing: 8
 
         Row {
             spacing: 8
@@ -57,8 +67,9 @@ Rectangle {
             model: Net.networks
             delegate: BarButton {
                 required property var modelData
+                required property int index
                 implicitWidth: col.width
-                active: modelData.connected
+                active: modelData.connected || catcher.currentIndex === index
                 onClicked: {
                     if (modelData.connected)
                         modelData.disconnect();
@@ -73,6 +84,16 @@ Rectangle {
                     elide: Text.ElideRight
                 }
             }
+        }
+        }
+    }
+
+    Connections {
+        target: ShellState
+        function onPopoutChanged() {
+            Net.setScanning(ShellState.popout === "network");
+            if (ShellState.popout === "network")
+                catcher.forceActiveFocus();
         }
     }
 }
