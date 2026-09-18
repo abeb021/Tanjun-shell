@@ -595,8 +595,13 @@ def cmd_restore() -> None:
 def cmd_paint(kind: str, name: str) -> None:
     paint_kitty(kind, name)
     paint_lock(kind, name)
-    paint_wall(name)
+    wall = paint_wall(name)
     paint_hypr(kind, name)
+    if wall is None:
+        print("{}", flush=True)
+        return
+    still = still_of(wall)
+    print(json.dumps({"wall": str(wall), "wallStill": str(still)}), flush=True)
 
 
 def main() -> None:

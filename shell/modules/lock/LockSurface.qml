@@ -24,7 +24,7 @@ Item {
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         asynchronous: false
-        cache: true
+        cache: false
         source: root.wallSrc
         visible: status === Image.Ready
     }

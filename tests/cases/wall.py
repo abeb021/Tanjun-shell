@@ -36,6 +36,11 @@ def register(s) -> None:
     s.has("lock pause video", lock, "-STOP")
     s.has("lock resume video", lock, "-CONT")
     s.has("lock still wall", surface, "Theme.wallStill")
+    paint_named = paint.split("def cmd_paint")[-1]
+    s.has("cmd_paint dumps json", paint_named, 'json.dumps({"wall": str(wall), "wallStill": str(still)})')
+    s.lacks("theme named paint not detached", theme, "execDetached")
+    s.has("theme paintProc", theme, "id: paintProc")
+    s.has("theme paint applies wall", theme, "applyWallMedia")
 
     s.has("setup mpvpaper", setup, "mpvpaper")
     s.has("setup ffmpeg", setup, "ffmpeg")

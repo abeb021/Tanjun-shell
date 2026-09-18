@@ -55,6 +55,8 @@ Singleton {
     property string wallFile: ""
     property string wallStill: ""
     property string wallPick: ""
+    property string paintKind: "dark"
+    property string paintName: "monochrome"
 
     readonly property string wallDir: `${Config.configHome}/hypr/assets/wallpapers`
     readonly property url wallFolder: Qt.url("file://" + wallDir)
@@ -135,7 +137,12 @@ Singleton {
         const n = nextName || name;
         if (n === "wall")
             return;
-        Quickshell.execDetached(["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, nextKind || kind, n]);
+        paintKind = nextKind || kind;
+        paintName = n;
+        paintProc.running = false;
+        Qt.callLater(() => {
+            paintProc.running = true;
+        });
     }
 
     function applyWallJson(d) {
@@ -196,6 +203,20 @@ Singleton {
         Qt.callLater(() => {
             sampleProc.running = true;
         });
+    }
+
+    Process {
+        id: paintProc
+        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, root.paintKind, root.paintName]
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                try {
+                    root.applyWallMedia(JSON.parse(text));
+                    root.persist(root.kind, root.name);
+                } catch (e) {}
+            }
+        }
     }
 
     Process {
