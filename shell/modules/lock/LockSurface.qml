@@ -9,7 +9,7 @@ Item {
     readonly property var lockScreen: parent.screen
     readonly property bool isFocused: Compositor.isScreenFocused(lockScreen)
     readonly property string wallSrc: {
-        const p = Theme.wallFile.length ? Theme.wallFile : `${Config.configHome}/background`;
+        const p = Theme.wallStill.length ? Theme.wallStill : (Theme.wallFile.length ? Theme.wallFile : `${Config.configHome}/background`);
         if (!p.length)
             return "";
         return p.startsWith("file:") ? p : ("file://" + p);

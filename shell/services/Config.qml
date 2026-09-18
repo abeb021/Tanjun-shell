@@ -19,6 +19,7 @@ Singleton {
     readonly property alias session: adapter.session
     readonly property alias appearance: adapter.appearance
     readonly property alias screens: adapter.screens
+    readonly property alias theme: adapter.theme
 
     readonly property string defaultFontUi: "JetBrains Mono"
     readonly property string defaultFontJp: "Noto Sans CJK JP"
@@ -142,6 +143,8 @@ Singleton {
             ap.fontPx = appearance.fontPx;
         if (Object.keys(ap).length)
             out.appearance = ap;
+        if (theme.sampleWall === false)
+            out.theme = { sampleWall: false };
         if (screens.gamma > 0)
             out.screens = { gamma: screens.gamma };
         return out;
@@ -207,6 +210,10 @@ Singleton {
 
             property JsonObject screens: JsonObject {
                 property int gamma: 0
+            }
+
+            property JsonObject theme: JsonObject {
+                property bool sampleWall: true
             }
         }
     }

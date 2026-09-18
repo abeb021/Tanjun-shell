@@ -4,6 +4,11 @@ layer-rule {
 }
 
 layer-rule {
+    match namespace="^mpvpaper$"
+    place-within-backdrop true
+}
+
+layer-rule {
     match namespace="^tanjun-toast$"
     block-out-from "screencast"
 }

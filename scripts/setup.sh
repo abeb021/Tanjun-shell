@@ -217,7 +217,8 @@ PKGS_COMMON=(
   yazi
   bluez-utils
   python
-  polkit-gnome
+  ffmpeg
+  mpvpaper
   ttf-jetbrains-mono
   noto-fonts-cjk
   ttf-nerd-fonts-symbols
@@ -225,15 +226,12 @@ PKGS_COMMON=(
 PKGS_HYPR=(
   hyprland
   hyprpaper
-  hypridle
-  hyprlock
   hyprsunset
   hyprshot
 )
 PKGS_NIRI=(
   niri
   swaybg
-  swayidle
   xwayland-satellite
 )
 
@@ -320,20 +318,6 @@ EOF
   if [[ ! -f "$HYPR/hyprland/active_theme.lua" ]]; then
     mkdir -p "$HYPR/hyprland"
     printf '%s\n' 'return "hyprland.themes.dark.monochrome"' > "$HYPR/hyprland/active_theme.lua"
-  fi
-
-  local idle="$HYPR/hypridle.conf"
-  local src="$ROOT/compositors/hyprland/hypridle.conf"
-  if [[ -L "$idle" ]] || [[ ! -f "$idle" ]]; then
-    link "$src" "$idle" || true
-  else
-    if grep -qE '^\s*lock_cmd\s*=' "$idle"; then
-      sed -i 's|^\s*lock_cmd\s*=.*|    lock_cmd = quickshell ipc call tanjun lock|' "$idle"
-    fi
-    if grep -qE '^\s*before_sleep_cmd\s*=' "$idle"; then
-      sed -i 's|^\s*before_sleep_cmd\s*=.*|    before_sleep_cmd = quickshell ipc call tanjun lock|' "$idle"
-    fi
-    echo "idle   lock/sleep -> tanjun lock (kept $idle)"
   fi
 }
 

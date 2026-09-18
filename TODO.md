@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v2.8**
+Current: **v2.9**
 
 ## v1.0 — bar
 
@@ -119,3 +119,10 @@ Current: **v2.8**
 - [x] Super+Ctrl popouts open on the focused screen, from that glyph
 - [x] Click on another output closes the popout
 - [x] Mixer lists attached devices (named HDMI, buds), not empty ports or the analog jack
+
+## v2.9 — wall
+
+- [x] Picker takes mp4 / webm; mpvpaper loops muted on both compositors
+- [x] Lock uses a still frame; video pauses while locked
+- [x] Login restores the last still or video
+- [x] Pick a wall with pull colors, or keep the current palette and change only the wallpaper

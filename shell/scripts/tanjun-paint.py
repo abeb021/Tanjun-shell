@@ -5,17 +5,35 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 HOME = Path.home()
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config"))
+STATE = Path(os.environ.get("XDG_STATE_HOME", HOME / ".local/state")) / "tanjun"
+CACHE = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "tanjun"
 EXTS = ("png", "jpg", "jpeg", "webp", "bmp", "gif")
+VIDEO_EXTS = ("mp4", "webm", "mkv", "mov", "m4v")
+MPV_OPTS = "no-audio --loop-file=inf --hwdec=auto --panscan=1.0 --no-osc --osd-level=0 --no-input-default-bindings"
 
 
 def on_niri() -> bool:
     return bool(os.environ.get("NIRI_SOCKET"))
+
+
+def is_video(path: Path) -> bool:
+    return path.suffix.lower().lstrip(".") in VIDEO_EXTS
+
+
+def pin_wall(wall: Path) -> None:
+    STATE.mkdir(parents=True, exist_ok=True)
+    (STATE / "wall").write_text(str(wall) + "\n")
+
+
+def _kill(name: str) -> None:
+    subprocess.run(["killall", name], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def rewrite_line(path: Path, pattern: str, repl: str) -> bool:
@@ -30,6 +48,11 @@ def rewrite_line(path: Path, pattern: str, repl: str) -> bool:
 
 
 def current_wall() -> Path | None:
+    pin = STATE / "wall"
+    if pin.is_file():
+        p = Path(pin.read_text().strip()).expanduser()
+        if p.is_file():
+            return p
     conf = CONFIG / "hypr/hyprpaper.conf"
     if conf.is_file():
         for line in conf.read_text().splitlines():
@@ -145,53 +168,116 @@ def paint_lock(kind: str, name: str) -> None:
     )
 
 
-def apply_wall_file(wall: Path) -> Path | None:
-    wall = wall.expanduser().resolve()
-    if not wall.is_file():
-        return None
+def still_of(wall: Path) -> Path:
+    if not is_video(wall):
+        return wall
+    CACHE.mkdir(parents=True, exist_ok=True)
+    out = CACHE / "wall-still.jpg"
+    if out.is_file() and out.stat().st_mtime >= wall.stat().st_mtime and out.stat().st_size > 0:
+        return out
+    r = subprocess.run(
+        ["ffmpeg", "-y", "-ss", "1", "-i", str(wall), "-frames:v", "1", "-q:v", "3", str(out)],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if r.returncode == 0 and out.is_file() and out.stat().st_size > 0:
+        return out
+    return wall
+
+
+def link_background(path: Path) -> None:
+    bg = CONFIG / "background"
+    try:
+        if bg.is_symlink() or bg.exists():
+            bg.unlink()
+        bg.symlink_to(path)
+    except OSError:
+        pass
+
+
+def stop_video() -> None:
+    _kill("mpvpaper")
+
+
+def stop_still() -> None:
+    _kill("hyprpaper")
+    _kill("swaybg")
+
+
+def start_video(wall: Path) -> None:
+    if shutil.which("mpvpaper") is None:
+        return
+    stop_still()
+    stop_video()
+    subprocess.Popen(
+        ["mpvpaper", "-o", MPV_OPTS, "*", str(wall)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+
+def write_hyprpaper(wall: Path) -> None:
     home = str(HOME)
     raw = str(wall)
     shown = f"~{raw[len(home):]}" if raw.startswith(home + os.sep) else raw
     conf = CONFIG / "hypr/hyprpaper.conf"
-    if conf.is_file():
-        lines = conf.read_text().splitlines(True)
-        out = []
-        in_block = False
-        for line in lines:
-            if re.match(r"^preload\s*=", line):
-                line = f"preload = {shown}\n"
-            if re.match(r"^wallpaper\s*\{", line):
-                in_block = True
-            elif in_block and re.match(r"^\s*path\s*=", line):
-                indent = re.match(r"^(\s*)", line).group(1)
-                line = f"{indent}path = {shown}\n"
-            if in_block and line.strip() == "}":
-                in_block = False
-            out.append(line)
-        conf.write_text("".join(out))
-        if not on_niri():
-            subprocess.run(["killall", "hyprpaper"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.Popen(
-                ["hyprpaper", "--config", str(conf)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
+    if not conf.is_file():
+        return
+    lines = conf.read_text().splitlines(True)
+    out = []
+    in_block = False
+    for line in lines:
+        if re.match(r"^preload\s*=", line):
+            line = f"preload = {shown}\n"
+        if re.match(r"^wallpaper\s*\{", line):
+            in_block = True
+        elif in_block and re.match(r"^\s*path\s*=", line):
+            indent = re.match(r"^(\s*)", line).group(1)
+            line = f"{indent}path = {shown}\n"
+        if in_block and line.strip() == "}":
+            in_block = False
+        out.append(line)
+    conf.write_text("".join(out))
+
+
+def start_still(wall: Path) -> None:
+    stop_video()
+    write_hyprpaper(wall)
     if on_niri():
-        subprocess.run(["killall", "swaybg"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _kill("swaybg")
         subprocess.Popen(
             ["swaybg", "-i", str(wall), "-m", "fill"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
-    bg = CONFIG / "background"
-    try:
-        if bg.is_symlink() or bg.exists():
-            bg.unlink()
-        bg.symlink_to(wall)
-    except OSError:
-        pass
+        return
+    conf = CONFIG / "hypr/hyprpaper.conf"
+    _kill("hyprpaper")
+    cmd = ["hyprpaper"]
+    if conf.is_file():
+        cmd.extend(["--config", str(conf)])
+    subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+
+def apply_wall_file(wall: Path) -> Path | None:
+    wall = wall.expanduser().resolve()
+    if not wall.is_file():
+        return None
+    pin_wall(wall)
+    still = still_of(wall)
+    link_background(still)
+    if is_video(wall):
+        start_video(wall)
+    else:
+        start_still(wall)
     return wall
 
 
@@ -419,7 +505,40 @@ def sample_palette(path: Path) -> dict:
         "surface": hexc(surface),
         "surfaceHover": hexc(hover),
         "wall": str(path),
+        "wallStill": str(path),
     }
+    return pal
+
+
+def fallback_pal(wall: Path, still: Path) -> dict:
+    return {
+        "kind": "wall",
+        "name": "wall",
+        "label": "From wall",
+        "accent": "#e0e0e0",
+        "accentHover": "#f0f0f0",
+        "critical": "#ef4444",
+        "warning": "#eab308",
+        "info": "#808080",
+        "good": "#7bc379",
+        "fg": "#d4d4d4",
+        "fgSub": "#9ca3af",
+        "bg": "#1b1b1f",
+        "surface": "#252525",
+        "surfaceHover": "#2e2e36",
+        "wall": str(wall),
+        "wallStill": str(still),
+    }
+
+
+def pal_from(wall: Path) -> dict:
+    still = still_of(wall)
+    try:
+        pal = sample_palette(still)
+    except Exception:
+        pal = fallback_pal(wall, still)
+    pal["wall"] = str(wall)
+    pal["wallStill"] = str(still)
     return pal
 
 
@@ -428,7 +547,7 @@ def cmd_sample() -> None:
     if wall is None:
         print("{}", flush=True)
         return
-    pal = sample_palette(wall)
+    pal = pal_from(wall)
     paint_hypr_from_pal(pal)
     print(json.dumps(pal), flush=True)
 
@@ -438,9 +557,39 @@ def cmd_set(path: str) -> None:
     if wall is None:
         print("{}", flush=True)
         return
-    pal = sample_palette(wall)
+    pal = pal_from(wall)
     paint_hypr_from_pal(pal)
     print(json.dumps(pal), flush=True)
+
+
+def cmd_wall(path: str) -> None:
+    wall = apply_wall_file(Path(path))
+    if wall is None:
+        print("{}", flush=True)
+        return
+    still = still_of(wall)
+    print(json.dumps({"wall": str(wall), "wallStill": str(still)}), flush=True)
+
+
+def cmd_restore() -> None:
+    wall = current_wall()
+    if wall is not None:
+        apply_wall_file(wall)
+        return
+    if on_niri():
+        bg = CONFIG / "background"
+        if bg.exists():
+            start_still(bg)
+        return
+    conf = CONFIG / "hypr/hyprpaper.conf"
+    if conf.is_file():
+        stop_video()
+        subprocess.Popen(
+            ["hyprpaper", "--config", str(conf)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
 
 
 def cmd_paint(kind: str, name: str) -> None:
@@ -457,8 +606,14 @@ def main() -> None:
     if args[0] == "sample":
         cmd_sample()
         return
+    if args[0] == "restore":
+        cmd_restore()
+        return
     if args[0] == "set" and len(args) > 1:
         cmd_set(args[1])
+        return
+    if args[0] == "wall" and len(args) > 1:
+        cmd_wall(args[1])
         return
     kind, name = args[0], args[1] if len(args) > 1 else "monochrome"
     if name == "wall" or kind == "wall":

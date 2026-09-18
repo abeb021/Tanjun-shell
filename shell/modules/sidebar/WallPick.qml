@@ -126,7 +126,7 @@ Item {
             showDirsFirst: true
             showDotAndDotDot: false
             showHidden: false
-            nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp", "*.gif"]
+            nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp", "*.gif", "*.mp4", "*.webm", "*.mkv", "*.mov", "*.m4v"]
             sortField: FolderListModel.Name
         }
 
@@ -135,11 +135,11 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: nav.bottom
-            anchors.bottom: parent.bottom
+            anchors.bottom: sampleBtn.top
             anchors.leftMargin: 10
             anchors.rightMargin: 10
             anchors.topMargin: 10
-            anchors.bottomMargin: 10
+            anchors.bottomMargin: 6
             clip: true
             cacheBuffer: 1600
             reuseItems: true
@@ -154,6 +154,10 @@ Item {
                 required property string fileName
                 required property url fileUrl
                 required property bool fileIsDir
+                readonly property bool isVideo: {
+                    const n = String(tile.fileName).toLowerCase();
+                    return n.endsWith(".mp4") || n.endsWith(".webm") || n.endsWith(".mkv") || n.endsWith(".mov") || n.endsWith(".m4v");
+                }
                 width: grid.cellWidth
                 height: grid.cellHeight
 
@@ -187,13 +191,13 @@ Item {
                     }
 
                     Image {
-                        visible: !tile.fileIsDir
+                        visible: !tile.fileIsDir && !tile.isVideo
                         anchors.fill: parent
                         asynchronous: true
                         cache: true
                         fillMode: Image.PreserveAspectCrop
                         sourceSize: Qt.size(Math.ceil(width * 1.4), Math.ceil(height * 1.4))
-                        source: tile.fileIsDir ? "" : tile.fileUrl
+                        source: tile.fileIsDir || tile.isVideo ? "" : tile.fileUrl
                         opacity: status === Image.Ready ? 1 : 0
                         Behavior on opacity {
                             enabled: Motion.ready
@@ -201,6 +205,25 @@ Item {
                                 duration: Motion.fast
                             }
                         }
+                    }
+                    BarText {
+                        visible: !tile.fileIsDir && tile.isVideo
+                        anchors.centerIn: parent
+                        text: "󰎁"
+                        icon: true
+                        px: 22
+                        color: Theme.fgSub
+                    }
+                    BarText {
+                        visible: !tile.fileIsDir && tile.isVideo
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.margins: 6
+                        text: tile.fileName
+                        px: 10
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideMiddle
                     }
 
                     Rectangle {
@@ -238,10 +261,28 @@ Item {
             }
         }
 
+        BarButton {
+            id: sampleBtn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 10
+            implicitHeight: 28
+            active: Config.theme.sampleWall
+            onClicked: {
+                Config.theme.sampleWall = !Config.theme.sampleWall;
+                Config.writeSparse();
+            }
+            BarText {
+                text: Config.theme.sampleWall ? "colors · pull" : "colors · keep"
+                px: 11
+            }
+        }
+
         BarText {
             visible: fm.status === FolderListModel.Ready && fm.count === 0
             anchors.centerIn: grid
-            text: "no images here"
+            text: "empty"
             sub: true
             px: 12
         }

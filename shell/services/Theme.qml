@@ -53,6 +53,7 @@ Singleton {
 
     readonly property bool fromWall: name === "wall"
     property string wallFile: ""
+    property string wallStill: ""
     property string wallPick: ""
 
     readonly property string wallDir: `${Config.configHome}/hypr/assets/wallpapers`
@@ -122,9 +123,11 @@ Singleton {
             o.kind = "wall";
             o.name = "wall";
             o.label = "From wall";
-            if (wallFile.length)
-                o.wall = wallFile;
         }
+        if (wallFile.length)
+            o.wall = wallFile;
+        if (wallStill.length)
+            o.wallStill = wallStill;
         stateFile.setText(JSON.stringify(o));
     }
 
@@ -141,10 +144,20 @@ Singleton {
         d.kind = "wall";
         d.name = "wall";
         d.label = "From wall";
-        if (d.wall)
-            wallFile = d.wall;
+        applyWallMedia(d);
         apply(d);
         persist("wall", "wall");
+    }
+
+    function applyWallMedia(d) {
+        if (!d)
+            return;
+        if (d.wall)
+            wallFile = d.wall;
+        if (d.wallStill)
+            wallStill = d.wallStill;
+        else if (d.wall)
+            wallStill = d.wall;
     }
 
     function urlPath(u) {
@@ -200,12 +213,18 @@ Singleton {
 
     Process {
         id: setProc
-        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, "set", root.wallPick]
+        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, Config.theme.sampleWall ? "set" : "wall", root.wallPick]
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
                 try {
-                    root.applyWallJson(JSON.parse(text));
+                    const d = JSON.parse(text);
+                    if (d.accent)
+                        root.applyWallJson(d);
+                    else {
+                        root.applyWallMedia(d);
+                        root.persist(root.kind, root.name);
+                    }
                 } catch (e) {}
             }
         }
@@ -220,9 +239,11 @@ Singleton {
         onLoaded: {
             try {
                 const s = JSON.parse(text());
+                if (s.wall)
+                    root.wallFile = s.wall;
+                if (s.wallStill)
+                    root.wallStill = s.wallStill;
                 if (s.name === "wall") {
-                    if (s.wall)
-                        root.wallFile = s.wall;
                     root.apply(s);
                     return;
                 }

@@ -134,6 +134,7 @@ Singleton {
     }
 
     onLockedChanged: {
+        Quickshell.execDetached(["killall", locked ? "-STOP" : "-CONT", "mpvpaper"]);
         if (!locked) {
             passPam.abort();
             printPam.abort();
