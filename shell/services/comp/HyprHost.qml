@@ -177,13 +177,13 @@ Item {
         let body = "---@module 'hl'\n\n";
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
-            if (r.disabled)
-                continue;
             body += "hl.monitor({\n";
             body += `    output = "${r.name}",\n`;
             body += `    mode = "${r.mode}",\n`;
             body += `    position = "${Math.round(r.x)}x${Math.round(r.y)}",\n`;
             body += `    scale = ${Number(r.scale) || 1},\n`;
+            if (r.disabled)
+                body += "    disabled = true,\n";
             body += "})\n\n";
         }
         const dir = `${configHome}/hypr`;

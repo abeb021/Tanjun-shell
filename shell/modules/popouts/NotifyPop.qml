@@ -2,11 +2,8 @@ import QtQuick
 import "../widgets"
 import "../../services"
 
-Rectangle {
-    color: Theme.surface
-    border.width: 1
-    border.color: Theme.hairline
-    radius: Theme.radius
+Face {
+    job: "pop"
     implicitWidth: 300
     implicitHeight: 360
     focus: true

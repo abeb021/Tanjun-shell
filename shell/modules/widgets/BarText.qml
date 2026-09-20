@@ -21,10 +21,14 @@ Text {
             return Theme.typeSeal;
         if (resolved === "caption")
             return Theme.typeCaption;
+        if (resolved === "head")
+            return Theme.captionPx;
         return Theme.typeBody;
     }
 
     color: {
+        if (resolved === "head")
+            return Theme.caption;
         if (resolved === "seal")
             return Theme.accent;
         if (sub || resolved === "caption")
@@ -33,8 +37,8 @@ Text {
     }
     font.family: family.length ? family : (resolved === "seal" ? Theme.fontJp : (resolved === "icon" ? Theme.fontIcons : Theme.fontUi))
     font.pixelSize: size
-    font.weight: resolved === "display" ? Font.Light : (resolved === "caption" ? Font.Normal : Font.Medium)
-    font.letterSpacing: resolved === "display" ? -1.2 : 0
+    font.weight: resolved === "display" ? Font.Light : (resolved === "caption" || resolved === "head" ? Font.Normal : Font.Medium)
+    font.letterSpacing: resolved === "display" ? -1.2 : (resolved === "head" ? Theme.captionTracking : 0)
     horizontalAlignment: resolved === "icon" ? Text.AlignHCenter : Text.AlignLeft
     verticalAlignment: Text.AlignVCenter
     elide: Text.ElideNone

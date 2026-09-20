@@ -24,6 +24,56 @@ Singleton {
 
     readonly property var scales: [1, 1.2, 1.25, 1.5, 1.75, 2]
 
+    function snapScale(raw) {
+        const stops = scales;
+        if (!stops.length)
+            return 1;
+        let n = Number(raw);
+        if (!(n > 0))
+            n = 1;
+        let best = stops[0];
+        let bestD = Math.abs(n - best);
+        for (let i = 1; i < stops.length; i++) {
+            const d = Math.abs(n - stops[i]);
+            if (d < bestD) {
+                best = stops[i];
+                bestD = d;
+            }
+        }
+        return best;
+    }
+
+    function scaleIndex(raw) {
+        const stops = scales;
+        const n = snapScale(raw);
+        for (let i = 0; i < stops.length; i++) {
+            if (Math.abs(stops[i] - n) < 0.001)
+                return i;
+        }
+        return 0;
+    }
+
+    function scaleAt(t) {
+        const stops = scales;
+        if (!stops.length)
+            return 1;
+        const last = stops.length - 1;
+        const i = Math.max(0, Math.min(last, Math.round(Math.max(0, Math.min(1, Number(t) || 0)) * last)));
+        return stops[i];
+    }
+
+    function scaleSlider(raw) {
+        const last = scales.length - 1;
+        if (last <= 0)
+            return 0;
+        return scaleIndex(raw) / last;
+    }
+
+    function fmtScale(raw) {
+        const n = snapScale(raw);
+        return `${n}`.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+    }
+
     function compactMode(s) {
         let t = `${s || ""}`.replace(/\s/g, "").replace(/Hz$/i, "");
         t = t.replace(/@(\d+(?:\.\d+)?)$/, (_, n) => {
@@ -123,7 +173,7 @@ Singleton {
         const cur = current;
         if (!cur)
             return;
-        scale = Number(v) || 1;
+        scale = snapScale(v);
         hold = true;
         const next = Object.assign({}, cur);
         next.scale = scale;
@@ -199,4 +249,77 @@ Singleton {
     }
 
     Component.onCompleted: refresh()
+
+    function cloneRow(r) {
+        return {
+            name: r.name,
+            desc: r.desc,
+            width: r.width,
+            height: r.height,
+            scale: r.scale,
+            mode: r.mode,
+            modes: r.modes,
+            x: r.x,
+            y: r.y,
+            disabled: r.disabled
+        };
+    }
+
+    function internalOf(rows) {
+        for (let i = 0; i < rows.length; i++) {
+            const n = `${rows[i].name || ""}`;
+            if (n.indexOf("eDP") === 0 || n.indexOf("LVDS") === 0)
+                return rows[i];
+        }
+        return rows.length ? rows[0] : null;
+    }
+
+    function setDesk(kind) {
+        const src = list || [];
+        if (!src.length)
+            return;
+        const rows = [];
+        for (let i = 0; i < src.length; i++)
+            rows.push(cloneRow(src[i]));
+        const internal = internalOf(rows);
+        if (!internal)
+            return;
+        let external = null;
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i].name !== internal.name) {
+                external = rows[i];
+                break;
+            }
+        }
+        if (kind === "first") {
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].disabled = rows[i].name !== internal.name;
+                if (!rows[i].disabled) {
+                    rows[i].x = 0;
+                    rows[i].y = 0;
+                }
+            }
+        } else if (kind === "second" && external) {
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].disabled = rows[i].name !== external.name;
+                if (!rows[i].disabled) {
+                    rows[i].x = 0;
+                    rows[i].y = 0;
+                }
+            }
+        } else if (kind === "extend" && external) {
+            for (let i = 0; i < rows.length; i++)
+                rows[i].disabled = false;
+            external.x = 0;
+            external.y = 0;
+            internal.x = Number(external.width) || 1920;
+            internal.y = 0;
+        } else {
+            return;
+        }
+        list = rows;
+        Compositor.persistMonitors(rows);
+        for (let i = 0; i < rows.length; i++)
+            Compositor.applyMonitor(rows[i]);
+    }
 }

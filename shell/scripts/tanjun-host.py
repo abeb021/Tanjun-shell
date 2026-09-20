@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import json
 import os
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -104,6 +106,41 @@ def cpu_desc():
     }
 
 
+def gpu_name():
+    try:
+        r = subprocess.run(["lspci"], capture_output=True, text=True, timeout=1)
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    for line in (r.stdout or "").splitlines():
+        if "VGA" in line or "3D" in line or "Display" in line:
+            return line.split(": ", 1)[-1].split(" (rev")[0].strip()
+    return ""
+
+
+def uptime_text():
+    try:
+        secs = float(Path("/proc/uptime").read_text(encoding="utf-8").split()[0])
+    except (OSError, ValueError, IndexError):
+        return ""
+    h = int(secs // 3600)
+    m = int((secs % 3600) // 60)
+    if h:
+        return f"{h}h {m}m"
+    return f"{m}m"
+
+
+def disk_text():
+    try:
+        u = shutil.disk_usage("/")
+    except OSError:
+        return ""
+    used = u.used / 1024**3
+    total = u.total / 1024**3
+    pct = int(100 * u.used / u.total) if u.total else 0
+    fmt = lambda n: f"{n:.0f}G" if n >= 10 else f"{n:.1f}G"
+    return f"{fmt(used)} / {fmt(total)} ({pct}%)"
+
+
 def os_name():
     pretty = ""
     try:
@@ -173,17 +210,21 @@ out = {
     "down": round(max(0.0, (r2 - r1) / span)),
     "up": round(max(0.0, (u2 - u1) / span)),
     "procs": procs(),
+    "uptime": uptime_text(),
+    "disk": disk_text(),
 }
 if not TICK:
     desc = cpu_desc()
     out.update(
         {
             "user": os.environ.get("USER") or os.environ.get("LOGNAME") or "",
+            "host": os.uname().nodename,
             "distro": os_name(),
             "kernel": os.uname().release,
             "cores": desc["cores"],
             "threads": desc["threads"],
             "cpuModel": desc["model"],
+            "gpu": gpu_name(),
         }
     )
 

@@ -4,11 +4,13 @@ import Quickshell.Wayland
 import "../widgets"
 import "../../services"
 
-Rectangle {
+Face {
     id: root
 
     required property var client
     property bool selected: false
+    job: "pop"
+    lit: selected
 
     signal clicked
     signal hovered
@@ -24,10 +26,6 @@ Rectangle {
 
     width: 280
     height: 176
-    color: Theme.surface
-    border.width: 1
-    border.color: selected ? Theme.accent : Theme.hairline
-    radius: Theme.radius
 
     Column {
         anchors.fill: parent

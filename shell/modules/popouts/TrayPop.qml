@@ -3,12 +3,9 @@ import Quickshell
 import "../widgets"
 import "../../services"
 
-Rectangle {
+Face {
     id: root
-    color: Theme.surface
-    border.width: 1
-    border.color: Theme.hairline
-    radius: Theme.radius
+    job: "pop"
     implicitWidth: 240
     implicitHeight: Math.min(col.implicitHeight + 16, 420)
     focus: true

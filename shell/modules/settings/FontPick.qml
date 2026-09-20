@@ -49,9 +49,7 @@ Item {
 
         BarText {
             text: root.title
-            sub: true
-            px: 11
-            family: Config.defaultFontUi
+            role: "head"
         }
         BarText {
             text: root.current.length ? root.current : "default"
@@ -72,36 +70,41 @@ Item {
         }
         Flow {
             width: parent.width
-            spacing: 4
+            spacing: 8
             visible: (root.pins || []).length > 0
             Repeater {
                 model: root.pins
-                BarButton {
+                HudPick {
                     required property var modelData
-                    implicitWidth: Math.max(72, chip.implicitWidth + 14)
-                    active: modelData === root.current
+                    height: 32
+                    implicitHeight: 32
+                    label: modelData
+                    current: modelData === root.current
                     onClicked: root.chosen(modelData)
-                    BarText {
-                        id: chip
-                        text: modelData
-                        px: 11
-                        family: Config.defaultFontUi
-                        color: modelData === root.current ? Theme.accent : Theme.fg
-                    }
                 }
             }
         }
         Rectangle {
             width: parent.width
-            height: 24
+            height: 32
             color: Theme.surface
             border.width: 1
             border.color: q.activeFocus ? Theme.accent : Theme.hairline
             radius: Theme.radius
+            BarText {
+                visible: !q.text.length
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.leftMargin: 8
+                text: "Search…"
+                sub: true
+                px: 12
+                family: Config.defaultFontUi
+            }
             TextInput {
                 id: q
                 anchors.fill: parent
-                anchors.margins: 4
+                anchors.margins: 8
                 font.family: Config.defaultFontUi
                 font.pixelSize: 12
                 color: Theme.fg
@@ -127,23 +130,17 @@ Item {
             required property int index
             required property var modelData
             width: ListView.view.width
-            height: 26
-            color: rowHover.containsMouse ? Theme.surfaceHover : "transparent"
+            height: 32
+            color: rowHover.containsMouse ? Theme.hotSoft : "transparent"
+            border.width: Theme.chipBorder
+            border.color: modelData === root.current || rowHover.containsMouse ? Theme.accent : "transparent"
             radius: Theme.radius
-            Rectangle {
-                visible: modelData === root.current
-                width: 1
-                height: parent.height - 8
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.accent
-            }
-
             BarText {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
                 text: modelData
                 px: 12
                 family: Config.defaultFontUi

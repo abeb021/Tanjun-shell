@@ -30,6 +30,14 @@ Scope {
                     right: true
                 }
 
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: Theme.barRule
+                    color: Theme.barLine
+                }
+
                 Row {
                     id: left
                     anchors.left: parent.left

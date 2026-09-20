@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v3.0**
+Current: **v3.1**
 
 ## v1.0 — bar
 
@@ -69,7 +69,7 @@ Current: **v3.0**
 
 - [x] Settings panel, Super+Ctrl+,
 - [x] Fonts: UI, Japanese, icons, size
-- [x] Clock, weather, lock, backlight, keyboard
+- [x] Clock, weather, backlight, keyboard
 - [x] Color: From wall + presets
 - [x] Search, Ctrl+K
 
@@ -107,7 +107,7 @@ Current: **v3.0**
 - [x] Mouse wheel opens the app list and moves the selection
 - [x] Bar clicks switch desks (lua dispatch)
 - [x] Widgets call `Compositor` only. Hyprland and niri each implement that API in `shell/services/comp/`. No `if niri` in the bar, launcher, or settings.
-- [x] `bash tests/run.sh` — contract checks; score is success
+- [x] `bash tests/run.sh` — qs ipc + config; score is success
 
 ## v2.7 — mixer
 
@@ -135,4 +135,12 @@ Current: **v3.0**
 - [x] Polkit dialog lives in the shell
 - [x] Idle (dim / lock / DPMS / sleep) lives in the shell
 - [x] Mixer hides unplugged ports from PipeWire, not from nicknames
+
+## v3.1 — settings
+
+- [x] Settings card; rail with a mark
+- [x] Pages: system, sound, screen, network, bluetooth, type, clock, weather, devices, color
+- [x] Scale slider snaps to real stops
+- [x] Style page: Tanjun and Panel chrome, apart from palettes
+- [x] Chrome on every surface; ticks only on planes (settings, launcher, System, clipboard, polkit)
 

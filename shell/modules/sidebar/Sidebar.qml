@@ -155,18 +155,10 @@ PanelWindow {
                     onClicked: {}
                 }
 
-                Rectangle {
+                Face {
+                    job: "plane"
                     anchors.fill: parent
-                    color: Theme.bg
                 }
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                width: 1
-                color: Theme.hairline
-            }
 
             Flickable {
                 anchors.fill: parent

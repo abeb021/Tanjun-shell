@@ -18,6 +18,10 @@ Singleton {
     property int cores: 0
     property int threads: 0
     property string cpuModel: ""
+    property string gpu: ""
+    property string hostName: ""
+    property string uptime: ""
+    property string disk: ""
     property var corePct: []
     property bool facts: false
 
@@ -108,6 +112,14 @@ Singleton {
                         root.threads = d.threads;
                     if (d.cpuModel)
                         root.cpuModel = d.cpuModel;
+                    if (d.gpu)
+                        root.gpu = d.gpu;
+                    if (d.host)
+                        root.hostName = d.host;
+                    if (d.uptime)
+                        root.uptime = d.uptime;
+                    if (d.disk)
+                        root.disk = d.disk;
                     if (d.corePct)
                         root.corePct = d.corePct;
                     if (d.distro || d.cpu !== undefined)
@@ -123,11 +135,15 @@ Singleton {
             if (ShellState.sidebarOpen)
                 root.refresh();
         }
+        function onSettingsOpenChanged() {
+            if (ShellState.settingsOpen)
+                root.refresh();
+        }
     }
 
     Timer {
         interval: 2000
-        running: ShellState.sidebarOpen
+        running: ShellState.sidebarOpen || ShellState.settingsOpen
         repeat: true
         onTriggered: root.refresh()
     }

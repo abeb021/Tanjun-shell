@@ -50,6 +50,21 @@ Singleton {
         Networking.wifiEnabled = !Networking.wifiEnabled;
     }
 
+    function connectNet(n, password) {
+        if (!n)
+            return;
+        if (n.connected) {
+            n.disconnect();
+            return;
+        }
+        const ssid = `${n.name || ""}`;
+        if (password && `${password}`.length && ssid.length) {
+            Quickshell.execDetached(["nmcli", "device", "wifi", "connect", ssid, "password", `${password}`]);
+            return;
+        }
+        n.connect();
+    }
+
     function refreshVpn() {
         vpnProc.running = true;
     }

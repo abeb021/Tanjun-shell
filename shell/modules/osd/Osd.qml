@@ -25,13 +25,10 @@ Scope {
             }
             margins.bottom: 48
 
-            Rectangle {
+            Face {
                 id: body
+                job: "pop"
                 anchors.fill: parent
-                color: Theme.surface
-                border.width: 1
-                border.color: Theme.hairline
-                radius: Theme.radius
                 opacity: open ? 1 : 0
                 scale: open ? 1 : Motion.osdFrom
 
@@ -72,6 +69,15 @@ Scope {
                                     duration: Motion.fast
                                     easing.type: Motion.easeOut
                                 }
+                            }
+                            Rectangle {
+                                visible: Theme.sliderGlow
+                                anchors.fill: parent
+                                anchors.margins: -2
+                                radius: 4
+                                color: "transparent"
+                                border.width: 2
+                                border.color: Theme.wash(Theme.accent, 0.35)
                             }
                         }
                     }

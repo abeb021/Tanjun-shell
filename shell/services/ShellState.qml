@@ -26,6 +26,24 @@ Singleton {
     property bool sidebarOpen: false
     property bool settingsOpen: false
     property bool dnd: false
+    property string settingsPage: "system"
+    property int settingsRailCount: 0
+    property int settingsRailH: 0
+    property int settingsScrollY: 0
+    property int settingsStyleCount: 0
+    readonly property var settingsPages: [
+        { key: "system", label: "System", icon: "󰒓" },
+        { key: "sound", label: "Sound", icon: "" },
+        { key: "screen", label: "Screen", icon: "󰍹" },
+        { key: "network", label: "Network", icon: "󰖩" },
+        { key: "bluetooth", label: "Bluetooth", icon: "󰂯" },
+        { key: "type", label: "Type", icon: "󰛖" },
+        { key: "clock", label: "Clock", icon: "󰥔" },
+        { key: "weather", label: "Weather", icon: "󰖕" },
+        { key: "devices", label: "Devices", icon: "󰃠" },
+        { key: "style", label: "Style", icon: "󰀼" },
+        { key: "color", label: "Color", icon: "󰏘" }
+    ]
 
     property bool launcherReady: false
     property bool clipboardReady: false
@@ -145,7 +163,27 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsReady = true;
+        if (!pageOk(settingsPage))
+            settingsPage = "system";
         settingsOpen = true;
+    }
+
+    function pageOk(id) {
+        const rows = settingsPages;
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i].key === id)
+                return true;
+        }
+        return false;
+    }
+
+    function openSettingsPage(id) {
+        if (!pageOk(id))
+            return;
+        settingsScrollY = 0;
+        settingsPage = id;
+        if (!settingsOpen)
+            toggleSettings();
     }
 
     property int overviewNudge: 0

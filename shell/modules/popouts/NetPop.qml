@@ -4,12 +4,9 @@ import Quickshell.Networking
 import "../widgets"
 import "../../services"
 
-Rectangle {
+Face {
     id: root
-    color: Theme.surface
-    border.width: 1
-    border.color: Theme.hairline
-    radius: Theme.radius
+    job: "pop"
     implicitWidth: 260
     implicitHeight: col.implicitHeight + 16
     focus: true

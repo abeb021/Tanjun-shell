@@ -28,6 +28,38 @@ Singleton {
     readonly property string fontUi: Config.appearance.fontUi.length ? Config.appearance.fontUi : Config.defaultFontUi
     readonly property string fontJp: Config.appearance.fontJp.length ? Config.appearance.fontJp : Config.defaultFontJp
     readonly property string fontIcons: Config.appearance.fontIcons.length ? Config.appearance.fontIcons : Config.defaultFontIcons
+    readonly property string defaultStyle: "panel"
+    readonly property var styles: [
+        { key: "tanjun", label: "Tanjun", blurb: "Quiet 1px planes across the shell." },
+        { key: "panel", label: "Panel", blurb: "Ticks, chips, and marked rails. Palettes unchanged." }
+    ]
+    readonly property string style: normStyle(Config.appearance.style)
+    readonly property bool panelStyle: style === "panel"
+    readonly property bool tick: panelStyle
+    readonly property bool tickPops: false
+    readonly property bool pip: panelStyle
+    readonly property bool railMark: panelStyle
+    readonly property bool sliderGlow: panelStyle
+    readonly property bool pillToggle: panelStyle
+    readonly property int chipBorder: panelStyle ? 1 : 0
+    readonly property int tickPlane: 40
+    readonly property int tickPop: 18
+    readonly property int tickArm: 2
+    readonly property int tickPad: 14
+    readonly property int thumb: panelStyle ? 12 : 8
+    readonly property int barRule: panelStyle ? 1 : 0
+    readonly property int brandTracking: panelStyle ? 4 : 0
+    readonly property int titleTracking: panelStyle ? 3 : 0
+    readonly property int chipTracking: panelStyle ? 1 : 0
+    readonly property color caption: panelStyle ? accent : fgSub
+    readonly property int captionTracking: panelStyle ? 2 : 0
+    readonly property int captionPx: panelStyle ? 11 : 12
+    readonly property int cardPad: panelStyle ? 28 : 20
+    readonly property color planeBorder: panelStyle ? accent : hairline
+    readonly property color popBorder: panelStyle ? accent : hairline
+    readonly property color hot: panelStyle ? wash(accent, 0.10) : surfaceHover
+    readonly property color hotSoft: panelStyle ? wash(accent, 0.08) : surfaceHover
+    readonly property color barLine: panelStyle ? wash(accent, 0.55) : "transparent"
 
     readonly property color hairline: Qt.rgba(fg.r, fg.g, fg.b, 0.16)
     readonly property int typeCaption: Math.max(10, fontPx - 2)
@@ -66,6 +98,10 @@ Singleton {
         if (s.startsWith("#") && s.length >= 7)
             return `#${s.slice(-6)}`;
         return s;
+    }
+
+    function wash(c, a) {
+        return Qt.rgba(c.r, c.g, c.b, a);
     }
 
     function snapshot() {
@@ -196,6 +232,43 @@ Singleton {
         loadPalette(nextKind, nextName);
         persist(nextKind, nextName);
         paint(nextKind, nextName);
+    }
+
+    function normStyle(id) {
+        const s = `${id || ""}`.toLowerCase();
+        if (s === "tanjun" || s === "panel")
+            return s;
+        return defaultStyle;
+    }
+
+    function setStyle(id) {
+        const k = normStyle(id);
+        Config.appearance.style = k === defaultStyle ? "" : k;
+        Config.writeSparse();
+    }
+
+    function styleKeys() {
+        const out = [];
+        const rows = styles;
+        for (let i = 0; i < rows.length; i++)
+            out.push(rows[i].key);
+        return out;
+    }
+
+    function styleChrome() {
+        return {
+            key: style,
+            tick: tick,
+            tickPops: tickPops,
+            pip: pip,
+            railMark: railMark,
+            sliderGlow: sliderGlow,
+            pillToggle: pillToggle,
+            chipBorder: chipBorder,
+            cardPad: cardPad,
+            captionTracking: captionTracking,
+            barRule: barRule
+        };
     }
 
     function sampleWall() {

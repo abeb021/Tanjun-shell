@@ -189,6 +189,14 @@ Singleton {
         if (!node?.audio)
             return;
         node.audio.volume = Math.max(0, Math.min(1, v));
+        if (v > 0)
+            node.audio.muted = false;
+    }
+
+    function toggleStreamMute(node) {
+        if (!node?.audio)
+            return;
+        node.audio.muted = !node.audio.muted;
     }
 
     function streamName(node) {

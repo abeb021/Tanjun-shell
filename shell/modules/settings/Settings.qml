@@ -20,12 +20,16 @@ Scope {
             contentOpacity: card.opacity
 
             readonly property bool isFocused: Compositor.isScreenFocused(modelData)
-            property string page: "type"
+            readonly property string page: ShellState.settingsPage
             property string face: "ui"
             property string query: ""
             readonly property bool looking: query.length > 0
             readonly property var catalog: {
                 const out = [
+                    { title: "system", sub: "page", page: "system", hay: "system host os kernel cpu gpu ram disk uptime" },
+                    { title: "sound", sub: "page", page: "sound", hay: "sound volume mute output mic mixer apps" },
+                    { title: "network", sub: "page", page: "network", hay: "network wifi ssid vpn scan" },
+                    { title: "bluetooth", sub: "page", page: "bluetooth", hay: "bluetooth buds adapter scan pair" },
                     { title: "type", sub: "page", page: "type", hay: "type font ui japanese icons size reset" },
                     { title: "ui font", sub: "type", page: "type", face: "ui", hay: "ui font jetbrains mono typeface" },
                     { title: "japanese font", sub: "type", page: "type", face: "jp", hay: "japanese font noto sans cjk jp 単" },
@@ -36,13 +40,15 @@ Scope {
                     { title: "12 hour", sub: "clock", page: "clock", hay: "12 hour am pm clock" },
                     { title: "24 hour", sub: "clock", page: "clock", hay: "24 hour clock" },
                     { title: "weather", sub: "page", page: "weather", hay: "weather city wttr moscow" },
-                    { title: "session", sub: "page", page: "session", hay: "session lock fingerprint password" },
                     { title: "devices", sub: "page", page: "devices", hay: "devices backlight keyboard intel_backlight" },
                     { title: "intel_backlight", sub: "devices", page: "devices", hay: "intel_backlight brightness light" },
-                    { title: "screen", sub: "page", page: "screen", hay: "screen monitor display scale gamma output edp" },
+                    { title: "screen", sub: "page", page: "screen", hay: "screen monitor display scale gamma output edp brightness layout first second extend" },
                     { title: "scale", sub: "screen", page: "screen", hay: "scale 1.2 fractional scaling monitor" },
                     { title: "gamma", sub: "screen", page: "screen", hay: "gamma hyprsunset night identity" },
-                    { title: "color", sub: "page", page: "color", hay: "color theme palette preset skin" },
+                    { title: "style", sub: "page", page: "style", hay: "style chrome panel tanjun look shell rail ticks" },
+                    { title: "Tanjun", sub: "style", page: "style", hay: "tanjun quiet plane rice chrome" },
+                    { title: "Panel", sub: "style", page: "style", hay: "panel chrome ticks chips marked rail" },
+                    { title: "color", sub: "page", page: "color", hay: "color theme palette preset" },
                     { title: "From wall", sub: "color", page: "color", kind: "wall", name: "wall", hay: "from wall wallpaper accent sample" },
                     { title: "keep palette", sub: "color", page: "color", hay: "keep palette wallpaper colors pull sample" }
                 ];
@@ -62,28 +68,87 @@ Scope {
             }
             readonly property var hits: looking ? Fuzzy.rank(query, catalog) : []
             property var fonts: []
-            property string zoneDraft: ""
-            property string weatherDraft: Config.services.weatherCity
-            property string blDraft: Config.services.backlight
-            property string kbDraft: Config.services.keyboard
 
             onOpenChanged: if (open) {
-                page = "type";
                 face = "ui";
                 query = "";
                 find.text = "";
-                weatherDraft = Config.services.weatherCity;
-                blDraft = Config.services.backlight;
-                kbDraft = Config.services.keyboard;
-                Screens.refresh();
-                fontsProc.running = false;
-                Qt.callLater(() => {
-                    fontsProc.running = true;
-                });
-                find.forceActiveFocus();
+                Qt.callLater(resetRestScroll);
+                openWork.restart();
+            } else {
+                openWork.stop();
+                Net.setScanning(false);
+                Bt.scan(false);
             }
 
-            onPageChanged: restFlick.contentY = 0
+            readonly property string pageTitle: page.toUpperCase()
+            readonly property string restSrc: {
+                if (page === "system")
+                    return "SystemPage.qml";
+                if (page === "sound")
+                    return "SoundPage.qml";
+                if (page === "network")
+                    return "NetworkPage.qml";
+                if (page === "bluetooth")
+                    return "BluetoothPage.qml";
+                if (page === "screen")
+                    return "ScreenPage.qml";
+                if (page === "clock")
+                    return "ClockPage.qml";
+                if (page === "weather")
+                    return "WeatherPage.qml";
+                if (page === "devices")
+                    return "DevicesPage.qml";
+                if (page === "style")
+                    return "StylePage.qml";
+                if (page === "color")
+                    return "ColorPage.qml";
+                return "";
+            }
+
+            onPageChanged: {
+                resetRestScroll();
+                if (open)
+                    openWork.restart();
+                Qt.callLater(resetRestScroll);
+            }
+
+            function resetRestScroll() {
+                if (!restFlick)
+                    return;
+                restFlick.contentY = 0;
+                restFlick.returnToBounds();
+                ShellState.settingsScrollY = 0;
+            }
+
+            Timer {
+                id: openWork
+                interval: 1
+                onTriggered: win.warmPage()
+            }
+
+            function warmPage() {
+                if (!open)
+                    return;
+                if (page === "system")
+                    Host.refresh();
+                if (page === "screen")
+                    Screens.refresh();
+                if (page === "network")
+                    Net.setScanning(true);
+                else
+                    Net.setScanning(false);
+                if (page === "bluetooth" && Bt.on)
+                    Bt.scan(true);
+                else
+                    Bt.scan(false);
+                if (page === "type" && !fonts.length) {
+                    fontsProc.running = false;
+                    Qt.callLater(() => {
+                        fontsProc.running = true;
+                    });
+                }
+            }
 
             Shortcut {
                 sequence: "Escape"
@@ -109,49 +174,37 @@ Scope {
                 onActivated: find.forceActiveFocus()
             }
 
-            Face {
+            SettingsCard {
                 id: card
-                job: "plane"
-                width: 720
-                height: Math.min(parent.height * 0.78, 520)
+                open: win.open
+                width: Math.min(980, parent.width - 80)
+                height: Math.min(640, parent.height - 80)
                 anchors.centerIn: parent
-                opacity: open ? 1 : 0
-                scale: open ? 1 : Motion.panelFrom
 
-                Behavior on opacity {
-                    enabled: Motion.ready
-                    NumberAnimation {
-                        duration: Motion.panel
-                        easing.type: open ? Motion.easeOut : Motion.easeIn
-                    }
-                }
-                Behavior on scale {
-                    enabled: Motion.ready
-                    NumberAnimation {
-                        duration: Motion.panel
-                        easing.type: open ? Motion.easeOut : Motion.easeIn
-                    }
-                }
-
-                MouseArea {
+                Item {
                     anchors.fill: parent
-                    onClicked: {}
-                }
 
                     Column {
-                        anchors.fill: parent
-                    anchors.margins: Theme.pad
-                    spacing: Theme.gap
+                        id: sidebar
+                        width: 220
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        spacing: 22
 
-                    Column {
-                        id: head
-                        width: parent.width
-                        spacing: 8
+                        Text {
+                            text: "SETTINGS"
+                            color: Theme.fg
+                            font.family: Config.defaultFontUi
+                            font.pixelSize: 20
+                            font.letterSpacing: Theme.brandTracking
+                            font.weight: Font.DemiBold
+                        }
 
-                        BarText {
-                            text: "settings"
-                            role: "caption"
-                            family: Config.defaultFontUi
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            color: Theme.hairline
                         }
 
                         Rectangle {
@@ -190,46 +243,65 @@ Scope {
                                 Keys.onEnterPressed: win.takeHit(0)
                             }
                         }
-                    }
 
-                    Row {
-                        width: parent.width
-                        height: parent.height - head.height - parent.spacing
-                        spacing: 12
+                        Flickable {
+                            width: parent.width
+                            height: Math.max(0, sidebar.height - y)
+                            clip: true
+                            contentWidth: width
+                            contentHeight: railCol.implicitHeight
+                            boundsBehavior: Flickable.StopAtBounds
+                            flickDeceleration: 8000
 
-                        Column {
-                            width: 108
-                            spacing: 4
-                            Repeater {
-                                model: [
-                                    { id: "type", label: "type" },
-                                    { id: "clock", label: "clock" },
-                                    { id: "weather", label: "weather" },
-                                    { id: "session", label: "session" },
-                                    { id: "devices", label: "devices" },
-                                    { id: "screen", label: "screen" },
-                                    { id: "color", label: "color" }
-                                ]
-                                BarButton {
-                                    required property var modelData
-                                    implicitWidth: 108
-                                    active: win.page === modelData.id
-                                    onClicked: win.page = modelData.id
-                                    BarText {
-                                        text: modelData.label
-                                        px: 12
-                                        family: Config.defaultFontUi
-                                        color: win.page === modelData.id ? Theme.accent : Theme.fg
+                            Column {
+                                id: railCol
+                                width: parent.width
+                                spacing: 4
+                                Repeater {
+                                    id: railRep
+                                    model: ShellState.settingsPages.length
+                                    onCountChanged: ShellState.settingsRailCount = count
+                                    Item {
+                                        required property int index
+                                        width: sidebar.width
+                                        height: 38
+                                        RailBtn {
+                                            width: parent.width
+                                            modelData: ShellState.settingsPages[index]
+                                            current: win.page === ShellState.settingsPages[index].key
+                                            onClicked: ShellState.openSettingsPage(ShellState.settingsPages[index].key)
+                                        }
                                     }
+                                }
+                                onImplicitHeightChanged: ShellState.settingsRailH = Math.round(implicitHeight)
+                                Component.onCompleted: {
+                                    ShellState.settingsRailCount = railRep.count;
+                                    ShellState.settingsRailH = Math.round(implicitHeight);
                                 }
                             }
                         }
+                    }
 
-                        Item {
-                            width: parent.width - 120
-                            height: parent.height
+                    Rectangle {
+                        id: railLine
+                        width: 1
+                        anchors.left: sidebar.right
+                        anchors.leftMargin: 28
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        color: Theme.hairline
+                    }
 
-                            ListView {
+                    Item {
+                        anchors.left: railLine.right
+                        anchors.leftMargin: 28
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        clip: true
+
+                        ListView {
                                 visible: win.looking
                                 anchors.fill: parent
                                 clip: true
@@ -271,81 +343,107 @@ Scope {
                                 }
                             }
 
+                        Item {
+                            id: pageBody
+                            visible: !win.looking
+                            anchors.fill: parent
+                            clip: true
+
+                            Column {
+                                id: pageHead
+                                width: parent.width
+                                spacing: 12
+
+                                Text {
+                                    text: win.pageTitle
+                                    color: Theme.fg
+                                    font.family: Config.defaultFontUi
+                                    font.pixelSize: 18
+                                    font.letterSpacing: Theme.titleTracking
+                                    font.weight: Font.DemiBold
+                                }
+
+                                Rectangle {
+                                    width: parent.width
+                                    height: 1
+                                    color: Theme.hairline
+                                }
+                            }
+
                             Item {
-                                visible: !win.looking && win.page === "type"
-                                anchors.fill: parent
+                                visible: win.page === "type"
+                                anchors.top: pageHead.bottom
+                                anchors.topMargin: 16
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
 
                                 Column {
                                     id: typeHead
                                     width: parent.width
-                                    spacing: 8
+                                    spacing: 12
                                     BarText {
-                                        text: "empty = default"
-                                        sub: true
-                                        px: 11
-                                        family: Config.defaultFontUi
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
+                                        text: "FACE"
+                                        role: "head"
                                     }
                                     Row {
-                                        spacing: 4
+                                        width: parent.width
+                                        spacing: 10
                                         Repeater {
                                             model: [
-                                                { id: "ui", label: "ui" },
-                                                { id: "jp", label: "japanese" },
-                                                { id: "icons", label: "icons" }
+                                                { id: "ui", label: "UI" },
+                                                { id: "jp", label: "JAPANESE" },
+                                                { id: "icons", label: "ICONS" }
                                             ]
-                                            BarButton {
+                                            HudPick {
                                                 required property var modelData
-                                                implicitWidth: 88
-                                                active: win.face === modelData.id
+                                                width: (parent.width - 20) / 3
+                                                label: modelData.label
+                                                current: win.face === modelData.id
                                                 onClicked: win.face = modelData.id
-                                                BarText {
-                                                    text: modelData.label
-                                                    px: 12
-                                                    family: Config.defaultFontUi
-                                                }
                                             }
                                         }
+                                    }
+                                    BarText {
+                                        text: "Empty = default"
+                                        px: 11
+                                        family: Config.defaultFontUi
+                                        color: Theme.fgSub
+                                        width: parent.width
+                                        wrapMode: Text.Wrap
                                     }
                                 }
 
                                 Row {
                                     id: typeSize
                                     anchors.bottom: parent.bottom
-                                    spacing: 8
+                                    width: parent.width
+                                    spacing: 10
                                     BarText {
-                                        text: "size  " + Theme.fontPx
-                                        px: 12
-                                        family: Config.defaultFontUi
+                                        text: "SIZE  " + Theme.fontPx
+                                        role: "head"
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
-                                    BarButton {
-                                        implicitWidth: 32
+                                    HudPick {
+                                        width: 42
+                                        implicitHeight: 32
+                                        height: 32
+                                        label: "−"
                                         onClicked: win.nudgePx(-1)
-                                        BarText {
-                                            text: "−"
-                                            px: 14
-                                            family: Config.defaultFontUi
-                                        }
                                     }
-                                    BarButton {
-                                        implicitWidth: 32
+                                    HudPick {
+                                        width: 42
+                                        implicitHeight: 32
+                                        height: 32
+                                        label: "+"
                                         onClicked: win.nudgePx(1)
-                                        BarText {
-                                            text: "+"
-                                            px: 14
-                                            family: Config.defaultFontUi
-                                        }
                                     }
-                                    BarButton {
-                                        implicitWidth: 72
+                                    HudPick {
+                                        width: 88
+                                        implicitHeight: 32
+                                        height: 32
+                                        label: "RESET"
                                         onClicked: win.resetType()
-                                        BarText {
-                                            text: "reset"
-                                            px: 11
-                                            family: Config.defaultFontUi
-                                        }
                                     }
                                 }
 
@@ -356,7 +454,7 @@ Scope {
                                     anchors.bottomMargin: 8
                                     anchors.left: parent.left
                                     anchors.right: parent.right
-                                    title: win.face === "jp" ? "japanese" : (win.face === "icons" ? "icons" : "ui")
+                                    title: win.face === "jp" ? "JAPANESE" : (win.face === "icons" ? "ICONS" : "UI")
                                     current: win.face === "jp" ? Theme.fontJp : (win.face === "icons" ? Theme.fontIcons : Theme.fontUi)
                                     pins: [win.face === "jp" ? Config.defaultFontJp : (win.face === "icons" ? Config.defaultFontIcons : Config.defaultFontUi)]
                                     sample: win.face === "jp" ? "単 純 あ い" : (win.face === "icons" ? "  󰃠 " : "Aa Bb 12")
@@ -367,319 +465,39 @@ Scope {
 
                             Flickable {
                                 id: restFlick
-                                visible: !win.looking && win.page !== "type"
-                                anchors.fill: parent
+                                visible: win.page !== "type"
+                                anchors.top: pageHead.bottom
+                                anchors.topMargin: 16
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
                                 clip: true
+                                flickableDirection: Flickable.VerticalFlick
                                 contentWidth: width
-                                contentHeight: restCol.implicitHeight
+                                contentHeight: restPage.item ? restPage.item.implicitHeight : 0
                                 boundsBehavior: Flickable.StopAtBounds
                                 flickDeceleration: 8000
                                 maximumFlickVelocity: 5000
+                                onVisibleChanged: if (visible)
+                                    win.resetRestScroll()
+                                onContentYChanged: if (win.isFocused)
+                                    ShellState.settingsScrollY = Math.round(contentY)
 
-                                Column {
-                                    id: restCol
+                                Loader {
+                                    id: restPage
                                     width: parent.width
-                                    spacing: 12
-
-                                Column {
-                                    visible: win.page === "clock"
-                                    width: parent.width
-                                    spacing: 8
-                                    BarButton {
-                                        implicitWidth: 200
-                                        onClicked: {
-                                            Config.clock.twelveHour = !Config.clock.twelveHour;
-                                            Config.writeSparse();
-                                        }
-                                        BarText {
-                                            text: Config.clock.twelveHour ? "12 hour" : "24 hour"
-                                            px: 12
-                                        }
-                                    }
-                                    Row {
-                                        spacing: 4
-                                        BarButton {
-                                            implicitWidth: 88
-                                            active: win.hasZone("Europe/Moscow")
-                                            onClicked: win.ensureZone("Europe/Moscow", "Moscow")
-                                            BarText {
-                                                text: "Moscow"
-                                                px: 11
-                                            }
-                                        }
-                                        BarButton {
-                                            implicitWidth: 100
-                                            active: win.hasZone("Australia/Melbourne")
-                                            onClicked: win.ensureZone("Australia/Melbourne", "Melbourne")
-                                            BarText {
-                                                text: "Melbourne"
-                                                px: 11
-                                            }
-                                        }
-                                    }
-                                    BarText {
-                                        visible: !(Config.clock.zones && Config.clock.zones.length)
-                                        text: Config.localLabel + "  ·  auto"
-                                        sub: true
-                                        px: 11
-                                    }
-                                    Repeater {
-                                        model: Config.clock.zones && Config.clock.zones.length ? Config.clockZones : []
-                                        BarButton {
-                                            required property var modelData
-                                            required property int index
-                                            implicitWidth: restCol.width
-                                            onClicked: win.dropZone(index)
-                                            BarText {
-                                                text: (modelData.label || modelData.id) + "  ·  remove"
-                                                px: 12
-                                            }
-                                        }
-                                    }
-                                    Row {
-                                        spacing: 6
-                                        Rectangle {
-                                            width: 280
-                                            height: 24
-                                            color: Theme.surface
-                                            border.width: 1
-                                            border.color: Theme.hairline
-                                            radius: Theme.radius
-                                            TextInput {
-                                                anchors.fill: parent
-                                                anchors.margins: 4
-                                            font.family: Config.defaultFontUi
-                                            font.pixelSize: 12
-                                            color: Theme.fg
-                                            text: win.zoneDraft
-                                                onTextChanged: win.zoneDraft = text
-                                                Keys.onReturnPressed: win.addZone()
-                                                Keys.onEnterPressed: win.addZone()
-                                            }
-                                        }
-                                        BarButton {
-                                            implicitWidth: 56
-                                            onClicked: win.addZone()
-                                            BarText {
-                                                text: "add"
-                                                px: 11
-                                            }
-                                        }
-                                    }
-                                    BarText {
-                                        text: "IANA id, e.g. Europe/Moscow"
-                                        sub: true
-                                        px: 11
-                                    }
-                                }
-
-                                Column {
-                                    visible: win.page === "weather"
-                                    width: parent.width
-                                    spacing: 8
-                                    BarText {
-                                        text: "city for wttr.in. empty = from IP."
-                                        sub: true
-                                        px: 11
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
-                                    }
-                                    Rectangle {
-                                        width: parent.width
-                                        height: 28
-                                        color: Theme.surface
-                                        border.width: 1
-                                        border.color: Theme.hairline
-                                        radius: Theme.radius
-                                        TextInput {
-                                            anchors.fill: parent
-                                            anchors.margins: 4
-                                            font.family: Config.defaultFontUi
-                                            font.pixelSize: 13
-                                            color: Theme.fg
-                                            text: win.weatherDraft
-                                            onTextChanged: win.weatherDraft = text
-                                            Keys.onReturnPressed: win.saveWeather()
-                                            Keys.onEnterPressed: win.saveWeather()
-                                        }
-                                    }
-                                    Row {
-                                        spacing: 4
-                                        BarButton {
-                                            implicitWidth: 80
-                                            active: Config.services.weatherCity === "Moscow"
-                                            onClicked: {
-                                                win.weatherDraft = "Moscow";
-                                                win.saveWeather();
-                                            }
-                                            BarText {
-                                                text: "Moscow"
-                                                px: 11
-                                            }
-                                        }
-                                        BarButton {
-                                            implicitWidth: 72
-                                            onClicked: win.saveWeather()
-                                            BarText {
-                                                text: "save"
-                                                px: 11
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Column {
-                                    visible: win.page === "session"
-                                    width: parent.width
-                                    spacing: 8
-                                    BarText {
-                                        text: "Super+L. Idle and sleep use this lock."
-                                        sub: true
-                                        px: 11
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
-                                    }
-                                }
-
-                                Column {
-                                    visible: win.page === "devices"
-                                    width: parent.width
-                                    spacing: 8
-                                    BarText {
-                                        text: "empty = auto"
-                                        sub: true
-                                        px: 11
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
-                                    }
-                                    BarText {
-                                        text: "backlight"
-                                        px: 12
-                                    }
-                                    Rectangle {
-                                        width: parent.width
-                                        height: 28
-                                        color: Theme.surface
-                                        border.width: 1
-                                        border.color: Theme.hairline
-                                        radius: Theme.radius
-                                        TextInput {
-                                            anchors.fill: parent
-                                            anchors.margins: 4
-                                            font.family: Config.defaultFontUi
-                                            font.pixelSize: 13
-                                            color: Theme.fg
-                                            text: win.blDraft
-                                            onTextChanged: win.blDraft = text
-                                            Keys.onReturnPressed: win.saveDevices()
-                                            Keys.onEnterPressed: win.saveDevices()
-                                        }
-                                    }
-                                    BarButton {
-                                        implicitWidth: 140
-                                        active: blDraft.trim() === "intel_backlight"
-                                        onClicked: {
-                                            win.blDraft = "intel_backlight";
-                                            win.saveDevices();
-                                        }
-                                        BarText {
-                                            text: "intel_backlight"
-                                            px: 11
-                                        }
-                                    }
-                                    BarText {
-                                        text: "keyboard"
-                                        px: 12
-                                    }
-                                    Rectangle {
-                                        width: parent.width
-                                        height: 28
-                                        color: Theme.surface
-                                        border.width: 1
-                                        border.color: Theme.hairline
-                                        radius: Theme.radius
-                                        TextInput {
-                                            anchors.fill: parent
-                                            anchors.margins: 4
-                                            font.family: Config.defaultFontUi
-                                            font.pixelSize: 13
-                                            color: Theme.fg
-                                            text: win.kbDraft
-                                            onTextChanged: win.kbDraft = text
-                                            Keys.onReturnPressed: win.saveDevices()
-                                            Keys.onEnterPressed: win.saveDevices()
-                                        }
-                                    }
-                                    BarButton {
-                                        implicitWidth: 72
-                                        onClicked: win.saveDevices()
-                                        BarText {
-                                            text: "save"
-                                            px: 11
-                                        }
-                                    }
-                                }
-
-                                ScreenPage {
-                                    visible: win.page === "screen"
-                                    width: parent.width
-                                }
-
-                                Column {
-                                    visible: win.page === "color"
-                                    width: parent.width
-                                    spacing: 10
-                                    BarButton {
-                                        implicitWidth: parent.width
-                                        implicitHeight: 28
-                                        active: Config.theme.sampleWall
-                                        onClicked: {
-                                            Config.theme.sampleWall = !Config.theme.sampleWall;
-                                            Config.writeSparse();
-                                        }
-                                        BarText {
-                                            text: Config.theme.sampleWall ? "colors · pull" : "colors · keep"
-                                            px: 12
-                                        }
-                                    }
-                                    SkinChip {
-                                        pal: ({
-                                            label: "From wall",
-                                            bg: Theme.hexOf(Theme.bg),
-                                            surface: Theme.hexOf(Theme.surface),
-                                            fg: Theme.hexOf(Theme.fg),
-                                            accent: Theme.hexOf(Theme.accent)
-                                        })
-                                        active: Theme.fromWall
-                                        onClicked: Theme.setTheme("wall", "wall")
-                                    }
-                                    Flow {
-                                        width: parent.width
-                                        spacing: 8
-                                        Repeater {
-                                            model: Theme.presets
-                                            SkinChip {
-                                                required property var modelData
-                                                pal: modelData
-                                                active: Theme.name === modelData.name
-                                                onClicked: Theme.setTheme(modelData.kind, modelData.name)
-                                            }
-                                        }
-                                    }
-                                    BarText {
-                                        text: Config.theme.sampleWall ? "pick a wall and pull colors" : "pick a wall, keep this palette"
-                                        sub: true
-                                        px: 11
-                                        family: Config.defaultFontUi
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
-                                    }
+                                    height: item ? item.implicitHeight : 0
+                                    active: restFlick.visible && win.restSrc.length > 0
+                                    source: active ? win.restSrc : ""
+                                    onLoaded: win.resetRestScroll()
+                                    onItemChanged: win.resetRestScroll()
+                                    onStatusChanged: if (status === Loader.Ready || status === Loader.Null)
+                                        win.resetRestScroll()
                                 }
                             }
                         }
                     }
                 }
-            }
             }
 
             Process {
@@ -700,7 +518,7 @@ Scope {
                 if (!row)
                     return;
                 if (row.page)
-                    page = row.page;
+                    ShellState.openSettingsPage(row.page);
                 if (row.face)
                     face = row.face;
                 if (row.name === "wall")
@@ -739,55 +557,6 @@ Scope {
                 Config.appearance.fontJp = "";
                 Config.appearance.fontIcons = "";
                 Config.appearance.fontPx = 0;
-                Config.writeSparse();
-            }
-
-            function hasZone(id) {
-                const z = Config.plainZones(Config.clockZones);
-                for (let i = 0; i < z.length; i++) {
-                    if (z[i].id === id)
-                        return true;
-                }
-                return false;
-            }
-
-            function ensureZone(id, label) {
-                if (hasZone(id))
-                    return;
-                const z = Config.plainZones(Config.clockZones);
-                z.push({
-                    id: id,
-                    label: label || Config.prettyZone(id)
-                });
-                Config.clock.zones = z;
-                Config.writeSparse();
-            }
-
-            function addZone() {
-                const id = zoneDraft.trim();
-                if (!id.length)
-                    return;
-                ensureZone(id, Config.prettyZone(id));
-                zoneDraft = "";
-            }
-
-            function dropZone(index) {
-                const z = Config.plainZones(Config.clockZones);
-                if (index < 0 || index >= z.length)
-                    return;
-                z.splice(index, 1);
-                Config.clock.zones = z;
-                Config.writeSparse();
-            }
-
-            function saveWeather() {
-                Config.services.weatherCity = weatherDraft.trim();
-                Config.writeSparse();
-            }
-
-            function saveDevices() {
-                Config.services.backlight = blDraft.trim();
-                Config.services.keyboard = kbDraft.trim();
                 Config.writeSparse();
             }
         }

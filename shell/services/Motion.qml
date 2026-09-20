@@ -11,10 +11,12 @@ Singleton {
     readonly property int fast: 140
     readonly property int pop: 220
     readonly property int panel: 280
+    readonly property int slow: 380
     readonly property int osdHold: 1400
 
     readonly property int easeOut: Easing.OutCubic
     readonly property int easeIn: Easing.InCubic
+    readonly property int easeOutBack: Easing.OutBack
 
     readonly property real popFrom: 0.92
     readonly property real panelFrom: 0.97

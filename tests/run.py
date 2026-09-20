@@ -28,15 +28,6 @@ class Suite:
     def eq(self, name: str, got, want) -> None:
         self.ok(name, got == want, f"got {got!r} want {want!r}")
 
-    def has(self, name: str, text: str, needle: str) -> None:
-        self.ok(name, needle in text, f"missing {needle!r}")
-
-    def lacks(self, name: str, text: str, needle: str) -> None:
-        self.ok(name, needle not in text, f"found {needle!r}")
-
-    def file_has(self, path: Path, needle: str) -> None:
-        self.has(f"{path.relative_to(ROOT)} has {needle!r}", path.read_text(encoding="utf-8"), needle)
-
     def exists(self, path: Path) -> None:
         self.ok(f"exists {path.relative_to(ROOT)}", path.is_file())
 

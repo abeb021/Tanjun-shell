@@ -2,17 +2,14 @@ import QtQuick
 import "../widgets"
 import "../../services"
 
-Rectangle {
+Face {
     id: root
+    job: "pop"
     property string title: ""
     default property alias content: inner.data
 
     width: parent ? parent.width : 280
     implicitHeight: box.implicitHeight + 16
-    color: Theme.surface
-    border.width: 1
-    border.color: Theme.hairline
-    radius: Theme.radius
 
     Column {
         id: box
@@ -24,8 +21,7 @@ Rectangle {
         BarText {
             visible: root.title.length > 0
             text: root.title
-            sub: true
-            px: 10
+            role: "head"
         }
 
         Column {

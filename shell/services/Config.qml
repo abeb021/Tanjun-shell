@@ -25,6 +25,7 @@ Singleton {
     readonly property string defaultFontJp: "Noto Sans CJK JP"
     readonly property string defaultFontIcons: "Symbols Nerd Font"
     readonly property int defaultFontPx: 13
+    readonly property string defaultStyle: "panel"
 
     readonly property string localId: {
         try {
@@ -141,6 +142,8 @@ Singleton {
             ap.fontIcons = appearance.fontIcons;
         if (appearance.fontPx > 0 && appearance.fontPx !== defaultFontPx)
             ap.fontPx = appearance.fontPx;
+        if (appearance.style.length && appearance.style !== defaultStyle)
+            ap.style = appearance.style;
         if (Object.keys(ap).length)
             out.appearance = ap;
         if (theme.sampleWall === false)
@@ -206,6 +209,7 @@ Singleton {
                 property string fontJp: ""
                 property string fontIcons: ""
                 property int fontPx: 0
+                property string style: ""
             }
 
             property JsonObject screens: JsonObject {

@@ -109,13 +109,13 @@ Item {
             height: Theme.pad
         }
 
-        Rectangle {
+        Face {
             width: parent.width
             height: 36
-            color: Theme.surface
-            border.width: 1
-            border.color: Lock.fail ? Theme.critical : (box.activeFocus ? Theme.accent : Theme.hairline)
-            radius: Theme.radius
+            job: "pop"
+            lit: box.activeFocus
+            danger: Lock.fail
+            ticks: false
 
             TextInput {
                 id: box

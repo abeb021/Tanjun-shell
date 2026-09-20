@@ -23,6 +23,15 @@ Rectangle {
                 easing.type: Motion.easeOut
             }
         }
+        Rectangle {
+            visible: Theme.sliderGlow
+            anchors.fill: parent
+            anchors.margins: -2
+            radius: 4
+            color: "transparent"
+            border.width: 2
+            border.color: Theme.wash(bar.fill, 0.35)
+        }
     }
 
     MouseArea {

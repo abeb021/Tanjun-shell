@@ -15,12 +15,21 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: hover.hovered || (root.active && !root.mark) ? Theme.surfaceHover : "transparent"
+        color: hover.hovered || (root.active && !root.mark) ? Theme.hotSoft : "transparent"
         radius: Theme.radius
     }
 
     Rectangle {
-        visible: !root.mark && root.active
+        visible: Theme.pip && !root.mark && root.active
+        width: 2
+        height: parent.height - 8
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        color: Theme.accent
+    }
+
+    Rectangle {
+        visible: !Theme.pip && !root.mark && root.active
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom

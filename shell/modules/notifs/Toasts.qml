@@ -70,15 +70,12 @@ Scope {
                         easing.type: Motion.easeOut
                     }
                 }
-                delegate: Rectangle {
+                delegate: Face {
                     required property var modelData
+                    job: "pop"
                     width: toast.width
                     implicitHeight: col.implicitHeight + 16
                     height: implicitHeight
-                    color: Theme.surface
-                    border.width: 1
-                    border.color: Theme.hairline
-                    radius: Theme.radius
                     MouseArea {
                         anchors.fill: parent
                         onClicked: modelData.dismiss()

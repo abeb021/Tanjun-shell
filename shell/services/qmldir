@@ -18,3 +18,4 @@ singleton Launches 1.0 Launches.qml
 singleton Screens 1.0 Screens.qml
 singleton Lock 1.0 Lock.qml
 singleton Idle 1.0 Idle.qml
+singleton Bt 1.0 Bt.qml

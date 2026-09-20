@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-import re
+import os
+import shutil
+import subprocess
+import threading
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELL = ROOT / "shell"
 COMP = ROOT / "compositors"
 SCRIPTS = ROOT / "scripts"
-
-FORBIDDEN = ("Omarchy", "Ryoku", "Serpantinum")
-CYRILLIC = range(0x0400, 0x04FF)
 
 PALETTE_KEYS = (
     "name",
@@ -28,124 +29,85 @@ PALETTE_KEYS = (
     "surfaceHover",
 )
 
-HOST_FUNCS = (
-    "activateWorkspace",
-    "moveToWorkspace",
-    "cycleWorkspace",
-    "exitSession",
-    "toggleOverview",
-    "focusWindow",
-    "cycleLayout",
-    "parseMonitors",
-    "applyMonitor",
-    "persistMonitors",
-    "setGamma",
-    "identityGamma",
-    "readGamma",
-    "setDpms",
-    "refreshWindows",
-)
-
-HOST_PROPS = (
-    "live",
-    "hasGamma",
-    "grabFocus",
-    "screenNote",
-    "monitorQuery",
-    "gammaQuery",
-    "focusedOutput",
-    "focusedWorkspaceId",
-    "occupied",
-    "layoutName",
-    "windows",
-)
-
-IPC = (
-    "toggleLauncher",
-    "toggleSidebar",
-    "toggleAudio",
-    "toggleNetwork",
-    "toggleCalendar",
-    "toggleBattery",
-    "toggleNotify",
-    "toggleClipboard",
-    "toggleSettings",
-    "toggleOverview",
-    "toggleDnd",
-    "closeMenus",
-    "lock",
-)
-
-FACE_DIRS = (SHELL / "modules",)
+QS_BIN = shutil.which("qs") or shutil.which("quickshell")
 
 
-def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+def run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        cmd,
+        check=False,
+        capture_output=True,
+        text=True,
+        **kw,
+    )
 
 
-def qml_files() -> list[Path]:
-    return sorted(SHELL.rglob("*.qml"))
+class Qs:
+    """Talk to a live tanjun instance, or start one for the repo shell."""
 
+    def __init__(self) -> None:
+        self.bin = QS_BIN
+        self.proc: subprocess.Popen | None = None
+        self.log = ""
+        self.owned = False
+        self._buf: list[str] = []
+        self.path = SHELL
+        linked = (Path.home() / ".config" / "quickshell").resolve()
+        self.use_default = linked == SHELL
 
-def tracked_text_files() -> list[Path]:
-    text_suf = {
-        ".qml",
-        ".js",
-        ".json",
-        ".md",
-        ".sh",
-        ".py",
-        ".kdl",
-        ".lua",
-        ".conf",
-        ".txt",
-        ".mdc",
-        ".svg",
-        ".css",
-        ".html",
-        ".yml",
-        ".yaml",
-    }
-    out = []
-    for base in (SHELL, COMP, SCRIPTS, ROOT / "tests"):
-        if not base.exists():
-            continue
-        for p in base.rglob("*"):
-            if not p.is_file():
-                continue
-            if p.suffix.lower() not in text_suf:
-                continue
-            out.append(p)
-    for name in ("README.md", "TODO.md"):
-        p = ROOT / name
-        if p.is_file():
-            out.append(p)
-    return out
+    def ipc(self, *args: str, timeout: float = 5) -> subprocess.CompletedProcess:
+        cmd = [self.bin, "ipc"]
+        if self.owned or not self.use_default:
+            cmd += ["-p", str(self.path), "--any-display"]
+        cmd += list(args)
+        return run(cmd, timeout=timeout)
 
+    def start(self) -> str:
+        if not self.bin:
+            return "qs not on PATH"
+        show = self.ipc("show")
+        if show.returncode == 0 and "target tanjun" in (show.stdout or ""):
+            self.log = show.stdout
+            return ""
+        env = os.environ.copy()
+        env.setdefault("QT_QPA_PLATFORM", "wayland")
+        self.proc = subprocess.Popen(
+            [self.bin, "-p", str(self.path), "--no-color"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=env,
+        )
+        self.owned = True
 
-def balanced(text: str) -> bool:
-    n = 0
-    for c in text:
-        if c == "{":
-            n += 1
-        elif c == "}":
-            n -= 1
-            if n < 0:
-                return False
-    return n == 0
+        def pump() -> None:
+            assert self.proc and self.proc.stdout
+            for line in self.proc.stdout:
+                self._buf.append(line)
 
+        threading.Thread(target=pump, daemon=True).start()
+        deadline = time.time() + 8
+        while time.time() < deadline:
+            self.log = "".join(self._buf)
+            if "Configuration Loaded" in self.log:
+                return ""
+            if "Failed to load configuration" in self.log:
+                return self.log
+            if self.proc.poll() is not None:
+                time.sleep(0.1)
+                self.log = "".join(self._buf)
+                return self.log or f"qs exited {self.proc.returncode}"
+            time.sleep(0.05)
+        self.log = "".join(self._buf)
+        return self.log or "timeout waiting for Configuration Loaded"
 
-def has_cyrillic(text: str) -> bool:
-    return any(ord(c) in CYRILLIC for c in text)
-
-
-def bash_array(text: str, name: str) -> list[str]:
-    m = re.search(rf"^{re.escape(name)}=\((.*?)\)", text, re.M | re.S)
-    if not m:
-        return []
-    out: list[str] = []
-    for line in m.group(1).splitlines():
-        raw = line.split("#", 1)[0].strip()
-        if raw:
-            out.extend(raw.split())
-    return out
+    def stop(self) -> None:
+        if not self.owned:
+            return
+        run([self.bin, "kill", "-p", str(self.path), "--any-display"], timeout=5)
+        if self.proc and self.proc.poll() is None:
+            self.proc.terminate()
+            try:
+                self.proc.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
