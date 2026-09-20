@@ -31,7 +31,7 @@ Face {
         anchors.fill: parent
         focus: true
         count: root.picks.length
-        onCancel: ShellState.closeMenus()
+        onCancel: UiMode.closeMenus()
         onPick: i => {
             const it = root.picks[i];
             if (!it)
@@ -164,9 +164,9 @@ Face {
     }
 
     Connections {
-        target: ShellState
+        target: UiMode
         function onPopoutChanged() {
-            if (ShellState.popout === "audio")
+            if (UiMode.popout === "audio")
                 catcher.forceActiveFocus();
         }
     }

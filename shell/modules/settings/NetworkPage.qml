@@ -142,8 +142,16 @@ Column {
                         font.pixelSize: 12
                         color: Theme.fg
                         onTextChanged: page.pw = text
-                        Keys.onReturnPressed: Net.connectNet(modelData, page.pw)
-                        Keys.onEnterPressed: Net.connectNet(modelData, page.pw)
+        Keys.onReturnPressed: {
+            Net.connectNet(modelData, page.pw);
+            page.pw = "";
+            page.pending = "";
+        }
+        Keys.onEnterPressed: {
+            Net.connectNet(modelData, page.pw);
+            page.pw = "";
+            page.pending = "";
+        }
                     }
                 }
                 BarText {
@@ -155,7 +163,11 @@ Column {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: Net.connectNet(modelData, page.pw)
+                        onClicked: {
+                            Net.connectNet(modelData, page.pw);
+                            page.pw = "";
+                            page.pending = "";
+                        }
                     }
                 }
             }

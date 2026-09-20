@@ -11,17 +11,20 @@ Singleton {
     HyprHost {
         id: hypr
         live: !niri.live
+        overviewOpen: UiMode.overviewOpen
         onApplied: root.monitorsDirty()
-        onOverviewWanted: ShellState.toggleOverview()
+        onOverviewWanted: UiMode.toggleOverview()
     }
     NiriHost {
         id: niri
         live: !!Quickshell.env("NIRI_SOCKET")
+        overviewOpen: UiMode.overviewOpen
         onApplied: root.monitorsDirty()
-        onOverviewWanted: ShellState.toggleOverview()
+        onOverviewWanted: UiMode.toggleOverview()
     }
 
     readonly property var host: niri.live ? niri : hypr
+    readonly property bool idleInhibited: host.idleInhibited
 
     readonly property int focusedWorkspaceId: host.focusedWorkspaceId
     readonly property var occupied: host.occupied

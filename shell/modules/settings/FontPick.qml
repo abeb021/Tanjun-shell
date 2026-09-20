@@ -10,6 +10,7 @@ Item {
     property var pins: []
     property var families: []
     property string query: ""
+    property string queryRaw: ""
     readonly property var shown: {
         const fam = families || [];
         const pin = pins || [];
@@ -39,7 +40,14 @@ Item {
 
     onTitleChanged: {
         query = "";
+        queryRaw = "";
         q.text = "";
+    }
+
+    Timer {
+        id: qTimer
+        interval: 80
+        onTriggered: root.query = root.queryRaw
     }
 
     Column {
@@ -109,7 +117,10 @@ Item {
                 font.pixelSize: 12
                 color: Theme.fg
                 clip: true
-                onTextChanged: root.query = text
+                onTextChanged: {
+                    root.queryRaw = text;
+                    qTimer.restart();
+                }
             }
         }
     }
@@ -122,6 +133,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         clip: true
+        reuseItems: true
         boundsBehavior: Flickable.StopAtBounds
         flickDeceleration: 8000
         maximumFlickVelocity: 5000

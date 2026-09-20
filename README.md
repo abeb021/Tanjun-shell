@@ -43,6 +43,8 @@ Outputs: Settings → screen (`~/.config/hypr/monitors.lua` or `~/.config/niri/o
 | Super+A | Launcher |
 | Super+V | Clipboard |
 | Super+Tab | Overview |
+| Super+Shift+S | Region screenshot |
+| Print | Region screenshot |
 | Super+Ctrl+A | Mixer |
 | Super+Ctrl+W | Network |
 | Super+Ctrl+C | Calendar |
@@ -102,6 +104,7 @@ Optional. Defaults are in the shell. Pin only what you want. See `config.example
 | `services.weatherCity` | wttr.in from IP |
 | `services.backlight` | brightnessctl default |
 | `services.keyboard` | compositor |
+| `services.budsMac` / `budsName` | Super+B off |
 | `appearance.fontUi` | JetBrains Mono |
 | `appearance.fontJp` | Noto Sans CJK JP |
 | `appearance.fontIcons` | Symbols Nerd Font |
@@ -141,4 +144,4 @@ scripts/shots.sh
 scripts/hyprland.conf.example
 ```
 
-See `TODO.md`. Current: **v2.5**.
+See `TODO.md`. Current: **v3.4**.

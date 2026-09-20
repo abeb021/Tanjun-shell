@@ -14,58 +14,17 @@ Scope {
             id: win
             required property var modelData
             screen: modelData
-            open: ShellState.settingsOpen
+            open: UiMode.settingsOpen
             layerName: "tanjun-settings"
             grabKeys: Compositor.isScreenFocused(modelData)
             contentOpacity: card.opacity
 
             readonly property bool isFocused: Compositor.isScreenFocused(modelData)
-            readonly property string page: ShellState.settingsPage
+            readonly property string page: SettingsNav.page
             property string face: "ui"
             property string query: ""
             readonly property bool looking: query.length > 0
-            readonly property var catalog: {
-                const out = [
-                    { title: "system", sub: "page", page: "system", hay: "system host os kernel cpu gpu ram disk uptime" },
-                    { title: "sound", sub: "page", page: "sound", hay: "sound volume mute output mic mixer apps" },
-                    { title: "network", sub: "page", page: "network", hay: "network wifi ssid vpn scan" },
-                    { title: "bluetooth", sub: "page", page: "bluetooth", hay: "bluetooth buds adapter scan pair" },
-                    { title: "type", sub: "page", page: "type", hay: "type font ui japanese icons size reset" },
-                    { title: "ui font", sub: "type", page: "type", face: "ui", hay: "ui font jetbrains mono typeface" },
-                    { title: "japanese font", sub: "type", page: "type", face: "jp", hay: "japanese font noto sans cjk jp 単" },
-                    { title: "icons font", sub: "type", page: "type", face: "icons", hay: "icons font nerd symbols" },
-                    { title: "clock", sub: "page", page: "clock", hay: "clock timezone 12 24 hour" },
-                    { title: "Moscow", sub: "clock", page: "clock", hay: "moscow europe/moscow timezone clock" },
-                    { title: "Melbourne", sub: "clock", page: "clock", hay: "melbourne australia/melbourne timezone clock" },
-                    { title: "12 hour", sub: "clock", page: "clock", hay: "12 hour am pm clock" },
-                    { title: "24 hour", sub: "clock", page: "clock", hay: "24 hour clock" },
-                    { title: "weather", sub: "page", page: "weather", hay: "weather city wttr moscow" },
-                    { title: "devices", sub: "page", page: "devices", hay: "devices backlight keyboard intel_backlight" },
-                    { title: "intel_backlight", sub: "devices", page: "devices", hay: "intel_backlight brightness light" },
-                    { title: "screen", sub: "page", page: "screen", hay: "screen monitor display scale gamma output edp brightness layout first second extend" },
-                    { title: "scale", sub: "screen", page: "screen", hay: "scale 1.2 fractional scaling monitor" },
-                    { title: "gamma", sub: "screen", page: "screen", hay: "gamma hyprsunset night identity" },
-                    { title: "style", sub: "page", page: "style", hay: "style chrome panel tanjun look shell rail ticks" },
-                    { title: "Tanjun", sub: "style", page: "style", hay: "tanjun quiet plane rice chrome" },
-                    { title: "Panel", sub: "style", page: "style", hay: "panel chrome ticks chips marked rail" },
-                    { title: "color", sub: "page", page: "color", hay: "color theme palette preset" },
-                    { title: "From wall", sub: "color", page: "color", kind: "wall", name: "wall", hay: "from wall wallpaper accent sample" },
-                    { title: "keep palette", sub: "color", page: "color", hay: "keep palette wallpaper colors pull sample" }
-                ];
-                const p = Theme.presets;
-                for (let i = 0; i < p.length; i++) {
-                    const t = p[i];
-                    out.push({
-                        title: t.label,
-                        sub: "color",
-                        page: "color",
-                        kind: t.kind,
-                        name: t.name,
-                        hay: `${t.label} ${t.name} ${t.kind} color theme palette`
-                    });
-                }
-                return out;
-            }
+            readonly property var catalog: SettingsNav.catalog
             readonly property var hits: looking ? Fuzzy.rank(query, catalog) : []
             property var fonts: []
 
@@ -108,6 +67,8 @@ Scope {
 
             onPageChanged: {
                 resetRestScroll();
+                if (page !== "type")
+                    fonts = [];
                 if (open)
                     openWork.restart();
                 Qt.callLater(resetRestScroll);
@@ -118,7 +79,7 @@ Scope {
                     return;
                 restFlick.contentY = 0;
                 restFlick.returnToBounds();
-                ShellState.settingsScrollY = 0;
+                SettingsNav.scrollY = 0;
             }
 
             Timer {
@@ -130,8 +91,6 @@ Scope {
             function warmPage() {
                 if (!open)
                     return;
-                if (page === "system")
-                    Host.refresh();
                 if (page === "screen")
                     Screens.refresh();
                 if (page === "network")
@@ -158,7 +117,7 @@ Scope {
                         win.clearLookup();
                         return;
                     }
-                    ShellState.closeMenus();
+                    UiMode.closeMenus();
                 }
             }
 
@@ -237,7 +196,7 @@ Scope {
                                     if (text.length)
                                         win.clearLookup();
                                     else
-                                        ShellState.closeMenus();
+                                        UiMode.closeMenus();
                                 }
                                 Keys.onReturnPressed: win.takeHit(0)
                                 Keys.onEnterPressed: win.takeHit(0)
@@ -259,24 +218,24 @@ Scope {
                                 spacing: 4
                                 Repeater {
                                     id: railRep
-                                    model: ShellState.settingsPages.length
-                                    onCountChanged: ShellState.settingsRailCount = count
+                                    model: SettingsNav.pages.length
+                                    onCountChanged: SettingsNav.railCount = count
                                     Item {
                                         required property int index
                                         width: sidebar.width
                                         height: 38
                                         RailBtn {
                                             width: parent.width
-                                            modelData: ShellState.settingsPages[index]
-                                            current: win.page === ShellState.settingsPages[index].key
-                                            onClicked: ShellState.openSettingsPage(ShellState.settingsPages[index].key)
+                                            modelData: SettingsNav.pages[index]
+                                            current: win.page === SettingsNav.pages[index].key
+                                            onClicked: SettingsNav.openPage(SettingsNav.pages[index].key)
                                         }
                                     }
                                 }
-                                onImplicitHeightChanged: ShellState.settingsRailH = Math.round(implicitHeight)
+                                onImplicitHeightChanged: SettingsNav.railH = Math.round(implicitHeight)
                                 Component.onCompleted: {
-                                    ShellState.settingsRailCount = railRep.count;
-                                    ShellState.settingsRailH = Math.round(implicitHeight);
+                                    SettingsNav.railCount = railRep.count;
+                                    SettingsNav.railH = Math.round(implicitHeight);
                                 }
                             }
                         }
@@ -370,97 +329,19 @@ Scope {
                                 }
                             }
 
-                            Item {
+                            TypePage {
                                 visible: win.page === "type"
                                 anchors.top: pageHead.bottom
                                 anchors.topMargin: 16
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.bottom: parent.bottom
-
-                                Column {
-                                    id: typeHead
-                                    width: parent.width
-                                    spacing: 12
-                                    BarText {
-                                        text: "FACE"
-                                        role: "head"
-                                    }
-                                    Row {
-                                        width: parent.width
-                                        spacing: 10
-                                        Repeater {
-                                            model: [
-                                                { id: "ui", label: "UI" },
-                                                { id: "jp", label: "JAPANESE" },
-                                                { id: "icons", label: "ICONS" }
-                                            ]
-                                            HudPick {
-                                                required property var modelData
-                                                width: (parent.width - 20) / 3
-                                                label: modelData.label
-                                                current: win.face === modelData.id
-                                                onClicked: win.face = modelData.id
-                                            }
-                                        }
-                                    }
-                                    BarText {
-                                        text: "Empty = default"
-                                        px: 11
-                                        family: Config.defaultFontUi
-                                        color: Theme.fgSub
-                                        width: parent.width
-                                        wrapMode: Text.Wrap
-                                    }
-                                }
-
-                                Row {
-                                    id: typeSize
-                                    anchors.bottom: parent.bottom
-                                    width: parent.width
-                                    spacing: 10
-                                    BarText {
-                                        text: "SIZE  " + Theme.fontPx
-                                        role: "head"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                    HudPick {
-                                        width: 42
-                                        implicitHeight: 32
-                                        height: 32
-                                        label: "−"
-                                        onClicked: win.nudgePx(-1)
-                                    }
-                                    HudPick {
-                                        width: 42
-                                        implicitHeight: 32
-                                        height: 32
-                                        label: "+"
-                                        onClicked: win.nudgePx(1)
-                                    }
-                                    HudPick {
-                                        width: 88
-                                        implicitHeight: 32
-                                        height: 32
-                                        label: "RESET"
-                                        onClicked: win.resetType()
-                                    }
-                                }
-
-                                FontPick {
-                                    anchors.top: typeHead.bottom
-                                    anchors.topMargin: 8
-                                    anchors.bottom: typeSize.top
-                                    anchors.bottomMargin: 8
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    title: win.face === "jp" ? "JAPANESE" : (win.face === "icons" ? "ICONS" : "UI")
-                                    current: win.face === "jp" ? Theme.fontJp : (win.face === "icons" ? Theme.fontIcons : Theme.fontUi)
-                                    pins: [win.face === "jp" ? Config.defaultFontJp : (win.face === "icons" ? Config.defaultFontIcons : Config.defaultFontUi)]
-                                    sample: win.face === "jp" ? "単 純 あ い" : (win.face === "icons" ? "  󰃠 " : "Aa Bb 12")
-                                    families: win.fonts
-                                    onChosen: win.setFont(win.face, name)
-                                }
+                                face: win.face
+                                fonts: win.fonts
+                                onFacePicked: face => win.face = face
+                                onFontPicked: (which, name) => win.setFont(which, name)
+                                onSizeNudge: delta => win.nudgePx(delta)
+                                onResetRequested: win.resetType()
                             }
 
                             Flickable {
@@ -481,7 +362,7 @@ Scope {
                                 onVisibleChanged: if (visible)
                                     win.resetRestScroll()
                                 onContentYChanged: if (win.isFocused)
-                                    ShellState.settingsScrollY = Math.round(contentY)
+                                    SettingsNav.scrollY = Math.round(contentY)
 
                                 Loader {
                                     id: restPage
@@ -518,7 +399,7 @@ Scope {
                 if (!row)
                     return;
                 if (row.page)
-                    ShellState.openSettingsPage(row.page);
+                    SettingsNav.openPage(row.page);
                 if (row.face)
                     face = row.face;
                 if (row.name === "wall")

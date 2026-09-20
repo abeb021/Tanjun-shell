@@ -24,6 +24,11 @@ Scope {
                 WlrLayershell.namespace: "tanjun-bar"
                 WlrLayershell.layer: WlrLayer.Top
 
+                IdleInhibitor {
+                    enabled: !!(Media.player && Media.player.isPlaying)
+                    window: barWin
+                }
+
                 anchors {
                     top: true
                     left: true
@@ -83,80 +88,108 @@ Scope {
                 }
             }
 
-            BarPop {
-                name: "clock"
-                barWindow: barWin
-                anchorItem: clockBtn
-                growFrom: Item.Top
-                cardW: cal.implicitWidth
-                cardH: cal.implicitHeight
-                CalendarPop {
-                    id: cal
+            LazyLoader {
+                id: clockLoad
+                active: UiMode.popout === "clock"
+                BarPop {
+                    name: "clock"
+                    barWindow: barWin
+                    anchorItem: clockBtn
+                    growFrom: Item.Top
+                    cardW: cal.implicitWidth
+                    cardH: cal.implicitHeight
+                    CalendarPop {
+                        id: cal
+                    }
                 }
             }
 
-            BarPop {
-                name: "audio"
-                barWindow: barWin
-                anchorItem: audioBtn
-                growFrom: Item.TopRight
-                cardW: ap.implicitWidth
-                cardH: ap.implicitHeight
-                AudioPop {
-                    id: ap
+            LazyLoader {
+                id: audioLoad
+                active: UiMode.popout === "audio"
+                BarPop {
+                    name: "audio"
+                    barWindow: barWin
+                    anchorItem: audioBtn
+                    growFrom: Item.TopRight
+                    cardW: ap.implicitWidth
+                    cardH: ap.implicitHeight
+                    AudioPop {
+                        id: ap
+                    }
                 }
             }
 
-            BarPop {
-                name: "network"
-                barWindow: barWin
-                anchorItem: netBtn
-                growFrom: Item.TopRight
-                cardW: np.implicitWidth
-                cardH: np.implicitHeight
-                NetPop {
-                    id: np
+            LazyLoader {
+                id: netLoad
+                active: UiMode.popout === "network"
+                BarPop {
+                    name: "network"
+                    barWindow: barWin
+                    anchorItem: netBtn
+                    growFrom: Item.TopRight
+                    cardW: np.implicitWidth
+                    cardH: np.implicitHeight
+                    NetPop {
+                        id: np
+                    }
                 }
             }
 
-            BarPop {
-                name: "notify"
-                barWindow: barWin
-                anchorItem: notifyBtn
-                growFrom: Item.TopRight
-                cardW: ntp.implicitWidth
-                cardH: ntp.implicitHeight
-                NotifyPop {
-                    id: ntp
+            LazyLoader {
+                id: notifyLoad
+                active: UiMode.popout === "notify"
+                BarPop {
+                    name: "notify"
+                    barWindow: barWin
+                    anchorItem: notifyBtn
+                    growFrom: Item.TopRight
+                    cardW: ntp.implicitWidth
+                    cardH: ntp.implicitHeight
+                    NotifyPop {
+                        id: ntp
+                    }
                 }
             }
 
-            BarPop {
-                name: "battery"
-                barWindow: barWin
-                anchorItem: batteryBtn
-                growFrom: Item.TopRight
-                cardW: bp.implicitWidth
-                cardH: bp.implicitHeight
-                BatteryPop {
-                    id: bp
+            LazyLoader {
+                id: batteryLoad
+                active: UiMode.popout === "battery"
+                BarPop {
+                    name: "battery"
+                    barWindow: barWin
+                    anchorItem: batteryBtn
+                    growFrom: Item.TopRight
+                    cardW: bp.implicitWidth
+                    cardH: bp.implicitHeight
+                    BatteryPop {
+                        id: bp
+                    }
                 }
             }
 
-            BarPop {
-                name: "tray"
-                barWindow: barWin
-                anchorItem: ShellState.popoutAnchor || batteryBtn
-                growFrom: Item.TopRight
-                cardW: tp.implicitWidth
-                cardH: tp.implicitHeight
-                TrayPop {
-                    id: tp
+            LazyLoader {
+                id: trayLoad
+                active: UiMode.popout === "tray"
+                BarPop {
+                    name: "tray"
+                    barWindow: barWin
+                    anchorItem: UiMode.popoutAnchor || batteryBtn
+                    growFrom: Item.TopRight
+                    cardW: tp.implicitWidth
+                    cardH: tp.implicitHeight
+                    TrayPop {
+                        id: tp
+                    }
                 }
             }
 
-            Sidebar {
-                barWindow: barWin
+            LazyLoader {
+                id: sideLoad
+                active: UiMode.sidebarOpen
+                Sidebar {
+                    barWindow: barWin
+                }
             }
         }
     }

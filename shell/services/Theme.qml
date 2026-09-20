@@ -86,11 +86,9 @@ Singleton {
     readonly property bool fromWall: name === "wall"
     property string wallFile: ""
     property string wallStill: ""
-    property string wallPick: ""
-    property string paintKind: "dark"
-    property string paintName: "monochrome"
 
-    readonly property string wallDir: `${Config.configHome}/hypr/assets/wallpapers`
+    readonly property string wallDir: `${Config.stateDir}/walls`
+    readonly property string wallDirLegacy: `${Config.configHome}/hypr/assets/wallpapers`
     readonly property url wallFolder: Qt.url("file://" + wallDir)
 
     function hexOf(c) {
@@ -119,7 +117,8 @@ Singleton {
             fgSub: hexOf(fgSub),
             bg: hexOf(bg),
             surface: hexOf(surface),
-            surfaceHover: hexOf(surfaceHover)
+            surfaceHover: hexOf(surfaceHover),
+            wallDir: root.wallDir
         };
     }
 
@@ -142,12 +141,21 @@ Singleton {
         surfaceHover = obj.surfaceHover ?? surfaceHover;
     }
 
+    function slug(s, fallback) {
+        const t = `${s || ""}`.toLowerCase();
+        if (/^[a-z0-9_-]+$/.test(t))
+            return t;
+        return fallback || "";
+    }
+
     function loadPalette(nextKind, nextName) {
-        if (nextName === "wall")
+        const n = slug(nextName, "");
+        if (!n.length || n === "wall")
             return;
-        kind = nextKind;
-        name = nextName;
-        paletteFile.path = `${Quickshell.shellDir}/themes/${nextKind}/${nextName}.json`;
+        const k = slug(nextKind, "dark");
+        kind = k;
+        name = n;
+        paletteFile.path = `${Quickshell.shellDir}/themes/${k}/${n}.json`;
         paletteFile.reload();
     }
 
@@ -162,23 +170,15 @@ Singleton {
             o.name = "wall";
             o.label = "From wall";
         }
-        if (wallFile.length)
-            o.wall = wallFile;
-        if (wallStill.length)
-            o.wallStill = wallStill;
+        if (root.wallFile.length)
+            o.wall = root.wallFile;
+        if (root.wallStill.length)
+            o.wallStill = root.wallStill;
         stateFile.setText(JSON.stringify(o));
     }
 
     function paint(nextKind, nextName) {
-        const n = nextName || name;
-        if (n === "wall")
-            return;
-        paintKind = nextKind || kind;
-        paintName = n;
-        paintProc.running = false;
-        Qt.callLater(() => {
-            paintProc.running = true;
-        });
+        Wall.paint(nextKind, nextName);
     }
 
     function applyWallJson(d) {
@@ -204,24 +204,11 @@ Singleton {
     }
 
     function urlPath(u) {
-        let s = `${u}`;
-        if (s.startsWith("file://")) {
-            s = decodeURIComponent(s.slice(7));
-            if (s.startsWith("localhost"))
-                s = s.slice("localhost".length);
-        }
-        return s;
+        return Wall.urlPath(u);
     }
 
     function setWallpaper(path) {
-        const p = urlPath(path);
-        if (!p.length)
-            return;
-        wallPick = p;
-        setProc.running = false;
-        Qt.callLater(() => {
-            setProc.running = true;
-        });
+        Wall.setWallpaper(path);
     }
 
     function setTheme(nextKind, nextName) {
@@ -272,71 +259,20 @@ Singleton {
     }
 
     function sampleWall() {
-        sampleProc.running = false;
-        Qt.callLater(() => {
-            sampleProc.running = true;
-        });
-    }
-
-    Process {
-        id: paintProc
-        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, root.paintKind, root.paintName]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: {
-                try {
-                    root.applyWallMedia(JSON.parse(text));
-                    root.persist(root.kind, root.name);
-                } catch (e) {}
-            }
-        }
-    }
-
-    Process {
-        id: sampleProc
-        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, "sample"]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: {
-                try {
-                    root.applyWallJson(JSON.parse(text));
-                } catch (e) {}
-            }
-        }
-    }
-
-    Process {
-        id: setProc
-        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, Config.theme.sampleWall ? "set" : "wall", root.wallPick]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: {
-                try {
-                    const d = JSON.parse(text);
-                    if (d.accent)
-                        root.applyWallJson(d);
-                    else {
-                        root.applyWallMedia(d);
-                        root.persist(root.kind, root.name);
-                    }
-                } catch (e) {}
-            }
-        }
+        Wall.sample();
     }
 
     FileView {
         id: stateFile
         path: Config.stateFile
         printErrors: false
+        atomicWrites: true
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {
             try {
                 const s = JSON.parse(text());
-                if (s.wall)
-                    root.wallFile = s.wall;
-                if (s.wallStill)
-                    root.wallStill = s.wallStill;
+                root.applyWallMedia(s);
                 if (s.name === "wall") {
                     root.apply(s);
                     return;

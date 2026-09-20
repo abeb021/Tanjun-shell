@@ -6,20 +6,20 @@ BarButton {
     id: root
     required property var modelData
     implicitWidth: 22
-    active: ShellState.popout === "tray" && ShellState.trayItem === modelData
+    active: UiMode.popout === "tray" && UiMode.trayItem === modelData
 
     onClicked: {
         if (modelData.onlyMenu && modelData.hasMenu) {
-            ShellState.openTray(modelData, root);
+            UiMode.openTray(modelData, root);
             return;
         }
-        if (ShellState.popout === "tray")
-            ShellState.closePopout();
+        if (UiMode.popout === "tray")
+            UiMode.closePopout();
         modelData.activate();
     }
     onRightClicked: {
         if (modelData.hasMenu)
-            ShellState.openTray(modelData, root);
+            UiMode.openTray(modelData, root);
         else
             modelData.secondaryActivate();
     }

@@ -19,6 +19,7 @@ binds {
     Mod+A hotkey-overlay-title="Launcher" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleLauncher"; }
 
     Print { screenshot; }
+    Mod+Shift+S { screenshot; }
     Mod+Print { screenshot-window; }
     Alt+Print { screenshot-screen; }
 

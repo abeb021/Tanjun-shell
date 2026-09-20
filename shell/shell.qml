@@ -23,48 +23,45 @@ ShellRoot {
     PolkitAsk {}
 
     LazyLoader {
-        active: ShellState.launcherReady
+        active: UiMode.launcherReady
         Launcher {}
     }
 
     LazyLoader {
-        active: ShellState.clipboardReady
+        active: UiMode.clipboardReady
         Clipboard {}
     }
 
     LazyLoader {
-        active: ShellState.overviewReady
+        active: UiMode.overviewReady
         Overview {}
     }
 
     LazyLoader {
-        active: ShellState.settingsReady
+        active: UiMode.settingsReady
         Settings {}
-    }
-
-    Timer {
-        interval: 800
-        running: !ShellState.settingsReady
-        repeat: false
-        onTriggered: ShellState.settingsReady = true
     }
 
     IpcHandler {
         target: "tanjun"
 
-        property bool launcherOpen: ShellState.launcherOpen
-        property bool settingsOpen: ShellState.settingsOpen
-        property bool clipboardOpen: ShellState.clipboardOpen
-        property bool sidebarOpen: ShellState.sidebarOpen
-        property bool overviewOpen: ShellState.overviewOpen
-        property bool dnd: ShellState.dnd
-        property string popout: ShellState.popout
-        property string settingsPage: ShellState.settingsPage
-        property int settingsRailCount: ShellState.settingsRailCount
-        property int settingsRailH: ShellState.settingsRailH
-        property int settingsScrollY: ShellState.settingsScrollY
+        property bool launcherOpen: UiMode.launcherOpen
+        property bool settingsOpen: UiMode.settingsOpen
+        property bool clipboardOpen: UiMode.clipboardOpen
+        property bool sidebarOpen: UiMode.sidebarOpen
+        property bool overviewOpen: UiMode.overviewOpen
+        property bool dnd: UiMode.dnd
+        property bool settingsReady: UiMode.settingsReady
+        property bool overviewReady: UiMode.overviewReady
+        property bool clipboardReady: UiMode.clipboardReady
+        property bool launcherReady: UiMode.launcherReady
+        property string popout: UiMode.popout
+        property string settingsPage: SettingsNav.page
+        property int settingsRailCount: SettingsNav.railCount
+        property int settingsRailH: SettingsNav.railH
+        property int settingsScrollY: SettingsNav.scrollY
         property string style: Theme.style
-        property int settingsStyleCount: ShellState.settingsStyleCount
+        property int settingsStyleCount: SettingsNav.styleCount
 
         function ping(): string {
             return "ok";
@@ -79,7 +76,7 @@ ShellRoot {
         }
 
         function settingsPages(): string {
-            const rows = ShellState.settingsPages;
+            const rows = SettingsNav.pages;
             const ids = [];
             for (let i = 0; i < rows.length; i++)
                 ids.push(rows[i].key);
@@ -87,7 +84,23 @@ ShellRoot {
         }
 
         function openSettingsPage(id: string): void {
-            ShellState.openSettingsPage(id);
+            SettingsNav.openPage(id);
+        }
+
+        function pollJson(): string {
+            return TestHooks.pollJson();
+        }
+
+        function hostCaps(): string {
+            return TestHooks.hostCaps();
+        }
+
+        function settingsCatalog(): string {
+            return TestHooks.settingsCatalog();
+        }
+
+        function uiMode(): string {
+            return TestHooks.uiMode();
         }
 
         function snapScale(raw: string): string {
@@ -108,39 +121,39 @@ ShellRoot {
         }
 
         function toggleLauncher(): void {
-            ShellState.toggleLauncher();
+            UiMode.toggleLauncher();
         }
 
         function toggleSidebar(): void {
-            ShellState.toggleSidebar();
+            UiMode.toggleSidebar();
         }
 
         function toggleAudio(): void {
-            ShellState.togglePopout("audio");
+            UiMode.togglePopout("audio");
         }
 
         function toggleNetwork(): void {
-            ShellState.togglePopout("network");
+            UiMode.togglePopout("network");
         }
 
         function toggleCalendar(): void {
-            ShellState.togglePopout("clock");
+            UiMode.togglePopout("clock");
         }
 
         function toggleBattery(): void {
-            ShellState.togglePopout("battery");
+            UiMode.togglePopout("battery");
         }
 
         function toggleNotify(): void {
-            ShellState.togglePopout("notify");
+            UiMode.togglePopout("notify");
         }
 
         function toggleClipboard(): void {
-            ShellState.toggleClipboard();
+            UiMode.toggleClipboard();
         }
 
         function toggleSettings(): void {
-            ShellState.toggleSettings();
+            UiMode.toggleSettings();
         }
 
         function toggleOverview(): void {
@@ -148,15 +161,15 @@ ShellRoot {
         }
 
         function confirmOverview(): void {
-            ShellState.confirmOverview();
+            UiMode.confirmOverview();
         }
 
         function toggleDnd(): void {
-            ShellState.dnd = !ShellState.dnd;
+            UiMode.dnd = !UiMode.dnd;
         }
 
         function closeMenus(): void {
-            ShellState.closeMenus();
+            UiMode.closeMenus();
         }
 
         function lock(): void {

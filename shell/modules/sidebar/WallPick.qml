@@ -19,7 +19,7 @@ Item {
     z: 40
 
     onOpenChanged: if (open)
-        currentFolder = Theme.wallFolder
+        currentFolder = ownWalls.count > 0 ? Theme.wallFolder : Qt.url("file://" + Theme.wallDirLegacy)
 
     function prettyPath(u) {
         return `${u}`.replace("file://", "").replace(home, "~");
@@ -110,6 +110,14 @@ Item {
                 }
             }
             BarButton {
+                implicitWidth: 72
+                onClicked: picker.currentFolder = Qt.url("file://" + Theme.wallDirLegacy)
+                BarText {
+                    text: "rice"
+                    px: 11
+                }
+            }
+            BarButton {
                 implicitWidth: 84
                 onClicked: picker.goHome("Pictures")
                 BarText {
@@ -117,6 +125,14 @@ Item {
                     px: 11
                 }
             }
+        }
+
+        FolderListModel {
+            id: ownWalls
+            folder: Theme.wallFolder
+            showDirs: true
+            showDotAndDotDot: false
+            showHidden: false
         }
 
         FolderListModel {
@@ -141,7 +157,7 @@ Item {
             anchors.topMargin: 10
             anchors.bottomMargin: 6
             clip: true
-            cacheBuffer: 1600
+            cacheBuffer: 240
             reuseItems: true
             boundsBehavior: Flickable.StopAtBounds
             readonly property int cols: Math.max(2, Math.floor(width / 168))

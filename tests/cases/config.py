@@ -90,6 +90,73 @@ def register(s) -> None:
         r = run(["niri", "validate", "-c", str(kdl)])
         s.ok("niri validate repo", r.returncode == 0, ((r.stderr or "") + (r.stdout or ""))[-500:])
 
+    lua = shutil.which("lua")
+    s.ok("lua on PATH", bool(lua), "lua missing")
+    if lua:
+        dump = r"""
+local keys = {}
+local shots = {}
+local function dummy()
+    return setmetatable({}, {
+        __call = function() return dummy() end,
+        __index = function(_, k)
+            if k == "exec_cmd" then
+                return function(cmd)
+                    shots[#shots + 1] = tostring(cmd)
+                    return dummy()
+                end
+            end
+            return dummy()
+        end,
+    })
+end
+hl = dummy()
+function hl.bind(key)
+    keys[#keys + 1] = key
+end
+package.path = "./?.lua;" .. package.path
+dofile("modules/binds.lua")
+for _, k in ipairs(keys) do
+    io.write("K ", k, "\n")
+end
+for _, c in ipairs(shots) do
+    io.write("C ", c, "\n")
+end
+"""
+        r = run(["lua", "-e", dump], cwd=str(COMP / "hyprland"))
+        hypr_keys = []
+        hypr_cmds = []
+        for ln in (r.stdout or "").splitlines():
+            if ln.startswith("K "):
+                hypr_keys.append(ln[2:].strip())
+            elif ln.startswith("C "):
+                hypr_cmds.append(ln[2:].strip())
+        s.eq("hypr binds dump exit", r.returncode, 0)
+        s.ok("hypr binds listed", len(hypr_keys) >= 20, (r.stderr or "")[-300:] or str(hypr_keys[:8]))
+        s.ok("hypr region shot Print", "Print" in hypr_keys, str(hypr_keys[-15:]))
+        s.ok("hypr region shot Super+Shift+S", "SUPER + SHIFT + S" in hypr_keys, str(hypr_keys))
+        s.ok(
+            "hyprshot region in binds",
+            any("hyprshot -m region" in c for c in hypr_cmds),
+            str(hypr_cmds[-8:]),
+        )
+
+    niri_keys = []
+    niri_shift_s = False
+    for line in (COMP / "niri" / "config" / "keybinds.kdl").read_text(encoding="utf-8").splitlines():
+        t = line.strip()
+        if not t or t.startswith("//") or t.startswith("binds") or t.startswith("}"):
+            continue
+        if "{" not in t:
+            continue
+        key = t.split("{", 1)[0].strip().split()[0]
+        niri_keys.append(key)
+        if key == "Mod+Shift+S" and "screenshot" in t:
+            niri_shift_s = True
+    s.ok("niri binds listed", "Mod+Tab" in niri_keys, str(niri_keys[:12]))
+    s.ok("niri region shot Print", "Print" in niri_keys, str(niri_keys))
+    s.ok("niri region shot Super+Shift+S", niri_shift_s, str(niri_keys))
+
     for script in (
         SHELL / "scripts" / "tanjun-paint.py",
         SHELL / "scripts" / "tanjun-host.py",

@@ -12,7 +12,7 @@ Scope {
             id: win
             required property var modelData
             screen: modelData
-            open: ShellState.overviewOpen
+            open: UiMode.overviewOpen
             layerName: "tanjun-overview"
             grabKeys: Compositor.isScreenFocused(modelData)
             contentOpacity: stage.opacity
@@ -27,9 +27,7 @@ Scope {
                 const out = [];
                 for (let i = 1; i <= 10; i++) {
                     if (i <= 3 || occ[i])
-                        out.push({
-                            id: i
-                        });
+                        out.push(i);
                 }
                 return out;
             }
@@ -76,6 +74,55 @@ Scope {
                 }
             }
 
+            function deskIndexOf(id) {
+                const list = desks;
+                const n = Number(id) || 0;
+                for (let i = 0; i < list.length; i++) {
+                    if (Number(list[i]) === n)
+                        return i;
+                }
+                return -1;
+            }
+
+            function publishPick() {
+                if (!isFocused)
+                    return;
+                if (!open) {
+                    UiMode.overviewPick = "";
+                    UiMode.overviewCount = 0;
+                    return;
+                }
+                const list = windows;
+                UiMode.overviewCount = list.length;
+                const w = list[currentIndex];
+                UiMode.overviewPick = w ? `${w.addr || ""}` : "";
+            }
+
+            function revealPick() {
+                const w = windows[currentIndex];
+                if (!w)
+                    return;
+                const i = deskIndexOf(w.workspaceId);
+                if (i >= 0)
+                    scroller.positionViewAtIndex(i, ListView.Contain);
+            }
+
+            function addrIndex(addr) {
+                const list = windows;
+                const a = `${addr || ""}`;
+                for (let i = 0; i < list.length; i++) {
+                    if (`${list[i].addr || ""}` === a)
+                        return i;
+                }
+                return -1;
+            }
+
+            function selectAddr(addr) {
+                const i = addrIndex(addr);
+                if (i >= 0)
+                    currentIndex = i;
+            }
+
             function clampIndex() {
                 const n = windows.length;
                 if (n === 0) {
@@ -106,38 +153,49 @@ Scope {
             function activateCurrent() {
                 const w = windows[currentIndex];
                 if (!w) {
-                    ShellState.closeMenus();
+                    UiMode.closeMenus();
                     return;
                 }
                 win.pendingAddr = `${w.addr || ""}`;
                 win.pendingWs = Number(w.workspaceId) || 0;
                 if (w.capture && w.capture.activate)
                     w.capture.activate();
-                ShellState.closeMenus();
+                UiMode.closeMenus();
                 goTimer.restart();
             }
 
             function goDesk(id) {
                 win.pendingAddr = "";
                 win.pendingWs = id;
-                ShellState.closeMenus();
+                UiMode.closeMenus();
                 goTimer.restart();
             }
 
             onOpenChanged: {
-                if (!open)
+                if (!open) {
+                    publishPick();
                     return;
+                }
                 Compositor.refreshWindows();
                 selectActive();
                 if (windows.length > 1)
                     win.move(1);
+                publishPick();
+                Qt.callLater(revealPick);
                 if (isFocused)
                     kb.forceActiveFocus();
             }
-            onWindowsChanged: clampIndex()
+            onWindowsChanged: {
+                clampIndex();
+                publishPick();
+            }
+            onCurrentIndexChanged: {
+                publishPick();
+                revealPick();
+            }
 
             Connections {
-                target: ShellState
+                target: UiMode
                 function onOverviewNudgeChanged() {
                     if (win.open)
                         win.move(1);
@@ -174,47 +232,41 @@ Scope {
                     }
                 }
 
-                Flickable {
+                ListView {
                     id: scroller
                     anchors.fill: parent
                     clip: true
                     focus: false
+                    reuseItems: true
+                    cacheBuffer: 480
+                    spacing: 22
                     boundsBehavior: Flickable.StopAtBounds
-                    contentWidth: width
-                    contentHeight: Math.max(height, col.implicitHeight + 1)
-
-                    Column {
-                        id: col
-                        x: Math.max(0, (scroller.width - width) / 2)
-                        y: Math.max(0, (scroller.height - implicitHeight) / 2)
-                        spacing: 22
-
-                        Repeater {
-                            model: win.desks
-                            delegate: Column {
+                    model: win.desks
+                    delegate: Column {
                                 id: desk
                                 required property var modelData
                                 spacing: 8
 
-                                readonly property int deskId: modelData.id
-                                readonly property var tiles: {
+                                readonly property int deskId: Number(modelData)
+                                readonly property int tileCount: {
                                     const all = win.windows;
-                                    const out = [];
+                                    const id = desk.deskId;
+                                    let n = 0;
                                     for (let i = 0; i < all.length; i++) {
-                                        const w = all[i];
-                                        if (Number(w.workspaceId) === desk.deskId)
-                                            out.push({
-                                                tl: w,
-                                                index: i
-                                            });
+                                        if (all[i] && Number(all[i].workspaceId) === id)
+                                            n++;
                                     }
-                                    return out;
+                                    return n;
                                 }
                                 readonly property int cardW: 280
                                 readonly property int gap: 10
                                 readonly property int maxCols: Math.max(1, Math.floor(stage.width / (cardW + gap)))
-                                readonly property int cols: tiles.length === 0 ? 1 : Math.min(tiles.length, maxCols)
-                                width: tiles.length === 0 ? 160 : cols * (cardW + gap) - gap
+                                readonly property int cols: tileCount === 0 ? 1 : Math.min(tileCount, maxCols)
+                                readonly property bool hasPick: {
+                                    const w = win.windows[win.currentIndex];
+                                    return !!(w && Number(w.workspaceId) === desk.deskId);
+                                }
+                                width: tileCount === 0 ? 160 : cols * (cardW + gap) - gap
 
                                 MouseArea {
                                     anchors.horizontalCenter: parent.horizontalCenter
@@ -227,7 +279,7 @@ Scope {
                                         anchors.centerIn: parent
                                         text: `${desk.deskId}`
                                         role: "title"
-                                        color: Compositor.focusedWorkspaceId === desk.deskId ? Theme.accent : Theme.fgSub
+                                        color: desk.hasPick ? Theme.accent : Theme.fgSub
                                     }
                                 }
 
@@ -236,21 +288,34 @@ Scope {
                                     spacing: desk.gap
 
                                     Repeater {
-                                        model: desk.tiles
+                                        model: ScriptModel {
+                                            objectProp: "addr"
+                                            values: {
+                                                const all = win.windows;
+                                                const id = desk.deskId;
+                                                const out = [];
+                                                for (let i = 0; i < all.length; i++) {
+                                                    const w = all[i];
+                                                    if (w && Number(w.workspaceId) === id)
+                                                        out.push(w);
+                                                }
+                                                return out;
+                                            }
+                                        }
                                         delegate: OverviewCard {
                                             required property var modelData
-                                            client: modelData.tl
-                                            selected: win.currentIndex === modelData.index
+                                            client: modelData
+                                            selected: win.addrIndex(`${modelData.addr || ""}`) === win.currentIndex
                                             onClicked: {
-                                                win.currentIndex = modelData.index;
+                                                win.selectAddr(`${modelData.addr || ""}`);
                                                 win.activateCurrent();
                                             }
-                                            onHovered: win.currentIndex = modelData.index
+                                            onHovered: win.selectAddr(`${modelData.addr || ""}`)
                                         }
                                     }
 
                                     MouseArea {
-                                        visible: desk.tiles.length === 0
+                                        visible: desk.tileCount === 0
                                         width: 160
                                         height: 100
                                         cursorShape: Qt.PointingHandCursor
@@ -265,10 +330,8 @@ Scope {
                                     }
                                 }
                             }
-                        }
                     }
                 }
-            }
 
             Item {
                 id: kb
@@ -280,7 +343,7 @@ Scope {
                         return;
                     const shift = (event.modifiers & Qt.ShiftModifier) !== 0;
                     if (event.key === Qt.Key_Escape) {
-                        ShellState.closeMenus();
+                        UiMode.closeMenus();
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_J || event.key === Qt.Key_L) {
                         win.move(shift ? -1 : 1);

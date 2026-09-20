@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pam
 
 Singleton {
@@ -13,6 +14,7 @@ Singleton {
     property bool fprint: false
     property bool fprintOff: false
     property bool fprintSaw: false
+    property string pamDir: `${Quickshell.shellDir}/pam`
 
     onPasswordChanged: {
         if (password.length)
@@ -20,14 +22,14 @@ Singleton {
     }
 
     function request() {
-        ShellState.closeMenus();
+        UiMode.closeMenus();
         lock();
     }
 
     function lock() {
         if (locked)
             return;
-        ShellState.closeMenus();
+        UiMode.closeMenus();
         password = "";
         fail = false;
         busy = false;
@@ -70,7 +72,7 @@ Singleton {
 
     PamContext {
         id: passPam
-        configDirectory: `${Quickshell.shellDir}/pam`
+        configDirectory: root.pamDir
         config: "password.conf"
 
         onPamMessage: {
@@ -97,7 +99,7 @@ Singleton {
 
     PamContext {
         id: printPam
-        configDirectory: `${Quickshell.shellDir}/pam`
+        configDirectory: root.pamDir
         config: "fingerprint.conf"
 
         onCompleted: result => {
@@ -126,6 +128,20 @@ Singleton {
         }
     }
 
+    Process {
+        id: pamInstall
+        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-pam.py`, "install", `${Quickshell.shellDir}/pam`, `${Config.configDir}/pam`]
+        running: true
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                const t = text.trim();
+                if (t.length)
+                    root.pamDir = t;
+            }
+        }
+    }
+
     Timer {
         id: fprintTimer
         interval: 500
@@ -134,7 +150,7 @@ Singleton {
     }
 
     onLockedChanged: {
-        Quickshell.execDetached(["killall", locked ? "-STOP" : "-CONT", "mpvpaper"]);
+        Quickshell.execDetached(["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, locked ? "pause" : "resume"]);
         if (!locked) {
             passPam.abort();
             printPam.abort();

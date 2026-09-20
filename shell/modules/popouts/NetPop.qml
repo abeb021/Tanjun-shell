@@ -16,7 +16,7 @@ Face {
         anchors.fill: parent
         focus: true
         count: Net.networks ? Net.networks.length : 0
-        onCancel: ShellState.closeMenus()
+        onCancel: UiMode.closeMenus()
         onPick: i => {
             const list = Net.networks;
             if (!list || i < 0 || i >= list.length)
@@ -86,10 +86,10 @@ Face {
     }
 
     Connections {
-        target: ShellState
+        target: UiMode
         function onPopoutChanged() {
-            Net.setScanning(ShellState.popout === "network");
-            if (ShellState.popout === "network")
+            Net.setScanning(UiMode.popout === "network");
+            if (UiMode.popout === "network")
                 catcher.forceActiveFocus();
         }
     }

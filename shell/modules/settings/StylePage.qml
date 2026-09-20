@@ -22,7 +22,7 @@ Column {
 
     Repeater {
         model: Theme.styles.length
-        onCountChanged: ShellState.settingsStyleCount = count
+        onCountChanged: SettingsNav.styleCount = count
         StyleCard {
             required property int index
             width: page.width
@@ -31,6 +31,6 @@ Column {
             blurb: Theme.styles[index].blurb
             onClicked: Theme.setStyle(kind)
         }
-        Component.onCompleted: ShellState.settingsStyleCount = count
+        Component.onCompleted: SettingsNav.styleCount = count
     }
 }

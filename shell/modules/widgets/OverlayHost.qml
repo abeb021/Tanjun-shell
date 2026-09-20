@@ -46,15 +46,28 @@ PanelWindow {
         height: Theme.barHeight
     }
 
+    readonly property var otherScreens: {
+        if (!dismissOthers || !open)
+            return [];
+        const mine = root.screen ? `${root.screen.name}` : "";
+        const all = Quickshell.screens;
+        const out = [];
+        if (!all)
+            return out;
+        for (let i = 0; i < all.length; i++) {
+            const s = all[i];
+            if (s && `${s.name}` !== mine)
+                out.push(s);
+        }
+        return out;
+    }
+
     Variants {
-        model: root.dismissOthers && root.open ? Quickshell.screens : []
+        model: root.otherScreens
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: {
-                const mine = root.screen ? `${root.screen.name}` : "";
-                return root.open && !!modelData && `${modelData.name}` !== mine;
-            }
+            visible: root.open && !!modelData
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "tanjun-pop-away"
@@ -68,7 +81,7 @@ PanelWindow {
             }
             MouseArea {
                 anchors.fill: parent
-                onClicked: ShellState.closeMenus()
+                onClicked: UiMode.closeMenus()
             }
         }
     }
@@ -87,7 +100,7 @@ PanelWindow {
         enabled: root.open && root.onThisScreen
         onClicked: {
             root.dismissed();
-            ShellState.closeMenus();
+            UiMode.closeMenus();
         }
     }
 

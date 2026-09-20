@@ -11,6 +11,7 @@ Singleton {
     property int want: -1
     property int sending: -1
     property int lastOsd: -1
+    readonly property int pollMs: 0
 
     readonly property string blDev: Config.services.backlight.length ? Config.services.backlight : discovered
     readonly property string blRoot: blDev.length ? `/sys/class/backlight/${blDev}` : ""
@@ -26,7 +27,7 @@ Singleton {
         if (Math.abs(percent - lastOsd) < 1)
             return;
         lastOsd = percent;
-        ShellState.showOsd("brightness", percent / 100);
+        OsdBus.show("brightness", percent / 100);
     }
 
     function clamp(p) {
@@ -156,13 +157,6 @@ Singleton {
         Qt.callLater(refresh)
 
     Component.onCompleted: Qt.callLater(refresh)
-
-    Timer {
-        interval: ShellState.osdKind === "brightness" ? 50 : 200
-        running: root.blRoot.length > 0 && !root.pushing
-        repeat: true
-        onTriggered: brNow.reload()
-    }
 
     Timer {
         interval: 2000

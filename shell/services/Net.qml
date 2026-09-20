@@ -40,6 +40,7 @@ Singleton {
 
     property string vpn: ""
     readonly property bool vpnUp: vpn.length > 0
+    readonly property bool watching: UiMode.sidebarOpen || UiMode.popout === "network" || (UiMode.settingsOpen && SettingsNav.page === "network")
 
     function setScanning(on) {
         if (wifiDevice && wifiDevice.scannerEnabled !== undefined)
@@ -57,9 +58,11 @@ Singleton {
             n.disconnect();
             return;
         }
-        const ssid = `${n.name || ""}`;
-        if (password && `${password}`.length && ssid.length) {
-            Quickshell.execDetached(["nmcli", "device", "wifi", "connect", ssid, "password", `${password}`]);
+        if (password && `${password}`.length) {
+            if (n.connectWithPsk)
+                n.connectWithPsk(`${password}`);
+            else
+                n.connect();
             return;
         }
         n.connect();
@@ -72,7 +75,7 @@ Singleton {
     Process {
         id: vpnProc
         command: ["bash", "-c", "nmcli -t -f TYPE,NAME connection show --active 2>/dev/null | awk -F: '$1 ~ /vpn|wireguard|tun|sstp|amnezia/ {print $2; exit}'"]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: root.vpn = text.trim()
         }
@@ -80,8 +83,11 @@ Singleton {
 
     Timer {
         interval: 15000
-        running: true
+        running: root.watching
         repeat: true
         onTriggered: root.refreshVpn()
     }
+
+    onWatchingChanged: if (watching)
+        root.refreshVpn()
 }

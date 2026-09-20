@@ -8,7 +8,7 @@ Face {
     implicitWidth: Math.max(280, 20 + Time.zones.length * 120)
     implicitHeight: col.implicitHeight + 16
     focus: true
-    Keys.onEscapePressed: ShellState.closeMenus()
+    Keys.onEscapePressed: UiMode.closeMenus()
 
     property int viewYear: Number(Qt.formatDateTime(Time.now, "yyyy"))
     property int viewMonth: Number(Qt.formatDateTime(Time.now, "M")) - 1

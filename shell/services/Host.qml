@@ -24,6 +24,7 @@ Singleton {
     property string disk: ""
     property var corePct: []
     property bool facts: false
+    readonly property bool ticking: proc.running
 
     readonly property real ramRatio: ramTotal > 0 ? ramUsed / ramTotal : 0
     readonly property string ramText: `${fmtGiB(ramUsed)} / ${fmtGiB(ramTotal)}`
@@ -72,79 +73,85 @@ Singleton {
         return `${(bps / 1024 / 1024).toFixed(1)}M/s`;
     }
 
+    function sameNums(a, b) {
+        if (!a || !b || a.length !== b.length)
+            return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i])
+                return false;
+        }
+        return true;
+    }
+
+    function sameProcs(a, b) {
+        if (!a || !b || a.length !== b.length)
+            return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i].pid !== b[i].pid || a[i].cpu !== b[i].cpu || a[i].name !== b[i].name)
+                return false;
+        }
+        return true;
+    }
+
+    function apply(d) {
+        if (d.cpu !== undefined && d.cpu !== root.cpu)
+            root.cpu = d.cpu;
+        if (d.ramUsed !== undefined)
+            root.ramUsed = d.ramUsed;
+        if (d.ramTotal)
+            root.ramTotal = d.ramTotal;
+        if (d.down !== undefined)
+            root.down = d.down;
+        if (d.up !== undefined)
+            root.up = d.up;
+        if (d.procs && !sameProcs(root.procs, d.procs))
+            root.procs = d.procs;
+        if (d.corePct && !sameNums(root.corePct, d.corePct))
+            root.corePct = d.corePct;
+        if (d.user)
+            root.user = d.user;
+        if (d.distro)
+            root.distro = d.distro;
+        if (d.kernel)
+            root.kernel = d.kernel;
+        if (d.cores)
+            root.cores = d.cores;
+        if (d.threads)
+            root.threads = d.threads;
+        if (d.cpuModel)
+            root.cpuModel = d.cpuModel;
+        if (d.gpu)
+            root.gpu = d.gpu;
+        if (d.host)
+            root.hostName = d.host;
+        if (d.uptime)
+            root.uptime = d.uptime;
+        if (d.disk)
+            root.disk = d.disk;
+        if (d.distro || d.cpu !== undefined)
+            root.facts = true;
+    }
+
     function killProc(pid) {
         const n = Number(pid);
         if (!n || n <= 1)
             return;
         Quickshell.execDetached(["kill", "-TERM", `${n}`]);
-        Qt.callLater(refresh);
-    }
-
-    function refresh() {
-        proc.running = false;
-        proc.running = true;
     }
 
     Process {
         id: proc
-        command: root.facts ? ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`, "--tick"] : ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: {
+        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`, "--watch"]
+        running: UiMode.sidebarOpen || (UiMode.settingsOpen && SettingsNav.page === "system")
+        stdout: SplitParser {
+            onRead: line => {
+                const s = `${line || ""}`.trim();
+                if (!s.length)
+                    return;
                 try {
-                    const d = JSON.parse(text);
-                    root.cpu = d.cpu ?? root.cpu;
-                    root.ramUsed = d.ramUsed ?? root.ramUsed;
-                    root.ramTotal = d.ramTotal || root.ramTotal;
-                    root.down = d.down ?? root.down;
-                    root.up = d.up ?? root.up;
-                    if (d.procs)
-                        root.procs = d.procs;
-                    if (d.user)
-                        root.user = d.user;
-                    if (d.distro)
-                        root.distro = d.distro;
-                    if (d.kernel)
-                        root.kernel = d.kernel;
-                    if (d.cores)
-                        root.cores = d.cores;
-                    if (d.threads)
-                        root.threads = d.threads;
-                    if (d.cpuModel)
-                        root.cpuModel = d.cpuModel;
-                    if (d.gpu)
-                        root.gpu = d.gpu;
-                    if (d.host)
-                        root.hostName = d.host;
-                    if (d.uptime)
-                        root.uptime = d.uptime;
-                    if (d.disk)
-                        root.disk = d.disk;
-                    if (d.corePct)
-                        root.corePct = d.corePct;
-                    if (d.distro || d.cpu !== undefined)
-                        root.facts = true;
+                    root.apply(JSON.parse(s));
                 } catch (e) {}
             }
         }
-    }
-
-    Connections {
-        target: ShellState
-        function onSidebarOpenChanged() {
-            if (ShellState.sidebarOpen)
-                root.refresh();
-        }
-        function onSettingsOpenChanged() {
-            if (ShellState.settingsOpen)
-                root.refresh();
-        }
-    }
-
-    Timer {
-        interval: 2000
-        running: ShellState.sidebarOpen || ShellState.settingsOpen
-        repeat: true
-        onTriggered: root.refresh()
     }
 }

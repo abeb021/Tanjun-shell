@@ -5,7 +5,9 @@
     ]
   },
   "services": {
-    "weatherCity": "Berlin"
+    "weatherCity": "Berlin",
+    "budsMac": "",
+    "budsName": ""
   },
   "appearance": {
     "fontPx": 14

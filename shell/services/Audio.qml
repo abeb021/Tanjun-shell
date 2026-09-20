@@ -10,21 +10,66 @@ Singleton {
         objects: root.tracked
     }
 
+    readonly property bool mixerOpen: UiMode.popout === "audio" || (UiMode.settingsOpen && SettingsNav.page === "sound")
+
+    readonly property var nodeBag: {
+        const tracked = [];
+        const sinks = [];
+        const sources = [];
+        const streams = [];
+        if (!mixerOpen)
+            return {
+                tracked: tracked,
+                sinks: sinks,
+                sources: sources,
+                streams: streams
+            };
+        const nodes = Pipewire.nodes.values;
+        if (nodes) {
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i];
+                if (!n)
+                    continue;
+                if (n.isStream || n.audio)
+                    tracked.push(n);
+                if (n.isStream && n.isSink && n.audio)
+                    streams.push(n);
+                else if (!n.isStream && n.audio) {
+                    if (n.isSink) {
+                        if (!hideSink(n))
+                            sinks.push(n);
+                    } else if (!hideSource(n)) {
+                        sources.push(n);
+                    }
+                }
+            }
+        }
+        return {
+            tracked: tracked,
+            sinks: sinks,
+            sources: sources,
+            streams: streams
+        };
+    }
+
     readonly property var tracked: {
         const out = [];
-        const nodes = Pipewire.nodes.values;
-        if (!nodes)
-            return out;
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            if (!n)
-                continue;
-            if (n.isStream || n.audio)
-                out.push(n);
+        const s = sink;
+        const src = source;
+        if (s)
+            out.push(s);
+        if (src && src !== s)
+            out.push(src);
+        if (mixerOpen) {
+            const nodes = nodeBag.tracked;
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i];
+                if (n && n !== s && n !== src)
+                    out.push(n);
+            }
         }
         return out;
     }
-
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property real volume: {
         const a = sink?.audio;
@@ -45,44 +90,9 @@ Singleton {
     readonly property bool micMuted: source?.audio?.muted ?? false
     readonly property string micLabel: micMuted ? "muted" : `${Math.round(micVolume * 100)}%`
 
-    readonly property var sinks: {
-        const nodes = Pipewire.nodes.values;
-        const out = [];
-        if (!nodes)
-            return out;
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            if (n && !n.isStream && n.isSink && n.audio && !hideSink(n))
-                out.push(n);
-        }
-        return out;
-    }
-
-    readonly property var sources: {
-        const nodes = Pipewire.nodes.values;
-        const out = [];
-        if (!nodes)
-            return out;
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            if (n && !n.isStream && !n.isSink && n.audio && !hideSource(n))
-                out.push(n);
-        }
-        return out;
-    }
-
-    readonly property var streams: {
-        const nodes = Pipewire.nodes.values;
-        const out = [];
-        if (!nodes)
-            return out;
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i];
-            if (n && n.isStream && n.isSink && n.audio)
-                out.push(n);
-        }
-        return out;
-    }
+    readonly property var sinks: nodeBag.sinks
+    readonly property var sources: nodeBag.sources
+    readonly property var streams: nodeBag.streams
 
     property real lastVolume: -1
 
@@ -94,7 +104,7 @@ Singleton {
         if (Math.abs(volume - lastVolume) < 0.004)
             return;
         lastVolume = volume;
-        ShellState.showOsd("volume", muted ? 0 : volume);
+        OsdBus.show("volume", muted ? 0 : volume);
     }
 
     function deviceName(node) {

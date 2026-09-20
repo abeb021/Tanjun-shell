@@ -37,6 +37,13 @@ Singleton {
             next[keys[i]] = hits[keys[i]];
         const cur = next[id] || { n: 0, t: 0 };
         next[id] = { n: (cur.n || 0) + 1, t: Date.now() };
+        const keys2 = Object.keys(next);
+        if (keys2.length > 80) {
+            keys2.sort((a, b) => (next[a].t || 0) - (next[b].t || 0));
+            const drop = keys2.length - 80;
+            for (let i = 0; i < drop; i++)
+                delete next[keys2[i]];
+        }
         hits = next;
         gen++;
         persist();

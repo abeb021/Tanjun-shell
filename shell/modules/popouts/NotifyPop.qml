@@ -7,7 +7,7 @@ Face {
     implicitWidth: 300
     implicitHeight: 360
     focus: true
-    Keys.onEscapePressed: ShellState.closeMenus()
+    Keys.onEscapePressed: UiMode.closeMenus()
 
     Row {
         id: actions
@@ -18,9 +18,9 @@ Face {
         spacing: 6
         BarButton {
             implicitWidth: 140
-            onClicked: ShellState.dnd = !ShellState.dnd
+            onClicked: UiMode.dnd = !UiMode.dnd
             BarText {
-                text: ShellState.dnd ? "dnd · on" : "dnd · off"
+                text: UiMode.dnd ? "dnd · on" : "dnd · off"
                 px: 11
             }
         }
@@ -95,7 +95,7 @@ Face {
         BarText {
             visible: list.count === 0
             anchors.centerIn: parent
-            text: ShellState.dnd ? "do not disturb" : "no notifications"
+            text: UiMode.dnd ? "do not disturb" : "no notifications"
             sub: true
         }
     }

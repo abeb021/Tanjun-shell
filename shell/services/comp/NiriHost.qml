@@ -3,30 +3,25 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 
-Item {
+HostBase {
     id: root
-    property bool live: false
 
-    readonly property bool hasGamma: false
-    readonly property bool grabFocus: false
-    readonly property string screenNote: "scale and mode persist in ~/.config/niri/output.kdl."
-    readonly property var monitorQuery: ["niri", "msg", "--json", "outputs"]
-    readonly property var gammaQuery: ["true"]
-
-    signal applied
-    signal overviewWanted
+    hasGamma: false
+    grabFocus: false
+    screenNote: "scale and mode persist in ~/.config/niri/output.kdl."
+    monitorQuery: ["niri", "msg", "--json", "outputs"]
+    gammaQuery: ["true"]
 
     property var niriOccupied: ({})
     property var niriIdToIdx: ({})
     property var windowList: []
     property int niriFocusedId: 0
     property string niriFocusedOutput: ""
-    property string layoutName: ""
 
-    readonly property string focusedOutput: niriFocusedOutput
-    readonly property int focusedWorkspaceId: niriFocusedId
-    readonly property var occupied: niriOccupied
-    readonly property var windows: windowList
+    focusedOutput: niriFocusedOutput
+    focusedWorkspaceId: niriFocusedId
+    occupied: niriOccupied
+    windows: overviewOpen ? windowList : []
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
 
     function activateWorkspace(id) {
@@ -55,13 +50,17 @@ Item {
         overviewWanted();
     }
 
-    function refreshWindows() {
-        if (!live)
+    function pullWindows() {
+        if (!live || !overviewOpen)
             return;
         windowsProc.running = false;
-        Qt.callLater(() => {
-            windowsProc.running = true;
-        });
+        windowsProc.running = true;
+    }
+
+    function refreshWindows() {
+        if (!live || !overviewOpen)
+            return;
+        winDebounce.restart();
     }
 
     function setDpms(on) {
@@ -74,37 +73,60 @@ Item {
             return null;
         const app = `${appId || ""}`;
         const ttl = `${title || ""}`;
+        let byApp = null;
         for (let i = 0; i < list.length; i++) {
             const t = list[i];
-            if (`${t.appId}` === app && `${t.title}` === ttl)
+            if (`${t.appId}` !== app)
+                continue;
+            if (`${t.title}` === ttl)
                 return t;
+            if (!byApp)
+                byApp = t;
         }
-        for (let i = 0; i < list.length; i++) {
-            const t = list[i];
-            if (app.length && `${t.appId}` === app)
-                return t;
-        }
-        return null;
+        return byApp;
     }
 
     function ingestWindows(raw) {
         const list = Array.isArray(raw) ? raw : (raw && raw.windows) || [];
         const map = niriIdToIdx || {};
+        const prev = windowList;
+        const byAddr = {};
+        for (let i = 0; i < prev.length; i++)
+            byAddr[`${prev[i].addr}`] = prev[i];
         const out = [];
         for (let i = 0; i < list.length; i++) {
             const w = list[i];
             const idx = Number(map[w.workspace_id]) || 0;
+            const addr = `${w.id || ""}`;
+            const title = `${w.title || ""}`;
+            const appId = `${w.app_id || ""}`;
+            const output = `${w.output || ""}`;
+            const activated = !!w.is_focused;
+            const row = byAddr[addr];
+            const capture = (row && row.capture) ? row.capture : captureOf(w.app_id, w.title);
             out.push({
-                title: `${w.title || ""}`,
-                appId: `${w.app_id || ""}`,
-                addr: `${w.id || ""}`,
+                title: title,
+                appId: appId,
+                addr: addr,
                 workspaceId: idx,
-                output: `${w.output || ""}`,
-                capture: captureOf(w.app_id, w.title),
-                activated: !!w.is_focused
+                output: output,
+                capture: capture,
+                activated: activated
             });
         }
-        windowList = out;
+        let same = out.length === prev.length;
+        if (same) {
+            for (let i = 0; i < out.length; i++) {
+                const a = out[i];
+                const b = prev[i];
+                if (a.addr !== b.addr || a.title !== b.title || a.appId !== b.appId || a.workspaceId !== b.workspaceId || a.output !== b.output || a.activated !== b.activated) {
+                    same = false;
+                    break;
+                }
+            }
+        }
+        if (!same)
+            windowList = out;
     }
 
     function focusWindow(addr) {
@@ -116,6 +138,16 @@ Item {
 
     function cycleLayout(keyboard) {
         Quickshell.execDetached(["niri", "msg", "action", "switch-layout", "next"]);
+    }
+
+    function sameOcc(a, b) {
+        if (!a || !b)
+            return false;
+        for (let i = 1; i <= 10; i++) {
+            if (!!a[i] !== !!b[i])
+                return false;
+        }
+        return true;
     }
 
     function ingestWorkspaces(list) {
@@ -137,7 +169,7 @@ Item {
                 focusOut = `${ws.output || ""}`;
             }
         }
-        niriOccupied = occ;
+        niriOccupied = sameOcc(niriOccupied, occ) ? niriOccupied : occ;
         niriIdToIdx = idMap;
         if (focusId)
             niriFocusedId = focusId;
@@ -230,14 +262,18 @@ Item {
         Qt.callLater(() => root.applied());
     }
 
+    function kdlStr(s) {
+        return String(s || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " ");
+    }
+
     function persistMonitors(rows) {
         let body = "// Outputs. Written by Settings → screen.\n\n";
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
             if (r.disabled)
                 continue;
-            body += `output "${r.name}" {\n`;
-            body += `    mode "${r.mode}"\n`;
+            body += `output "${kdlStr(r.name)}" {\n`;
+            body += `    mode "${kdlStr(r.mode)}"\n`;
             body += `    scale ${Number(r.scale) || 1}\n`;
             body += `    position x=${Math.round(r.x)} y=${Math.round(r.y)}\n`;
             body += "}\n\n";
@@ -252,6 +288,13 @@ Item {
     function identityGamma() {}
     function readGamma(text) {
         return 0;
+    }
+
+    Timer {
+        id: winDebounce
+        interval: 50
+        repeat: false
+        onTriggered: root.pullWindows()
     }
 
     Process {
@@ -310,11 +353,17 @@ Item {
         printErrors: false
     }
 
+    onOverviewOpenChanged: {
+        if (overviewOpen)
+            pullWindows();
+        else
+            windowList = [];
+    }
+
     Component.onCompleted: {
         if (!live)
             return;
         refreshProc.running = true;
         layoutsProc.running = true;
-        windowsProc.running = true;
     }
 }

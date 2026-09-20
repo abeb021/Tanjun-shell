@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v3.1**
+Current: **v3.5**
 
 ## v1.0 — bar
 
@@ -143,4 +143,32 @@ Current: **v3.1**
 - [x] Scale slider snaps to real stops
 - [x] Style page: Tanjun and Panel chrome, apart from palettes
 - [x] Chrome on every surface; ticks only on planes (settings, launcher, System, clipboard, polkit)
+
+## v3.2 — harden
+
+- [x] Wi-Fi PSK off argv; PAM faillock; lock before sleep; idle inhibit while media plays
+- [x] Backlight / VPN / Host idle polls; overview freeze; Hypr windows gated
+- [x] Atomic config/state; wallpaper PIDs; no clobber of a real background file
+- [x] OverlayHost for popouts, launcher, System; lazy popouts; no Settings preload
+- [x] Settings nav and OSD off the menu bus; Type page; Tanjun wall dir
+- [x] Launcher debounce; one clip decode; host `/proc`; buds in config; pollJson tests
+- [x] Snapshot `wallDir`; mkdir before config write; clip cache 32MiB; WallPick legacy fallback
+
+## v3.3 — leftover audit
+
+- [x] UiMode exclusive surfaces; TestHooks for poll/hostCaps/catalog
+- [x] HostBase compositor contract; idle inhibit from clients and logind
+- [x] Palette paint in Wall; settings catalog on SettingsNav
+- [x] PAM copy to `~/.config/tanjun/pam` (mode 600, refuse group/world writable)
+
+## v3.4 — test host
+
+- [x] Suite boots its own `qs`; dead QML fails before IPC
+- [x] Super+Shift+R waits for `Configuration Loaded`; log in `~/.local/state/tanjun/reload.log`
+
+## v3.5 — speed
+
+- [x] Host: one `--watch` helper while System/settings are open; delta CPU; no Repeater rewrite if the top list is unchanged
+- [x] Overview cards keyed by window id; desk ListView; unload Settings/Overview/Clipboard after close
+- [x] Niri capture + debounce; weather/backlight/clip/audio/launcher/paint/wait-qs cheap paths
 

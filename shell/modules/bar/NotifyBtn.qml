@@ -5,16 +5,16 @@ import "../../services"
 BarButton {
     id: root
     popoutName: "notify"
-    onRightClicked: ShellState.dnd = !ShellState.dnd
+    onRightClicked: UiMode.dnd = !UiMode.dnd
     onMiddleClicked: Notifs.clear()
     BarText {
-        text: ShellState.dnd ? "" : ""
+        text: UiMode.dnd ? "" : ""
         icon: true
         px: 13
     }
     Rectangle {
         parent: root.overlay
-        visible: Notifs.unread > 0 && !ShellState.dnd
+        visible: Notifs.unread > 0 && !UiMode.dnd
         width: 5
         height: 5
         radius: Theme.radius

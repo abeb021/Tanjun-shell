@@ -16,7 +16,6 @@ Singleton {
 
     readonly property alias clock: adapter.clock
     readonly property alias services: adapter.services
-    readonly property alias session: adapter.session
     readonly property alias appearance: adapter.appearance
     readonly property alias screens: adapter.screens
     readonly property alias theme: adapter.theme
@@ -43,6 +42,7 @@ Singleton {
     }
 
     property bool _rewriting: false
+    property string _pendingText: ""
 
     function prettyZone(id) {
         const s = `${id || ""}`;
@@ -78,9 +78,9 @@ Singleton {
     function isFlat(obj) {
         if (!obj || typeof obj !== "object")
             return false;
-        if (obj.clock || obj.services || obj.session || obj.theme || obj.appearance)
+        if (obj.clock || obj.services || obj.theme || obj.appearance)
             return false;
-        return obj.zones !== undefined || obj.weatherCity !== undefined || obj.backlight !== undefined || obj.keyboard !== undefined || obj.lock !== undefined || obj.themeHook !== undefined;
+        return obj.zones !== undefined || obj.weatherCity !== undefined || obj.backlight !== undefined || obj.keyboard !== undefined || obj.themeHook !== undefined;
     }
 
     function applyFlat(obj) {
@@ -92,8 +92,6 @@ Singleton {
             services.backlight = `${obj.backlight}`;
         if (obj.keyboard !== undefined)
             services.keyboard = `${obj.keyboard}`;
-        if (obj.lock !== undefined)
-            session.lock = argv(obj.lock);
     }
 
     function plainZones(z) {
@@ -131,6 +129,10 @@ Singleton {
             svc.backlight = services.backlight;
         if (services.keyboard.length)
             svc.keyboard = services.keyboard;
+        if (services.budsMac.length)
+            svc.budsMac = services.budsMac;
+        if (services.budsName.length)
+            svc.budsName = services.budsName;
         if (Object.keys(svc).length)
             out.services = svc;
         const ap = {};
@@ -155,15 +157,30 @@ Singleton {
 
     function writeSparse() {
         _rewriting = true;
-        Quickshell.execDetached(["mkdir", "-p", configDir]);
-        file.setText(`${JSON.stringify(sparseObject(), null, 2)}\n`);
-        Qt.callLater(() => {
-            root._rewriting = false;
-        });
+        _pendingText = `${JSON.stringify(sparseObject(), null, 2)}\n`;
+        if (mkDirs.running)
+            return;
+        mkDirs.running = true;
     }
 
     function ensureStateDir() {
-        Quickshell.execDetached(["mkdir", "-p", stateDir]);
+        if (!mkDirs.running)
+            mkDirs.running = true;
+    }
+
+    Process {
+        id: mkDirs
+        command: ["mkdir", "-p", root.configDir, root.stateDir, `${root.stateDir}/walls`]
+        running: true
+        onExited: {
+            if (root._pendingText.length) {
+                file.setText(root._pendingText);
+                root._pendingText = "";
+            }
+            Qt.callLater(() => {
+                root._rewriting = false;
+            });
+        }
     }
 
     Component.onCompleted: ensureStateDir()
@@ -172,6 +189,7 @@ Singleton {
         id: file
         path: root.configFile
         printErrors: false
+        atomicWrites: true
         watchChanges: true
         onFileChanged: {
             if (!root._rewriting)
@@ -198,10 +216,8 @@ Singleton {
                 property string weatherCity: ""
                 property string backlight: ""
                 property string keyboard: ""
-            }
-
-            property JsonObject session: JsonObject {
-                property var lock: []
+                property string budsMac: ""
+                property string budsName: ""
             }
 
             property JsonObject appearance: JsonObject {

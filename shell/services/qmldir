@@ -1,7 +1,11 @@
 module services
 singleton Config 1.0 Config.qml
 singleton Compositor 1.0 Compositor.qml
-singleton ShellState 1.0 ShellState.qml
+singleton UiMode 1.0 UiMode.qml
+singleton TestHooks 1.0 TestHooks.qml
+singleton SettingsNav 1.0 SettingsNav.qml
+singleton OsdBus 1.0 OsdBus.qml
+singleton Wall 1.0 Wall.qml
 singleton Theme 1.0 Theme.qml
 singleton Time 1.0 Time.qml
 singleton Layout 1.0 Layout.qml

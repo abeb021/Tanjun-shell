@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import signal
 import subprocess
 import threading
 import time
@@ -43,7 +44,7 @@ def run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
 
 
 class Qs:
-    """Talk to a live tanjun instance, or start one for the repo shell."""
+    """Boot an owned Tanjun instance. Never attach to the live desktop shell."""
 
     def __init__(self) -> None:
         self.bin = QS_BIN
@@ -52,12 +53,12 @@ class Qs:
         self.owned = False
         self._buf: list[str] = []
         self.path = SHELL
-        linked = (Path.home() / ".config" / "quickshell").resolve()
-        self.use_default = linked == SHELL
 
     def ipc(self, *args: str, timeout: float = 5) -> subprocess.CompletedProcess:
         cmd = [self.bin, "ipc"]
-        if self.owned or not self.use_default:
+        if self.owned and self.proc and self.proc.pid:
+            cmd += ["--pid", str(self.proc.pid)]
+        else:
             cmd += ["-p", str(self.path), "--any-display"]
         cmd += list(args)
         return run(cmd, timeout=timeout)
@@ -65,10 +66,6 @@ class Qs:
     def start(self) -> str:
         if not self.bin:
             return "qs not on PATH"
-        show = self.ipc("show")
-        if show.returncode == 0 and "target tanjun" in (show.stdout or ""):
-            self.log = show.stdout
-            return ""
         env = os.environ.copy()
         env.setdefault("QT_QPA_PLATFORM", "wayland")
         self.proc = subprocess.Popen(
@@ -77,6 +74,7 @@ class Qs:
             stderr=subprocess.STDOUT,
             text=True,
             env=env,
+            start_new_session=True,
         )
         self.owned = True
 
@@ -89,10 +87,10 @@ class Qs:
         deadline = time.time() + 8
         while time.time() < deadline:
             self.log = "".join(self._buf)
-            if "Configuration Loaded" in self.log:
-                return ""
             if "Failed to load configuration" in self.log:
                 return self.log
+            if "Configuration Loaded" in self.log:
+                return ""
             if self.proc.poll() is not None:
                 time.sleep(0.1)
                 self.log = "".join(self._buf)
@@ -104,7 +102,13 @@ class Qs:
     def stop(self) -> None:
         if not self.owned:
             return
-        run([self.bin, "kill", "-p", str(self.path), "--any-display"], timeout=5)
+        pid = self.proc.pid if self.proc else 0
+        if pid:
+            run([self.bin, "kill", "--pid", str(pid)], timeout=5)
+            try:
+                os.killpg(pid, signal.SIGTERM)
+            except OSError:
+                pass
         if self.proc and self.proc.poll() is None:
             self.proc.terminate()
             try:

@@ -253,7 +253,7 @@ link() {
     return 0
   fi
   if [[ -e "$dest" ]]; then
-    echo "skip  $dest (exists, not a symlink)"
+    echo "skip  $dest (exists, not a symlink). Point it at $target yourself or remove it and re-run."
     return 1
   fi
   ln -sfn "$target" "$dest"
@@ -305,7 +305,7 @@ attach_hypr() {
   mkdir -p "$HYPR/hyprland/themes/wall"
   if [[ -f "$STUB" ]] && ! grep -q "Tanjun" "$STUB"; then
     cp "$STUB" "$STUB.bak-before-tanjun"
-    echo "backup $STUB.bak-before-tanjun"
+    echo "backup $STUB.bak-before-tanjun (replacing compositor stub)"
   fi
   cat > "$STUB" <<'EOF'
 -- Tanjun. Monitors: ~/.config/hypr/monitors.lua
@@ -326,7 +326,7 @@ attach_niri() {
   local stub="$NIRI/config.kdl"
   if [[ -f "$stub" ]] && ! grep -q "Tanjun" "$stub"; then
     cp "$stub" "$stub.bak-before-tanjun"
-    echo "backup $stub.bak-before-tanjun"
+    echo "backup $stub.bak-before-tanjun (replacing compositor stub)"
   fi
   link "$ROOT/compositors/niri" "$NIRI/tanjun" || true
   cat > "$stub" <<'EOF'

@@ -26,6 +26,8 @@ bind = SUPER, L, exec, quickshell ipc call tanjun lock
 bind = SUPER, P, exec, quickshell ipc call tanjun lock
 bindl = , switch:on:Lid Switch, exec, quickshell ipc call tanjun lock
 bind = SUPER SHIFT, R, exec, ~/.local/share/tanjun/compositors/hyprland/scripts/reload-shell.sh
+bind = SUPER SHIFT, S, exec, hyprshot -m region -o ~/Pictures/Screenshots
+bind = , Print, exec, hyprshot -m region -o ~/Pictures/Screenshots
 
 layerrule = noanim, tanjun-bar
 layerrule = noanim, tanjun-sidebar

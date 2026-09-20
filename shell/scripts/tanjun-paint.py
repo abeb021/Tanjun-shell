@@ -6,6 +6,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +15,8 @@ HOME = Path.home()
 CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config"))
 STATE = Path(os.environ.get("XDG_STATE_HOME", HOME / ".local/state")) / "tanjun"
 CACHE = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "tanjun"
+PID_FILE = STATE / "wall.pids"
+SLUG = re.compile(r"^[a-z0-9_-]+$")
 EXTS = ("png", "jpg", "jpeg", "webp", "bmp", "gif")
 VIDEO_EXTS = ("mp4", "webm", "mkv", "mov", "m4v")
 MPV_OPTS = "no-audio --loop-file=inf --hwdec=auto --panscan=1.0 --no-osc --osd-level=0 --no-input-default-bindings"
@@ -27,13 +30,71 @@ def is_video(path: Path) -> bool:
     return path.suffix.lower().lstrip(".") in VIDEO_EXTS
 
 
+def slug(value: str, fallback: str = "monochrome") -> str:
+    raw = (value or "").strip().lower()
+    if raw == "wall":
+        return "wall"
+    if SLUG.match(raw):
+        return raw
+    return fallback
+
+
+def wall_dirs() -> list[Path]:
+    own = STATE / "walls"
+    legacy = CONFIG / "hypr/assets/wallpapers"
+    out: list[Path] = []
+    if own.is_dir():
+        out.append(own)
+    if legacy.is_dir():
+        out.append(legacy)
+    return out or [own]
+
+
+def _load_pids() -> dict:
+    try:
+        data = json.loads(PID_FILE.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+def _save_pids(data: dict) -> None:
+    STATE.mkdir(parents=True, exist_ok=True)
+    PID_FILE.write_text(json.dumps(data), encoding="utf-8")
+
+
+def _kill_pid(key: str, sig: int = signal.SIGTERM) -> None:
+    data = _load_pids()
+    pid = data.pop(key, None)
+    if pid:
+        try:
+            os.kill(int(pid), sig)
+        except (OSError, ValueError, TypeError):
+            pass
+    _save_pids(data)
+
+
+def _signal_pid(key: str, sig: int) -> None:
+    data = _load_pids()
+    pid = data.get(key)
+    if not pid:
+        return
+    try:
+        os.kill(int(pid), sig)
+    except (OSError, ValueError, TypeError):
+        data.pop(key, None)
+        _save_pids(data)
+
+
+def _remember(key: str, pid: int) -> None:
+    data = _load_pids()
+    data[key] = pid
+    _save_pids(data)
+
+
 def pin_wall(wall: Path) -> None:
     STATE.mkdir(parents=True, exist_ok=True)
     (STATE / "wall").write_text(str(wall) + "\n")
-
-
-def _kill(name: str) -> None:
-    subprocess.run(["killall", name], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def rewrite_line(path: Path, pattern: str, repl: str) -> bool:
@@ -72,8 +133,10 @@ def current_wall() -> Path | None:
 
 
 def find_wall(name: str) -> Path | None:
-    folder = CONFIG / "hypr/assets/wallpapers"
-    if folder.is_dir():
+    name = slug(name, name)
+    for folder in wall_dirs():
+        if not folder.is_dir():
+            continue
         for ext in EXTS:
             p = folder / f"{name}.{ext}"
             if p.is_file():
@@ -85,6 +148,8 @@ def find_wall(name: str) -> Path | None:
 
 
 def paint_kitty(kind: str, name: str) -> None:
+    kind = slug(kind, "dark")
+    name = slug(name, "monochrome")
     conf = CONFIG / "kitty/kitty.conf"
     rewrite_line(
         conf,
@@ -97,6 +162,8 @@ def paint_kitty(kind: str, name: str) -> None:
 def paint_hypr(kind: str, name: str) -> None:
     if on_niri():
         return
+    kind = slug(kind, "dark")
+    name = slug(name, "monochrome")
     lua = CONFIG / "hypr/hyprland/active_theme.lua"
     if lua.is_file():
         lua.write_text(f'return "hyprland.themes.{kind}.{name}"\n')
@@ -186,23 +253,25 @@ def still_of(wall: Path) -> Path:
     return wall
 
 
-def link_background(path: Path) -> None:
-    bg = CONFIG / "background"
+def link_background(path: Path, bg: Path | None = None) -> None:
+    target = bg if bg is not None else CONFIG / "background"
     try:
-        if bg.is_symlink() or bg.exists():
-            bg.unlink()
-        bg.symlink_to(path)
+        if target.is_symlink():
+            target.unlink()
+        elif target.exists():
+            return
+        target.symlink_to(path)
     except OSError:
         pass
 
 
 def stop_video() -> None:
-    _kill("mpvpaper")
+    _kill_pid("mpvpaper")
 
 
 def stop_still() -> None:
-    _kill("hyprpaper")
-    _kill("swaybg")
+    _kill_pid("swaybg")
+    _kill_pid("hyprpaper")
 
 
 def start_video(wall: Path) -> None:
@@ -210,12 +279,13 @@ def start_video(wall: Path) -> None:
         return
     stop_still()
     stop_video()
-    subprocess.Popen(
+    p = subprocess.Popen(
         ["mpvpaper", "-o", MPV_OPTS, "*", str(wall)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         start_new_session=True,
     )
+    _remember("mpvpaper", p.pid)
 
 
 def write_hyprpaper(wall: Path) -> None:
@@ -246,25 +316,27 @@ def start_still(wall: Path) -> None:
     stop_video()
     write_hyprpaper(wall)
     if on_niri():
-        _kill("swaybg")
-        subprocess.Popen(
+        _kill_pid("swaybg")
+        p = subprocess.Popen(
             ["swaybg", "-i", str(wall), "-m", "fill"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
+        _remember("swaybg", p.pid)
         return
     conf = CONFIG / "hypr/hyprpaper.conf"
-    _kill("hyprpaper")
+    _kill_pid("hyprpaper")
     cmd = ["hyprpaper"]
     if conf.is_file():
         cmd.extend(["--config", str(conf)])
-    subprocess.Popen(
+    p = subprocess.Popen(
         cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         start_new_session=True,
     )
+    _remember("hyprpaper", p.pid)
 
 
 def apply_wall_file(wall: Path) -> Path | None:
@@ -389,19 +461,15 @@ def sample_palette(path: Path) -> dict:
 
     im = Image.open(path).convert("RGB")
     im.thumbnail((160, 160))
-    px = im.load()
-    w, h = im.size
     pixels: list[tuple[float, int, int, int]] = []
     scored: list[tuple[float, int, int, int]] = []
-    for y in range(h):
-        for x in range(w):
-            r, g, b = px[x, y]
-            lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-            pixels.append((lum, r, g, b))
-            if lum < 14:
-                continue
-            chroma = (max(r, g, b) - min(r, g, b)) / (max(r, g, b) or 1)
-            scored.append((chroma * 0.55 + (lum / 255) * 0.45, r, g, b))
+    for r, g, b in im.getdata():
+        lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        pixels.append((lum, r, g, b))
+        if lum < 14:
+            continue
+        chroma = (max(r, g, b) - min(r, g, b)) / (max(r, g, b) or 1)
+        scored.append((chroma * 0.55 + (lum / 255) * 0.45, r, g, b))
     pixels.sort()
     n = len(pixels) or 1
 
@@ -584,15 +652,18 @@ def cmd_restore() -> None:
     conf = CONFIG / "hypr/hyprpaper.conf"
     if conf.is_file():
         stop_video()
-        subprocess.Popen(
+        p = subprocess.Popen(
             ["hyprpaper", "--config", str(conf)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
+        _remember("hyprpaper", p.pid)
 
 
 def cmd_paint(kind: str, name: str) -> None:
+    kind = slug(kind, "dark")
+    name = slug(name, "monochrome")
     paint_kitty(kind, name)
     paint_lock(kind, name)
     wall = paint_wall(name)
@@ -613,6 +684,12 @@ def main() -> None:
         return
     if args[0] == "restore":
         cmd_restore()
+        return
+    if args[0] == "pause":
+        _signal_pid("mpvpaper", signal.SIGSTOP)
+        return
+    if args[0] == "resume":
+        _signal_pid("mpvpaper", signal.SIGCONT)
         return
     if args[0] == "set" and len(args) > 1:
         cmd_set(args[1])

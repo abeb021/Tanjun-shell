@@ -4,87 +4,28 @@ import Quickshell.Wayland
 import "../widgets"
 import "../../services"
 
-PanelWindow {
+OverlayHost {
     id: win
 
     required property var barWindow
 
-    readonly property bool onThisScreen: {
-        const want = ShellState.sidebarScreen;
+    screen: barWindow ? barWindow.screen : null
+    onThisScreen: {
+        const want = UiMode.sidebarScreen;
         const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
         if (!want.length)
             return Compositor.isScreenFocused(barWindow ? barWindow.screen : null);
         return mine === want;
     }
-    readonly property bool open: ShellState.sidebarOpen && onThisScreen
-    readonly property bool shown: open || body.opacity > 0.02
+    open: UiMode.sidebarOpen && onThisScreen
+    layerName: "tanjun-sidebar"
+    dismissOthers: true
+    contentOpacity: body.opacity
     readonly property int maxH: {
         const s = barWindow && barWindow.screen;
         if (!s)
             return 720;
         return Math.max(240, s.height - Theme.barHeight - 8);
-    }
-
-    screen: barWindow ? barWindow.screen : null
-    visible: shown
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    exclusiveZone: -1
-    focusable: true
-    mask: Region {
-        item: barHole
-        intersection: Intersection.Xor
-    }
-
-    WlrLayershell.namespace: "tanjun-sidebar"
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: keys.mode
-
-    KeyPrime {
-        id: keys
-        open: win.open
-    }
-
-    Item {
-        id: barHole
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: Theme.barHeight
-    }
-
-    Variants {
-        model: win.open ? Quickshell.screens : []
-        PanelWindow {
-            required property var modelData
-            screen: modelData
-            visible: {
-                const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
-                return win.open && !!modelData && `${modelData.name}` !== mine;
-            }
-            color: "transparent"
-            exclusionMode: ExclusionMode.Ignore
-            WlrLayershell.namespace: "tanjun-pop-away"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
-            }
-            MouseArea {
-                anchors.fill: parent
-                onClicked: ShellState.closeMenus()
-            }
-        }
-    }
-
-    anchors {
-        top: true
-        left: true
-        right: true
-        bottom: true
     }
 
     onOpenChanged: {
@@ -104,14 +45,14 @@ PanelWindow {
             if (body.wallsOpen)
                 body.wallsOpen = false;
             else
-                ShellState.closeMenus();
+                UiMode.closeMenus();
         }
     }
 
     MouseArea {
         anchors.fill: parent
         enabled: win.open
-        onClicked: ShellState.closeMenus()
+        onClicked: UiMode.closeMenus()
     }
 
     Item {
@@ -128,7 +69,7 @@ PanelWindow {
             if (body.wallsOpen)
                 body.wallsOpen = false;
             else
-                ShellState.closeMenus();
+                UiMode.closeMenus();
         }
                 property bool cpuOpen: false
                 property bool netOpen: true
@@ -249,7 +190,7 @@ PanelWindow {
                                                 implicitWidth: 32
                                                 implicitHeight: 32
                                                 onClicked: {
-                                                    ShellState.closeMenus();
+                                                    UiMode.closeMenus();
                                                     Quickshell.execDetached(["systemctl", "poweroff"]);
                                                 }
                                                 BarText {
@@ -499,15 +440,15 @@ PanelWindow {
                             }
                             BarButton {
                                 implicitWidth: parent.width
-                                onClicked: ShellState.dnd = !ShellState.dnd
+                                onClicked: UiMode.dnd = !UiMode.dnd
                                 BarText {
-                                    text: ShellState.dnd ? "dnd · on" : "dnd · off"
+                                    text: UiMode.dnd ? "dnd · on" : "dnd · off"
                                     px: 12
                                 }
                             }
                             BarButton {
                                 implicitWidth: parent.width
-                                onClicked: ShellState.toggleSettings()
+                                onClicked: UiMode.toggleSettings()
                                 BarText {
                                     text: "settings"
                                     px: 12

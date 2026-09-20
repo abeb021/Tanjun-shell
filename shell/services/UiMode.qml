@@ -11,6 +11,22 @@ Singleton {
     property string popoutScreen: ""
     property string sidebarScreen: ""
 
+    readonly property string kind: {
+        if (settingsOpen)
+            return "settings";
+        if (launcherOpen)
+            return "launcher";
+        if (clipboardOpen)
+            return "clipboard";
+        if (overviewOpen)
+            return "overview";
+        if (sidebarOpen)
+            return "sidebar";
+        if (popout.length)
+            return popout;
+        return "";
+    }
+
     function screenNameOf(item) {
         try {
             const win = item && item.QsWindow ? item.QsWindow.window : null;
@@ -26,32 +42,13 @@ Singleton {
     property bool sidebarOpen: false
     property bool settingsOpen: false
     property bool dnd: false
-    property string settingsPage: "system"
-    property int settingsRailCount: 0
-    property int settingsRailH: 0
-    property int settingsScrollY: 0
-    property int settingsStyleCount: 0
-    readonly property var settingsPages: [
-        { key: "system", label: "System", icon: "󰒓" },
-        { key: "sound", label: "Sound", icon: "" },
-        { key: "screen", label: "Screen", icon: "󰍹" },
-        { key: "network", label: "Network", icon: "󰖩" },
-        { key: "bluetooth", label: "Bluetooth", icon: "󰂯" },
-        { key: "type", label: "Type", icon: "󰛖" },
-        { key: "clock", label: "Clock", icon: "󰥔" },
-        { key: "weather", label: "Weather", icon: "󰖕" },
-        { key: "devices", label: "Devices", icon: "󰃠" },
-        { key: "style", label: "Style", icon: "󰀼" },
-        { key: "color", label: "Color", icon: "󰏘" }
-    ]
 
     property bool launcherReady: false
     property bool clipboardReady: false
     property bool overviewReady: false
     property bool settingsReady: false
-
-    property string osdKind: ""
-    property real osdValue: 0
+    property string overviewPick: ""
+    property int overviewCount: 0
 
     function togglePopout(name, anchor) {
         if (popout === name) {
@@ -63,6 +60,7 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        dropTimer.restart();
         if (name !== "tray")
             trayItem = null;
         popoutAnchor = anchor ?? popoutAnchor;
@@ -83,6 +81,7 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        dropTimer.restart();
         popoutAnchor = anchor ?? popoutAnchor;
         popoutScreen = screenNameOf(anchor);
         if (!popoutScreen.length)
@@ -108,6 +107,9 @@ Singleton {
         sidebarOpen = false;
         settingsOpen = false;
         sidebarScreen = "";
+        overviewPick = "";
+        overviewCount = 0;
+        dropTimer.restart();
     }
 
     function toggleSidebar() {
@@ -120,6 +122,7 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         settingsOpen = false;
+        dropTimer.restart();
         sidebarScreen = Compositor.focusedOutput;
         sidebarOpen = true;
     }
@@ -134,6 +137,9 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        clipboardReady = false;
+        overviewReady = false;
+        settingsReady = false;
         launcherReady = true;
         launcherOpen = true;
     }
@@ -148,6 +154,8 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        overviewReady = false;
+        settingsReady = false;
         clipboardReady = true;
         clipboardOpen = true;
     }
@@ -162,28 +170,12 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         sidebarOpen = false;
+        clipboardReady = false;
+        overviewReady = false;
         settingsReady = true;
-        if (!pageOk(settingsPage))
-            settingsPage = "system";
+        if (!SettingsNav.pageOk(SettingsNav.page))
+            SettingsNav.page = "system";
         settingsOpen = true;
-    }
-
-    function pageOk(id) {
-        const rows = settingsPages;
-        for (let i = 0; i < rows.length; i++) {
-            if (rows[i].key === id)
-                return true;
-        }
-        return false;
-    }
-
-    function openSettingsPage(id) {
-        if (!pageOk(id))
-            return;
-        settingsScrollY = 0;
-        settingsPage = id;
-        if (!settingsOpen)
-            toggleSettings();
     }
 
     property int overviewNudge: 0
@@ -199,6 +191,10 @@ Singleton {
         clipboardOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        clipboardReady = false;
+        settingsReady = false;
+        overviewPick = "";
+        overviewCount = 0;
         overviewReady = true;
         overviewOpen = true;
     }
@@ -209,15 +205,17 @@ Singleton {
         overviewCommit++;
     }
 
-    function showOsd(kind, value) {
-        osdKind = kind;
-        osdValue = value;
-        osdTimer.restart();
-    }
-
     Timer {
-        id: osdTimer
-        interval: Motion.osdHold
-        onTriggered: root.osdKind = ""
+        id: dropTimer
+        interval: Motion.panel
+        repeat: false
+        onTriggered: {
+            if (!root.settingsOpen)
+                root.settingsReady = false;
+            if (!root.overviewOpen)
+                root.overviewReady = false;
+            if (!root.clipboardOpen)
+                root.clipboardReady = false;
+        }
     }
 }

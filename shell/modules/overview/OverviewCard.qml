@@ -11,6 +11,8 @@ Face {
     property bool selected: false
     job: "pop"
     lit: selected
+    border.color: selected ? Theme.accent : Theme.hairline
+    color: selected ? Theme.hot : Theme.surface
 
     signal clicked
     signal hovered
@@ -38,12 +40,13 @@ Face {
             color: Theme.bg
             clip: true
             radius: Theme.radius
+            opacity: root.selected ? 1 : 0.48
 
             ScreencopyView {
                 id: preview
                 anchors.centerIn: parent
-                captureSource: ShellState.overviewOpen && root.client ? root.client.capture : null
-                live: ShellState.overviewOpen
+                captureSource: UiMode.overviewOpen && root.client ? root.client.capture : null
+                live: UiMode.overviewOpen && (root.selected || !preview.hasContent)
                 constraintSize.width: parent.width
                 constraintSize.height: parent.height
             }
@@ -61,7 +64,20 @@ Face {
             width: parent.width
             text: root.winTitle
             px: 11
+            color: root.selected ? Theme.accent : Theme.fg
+            elide: Text.ElideRight
         }
+    }
+
+    Rectangle {
+        visible: Theme.pip && root.selected
+        width: 2
+        height: parent.height - 10
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        anchors.leftMargin: 3
+        color: Theme.accent
+        z: 12
     }
 
     MouseArea {

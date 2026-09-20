@@ -18,15 +18,15 @@ Singleton {
         persistenceSupported: true
         onNotification: n => {
             n.tracked = true;
-            if (!ShellState.dnd)
+            if (!UiMode.dnd)
                 root.unread += 1;
         }
     }
 
     Connections {
-        target: ShellState
+        target: UiMode
         function onPopoutChanged() {
-            if (ShellState.popout === "notify")
+            if (UiMode.popout === "notify")
                 root.unread = 0;
         }
     }

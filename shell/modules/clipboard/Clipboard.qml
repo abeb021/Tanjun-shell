@@ -10,19 +10,59 @@ Scope {
         model: Quickshell.screens
 
         OverlayHost {
+            id: win
             required property var modelData
             screen: modelData
-            open: ShellState.clipboardOpen
+            open: UiMode.clipboardOpen
             layerName: "tanjun-clipboard"
             contentOpacity: card.opacity
+            property var thumbs: ({})
+            property int thumbGen: 0
 
-            onOpenChanged: if (open)
-                clips.forceActiveFocus()
+            function clipKey(line) {
+                const id = `${line || ""}`.split("\t")[0].replace(/[^0-9]/g, "");
+                return id;
+            }
+
+            function isPic(line) {
+                return /\[\[\s*binary/i.test(line) || /\b(png|jpe?g|webp|gif|bmp)\b/i.test(line);
+            }
+
+            function thumbOf(line) {
+                thumbGen;
+                const k = clipKey(line);
+                const p = k.length ? (thumbs[k] || "") : "";
+                return p.length ? `file://${p}` : "";
+            }
+
+            function decodeAt(index) {
+                if (index < 0 || index >= clipModel.count)
+                    return;
+                const row = clipModel.get(index);
+                if (!row || !isPic(row.line))
+                    return;
+                const k = clipKey(row.line);
+                if (!k.length || thumbs[k])
+                    return;
+                decodeProc.command = ["bash", `${Quickshell.shellDir}/scripts/clip-decode.sh`, row.line];
+                decodeProc.running = false;
+                Qt.callLater(() => {
+                    decodeProc.running = true;
+                });
+            }
+
+            onOpenChanged: {
+                if (open) {
+                    clips.forceActiveFocus();
+                    gcProc.running = false;
+                    gcProc.running = true;
+                }
+            }
 
             Shortcut {
                 sequence: "Escape"
                 enabled: open
-                onActivated: ShellState.closeMenus()
+                onActivated: UiMode.closeMenus()
             }
 
             Face {
@@ -67,10 +107,11 @@ Scope {
                     highlightResizeDuration: 0
                     reuseItems: true
                     cacheBuffer: 200
+                    onCurrentIndexChanged: win.decodeAt(currentIndex)
                     maximumFlickVelocity: 12000
                     flickDeceleration: 3500
                     boundsBehavior: Flickable.StopAtBounds
-                    Keys.onEscapePressed: ShellState.closeMenus()
+                    Keys.onEscapePressed: UiMode.closeMenus()
                     Keys.onReturnPressed: copyCurrent()
                     Keys.onEnterPressed: copyCurrent()
                     Keys.onDownPressed: clips.incrementCurrentIndex()
@@ -117,7 +158,7 @@ Scope {
                                 asynchronous: true
                                 cache: true
                                 sourceSize: Qt.size(64, 64)
-                                source: decoded.path.length ? `file://${decoded.path}` : ""
+                                source: win.thumbOf(row.line)
                             }
 
                             BarText {
@@ -138,33 +179,50 @@ Scope {
                                 copyLine(row.line);
                             }
                         }
+                    }
+                }
+            }
 
-                        Process {
-                            id: decoded
-                            property string path: ""
-                            running: row.pic && ShellState.clipboardOpen
-                            command: ["bash", `${Quickshell.shellDir}/scripts/clip-decode.sh`, row.line]
-                            stdout: StdioCollector {
-                                onStreamFinished: decoded.path = text.trim()
-                            }
-                        }
+            Process {
+                id: gcProc
+                command: ["bash", `${Quickshell.shellDir}/scripts/clip-decode.sh`, "--gc"]
+                running: false
+            }
+
+            Process {
+                id: decodeProc
+                running: false
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        const p = text.trim();
+                        if (!p.length)
+                            return;
+                        const bits = p.split("/");
+                        const k = bits[bits.length - 1];
+                        if (!k.length)
+                            return;
+                        win.thumbs[k] = p;
+                        win.thumbGen++;
                     }
                 }
             }
 
             Process {
                 id: clipProc
-                running: ShellState.clipboardOpen
+                running: UiMode.clipboardOpen
                 command: ["cliphist", "list"]
                 stdout: StdioCollector {
                     onStreamFinished: {
                         const lines = text.split("\n").filter(l => l.length);
                         clipModel.clear();
+                        win.thumbs = ({});
+                        win.thumbGen++;
                         for (let i = 0; i < Math.min(lines.length, 40); i++)
                             clipModel.append({
                                 line: lines[i]
                             });
                         clips.currentIndex = 0;
+                        win.decodeAt(0);
                     }
                 }
             }
@@ -181,7 +239,7 @@ Scope {
                 if (!line)
                     return;
                 Quickshell.execDetached(["bash", "-c", `printf '%s\\n' ${shellQuote(line)} | cliphist decode | wl-copy`]);
-                ShellState.closeMenus();
+                UiMode.closeMenus();
             }
 
             function copyCurrent() {

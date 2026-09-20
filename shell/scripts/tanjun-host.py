@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import heapq
 import json
 import os
 import shutil
@@ -7,8 +8,13 @@ import sys
 import time
 from pathlib import Path
 
-TICK = "--tick" in sys.argv
-RT = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "tanjun-host.prev"
+WATCH = "--watch" in sys.argv
+try:
+    INTERVAL = float(os.environ.get("TANJUN_HOST_INTERVAL", "2"))
+except ValueError:
+    INTERVAL = 2.0
+INTERVAL = max(0.05, min(INTERVAL, 60.0))
+LIMIT = 5
 
 
 def cpu_rows():
@@ -42,8 +48,7 @@ def net():
         f.readline()
         for line in f:
             name, rest = line.split(":", 1)
-            name = name.strip()
-            if name == "lo":
+            if name.strip() == "lo":
                 continue
             cols = rest.split()
             rx += int(cols[0])
@@ -51,30 +56,58 @@ def net():
     return rx, tx
 
 
-def procs(limit=5):
+def scan_procs(limit=LIMIT, prev=None, span=1.0):
     me = os.getpid()
-    out = []
+    hz = os.sysconf("SC_CLK_TCK") or 100
+    now = {}
+    ranked = []
     try:
-        raw = os.popen("ps -eo pid,pcpu,comm --no-headers --sort=-pcpu").read()
-    except OSError:
-        return out
-    for line in raw.splitlines():
-        parts = line.strip().split(None, 2)
-        if len(parts) < 3:
-            continue
-        try:
-            if int(parts[0]) == me:
+        for ent in os.scandir("/proc"):
+            if not ent.name.isdigit():
                 continue
-            cpu = float(parts[1])
-        except ValueError:
-            continue
-        name = parts[2]
-        if name.startswith("["):
-            continue
-        out.append({"pid": int(parts[0]), "name": name, "cpu": round(cpu, 1)})
-        if len(out) >= limit:
-            break
-    return out
+            pid = int(ent.name)
+            if pid == me:
+                continue
+            try:
+                with open(f"/proc/{pid}/stat", encoding="utf-8") as f:
+                    stat = f.read()
+                close = stat.rfind(")")
+                if close < 0:
+                    continue
+                name = stat[stat.find("(") + 1 : close]
+                if name.startswith("["):
+                    continue
+                rest = stat[close + 2 :].split()
+                ticks = int(rest[11]) + int(rest[12])
+            except (OSError, ValueError, IndexError):
+                continue
+            now[pid] = ticks
+            if prev is None:
+                ranked.append((ticks, pid, name))
+            elif pid in prev:
+                dt = ticks - prev[pid]
+                if dt > 0:
+                    ranked.append((dt, pid, name))
+    except OSError:
+        return [], now
+    if prev is None:
+        try:
+            up = float(Path("/proc/uptime").read_text(encoding="utf-8").split()[0])
+        except (OSError, ValueError, IndexError):
+            up = 1.0
+        denom = max(1.0, hz * max(up, 0.05))
+    else:
+        denom = max(1.0, hz * max(span, 0.05))
+    out = [
+        {"pid": pid, "name": name, "cpu": round(100.0 * dt / denom, 1)}
+        for dt, pid, name in heapq.nlargest(limit, ranked)
+    ]
+    return out, now
+
+
+def procs(limit=5, prev=None, span=1.0):
+    rows, _ = scan_procs(limit, prev, span)
+    return rows
 
 
 def cpu_desc():
@@ -136,9 +169,9 @@ def disk_text():
         return ""
     used = u.used / 1024**3
     total = u.total / 1024**3
-    pct = int(100 * u.used / u.total) if u.total else 0
+    pct_n = int(100 * u.used / u.total) if u.total else 0
     fmt = lambda n: f"{n:.0f}G" if n >= 10 else f"{n:.1f}G"
-    return f"{fmt(used)} / {fmt(total)} ({pct}%)"
+    return f"{fmt(used)} / {fmt(total)} ({pct_n}%)"
 
 
 def os_name():
@@ -161,71 +194,67 @@ def pct(a, b):
     return max(0.0, min(100.0, 100.0 * (1.0 - (idle2 - idle1) / dt)))
 
 
-def load_prev():
-    try:
-        d = json.loads(RT.read_text())
-        if time.monotonic() - float(d.get("t", 0)) > 8:
-            return None
-        return d
-    except (OSError, ValueError, TypeError):
-        return None
-
-
-def save_prev(rows, rx, tx) -> None:
-    try:
-        RT.write_text(
-            json.dumps({"cpu": rows, "rx": rx, "tx": tx, "t": time.monotonic()})
-        )
-    except OSError:
-        pass
-
-
-prev = load_prev()
-a2 = cpu_rows()
-r2, u2 = net()
-if prev is None:
-    time.sleep(0.12)
-    a1 = a2
-    r1, u1 = r2, u2
+def sample(prev, facts):
     a2 = cpu_rows()
     r2, u2 = net()
-    span = 0.12
-else:
-    a1 = [tuple(x) for x in prev["cpu"]]
-    r1, u1 = int(prev["rx"]), int(prev["tx"])
-    span = max(0.05, time.monotonic() - float(prev["t"]))
-save_prev(a2, r2, u2)
+    t2 = time.monotonic()
+    if prev is None:
+        cpu = 0.0
+        core_pct = []
+        down = up = 0
+        span = INTERVAL
+        proc_rows, proc_map = scan_procs(LIMIT, None, span)
+    else:
+        span = max(0.05, t2 - prev["t"])
+        cpu = pct(prev["cpu"][0], a2[0]) if prev["cpu"] and a2 else 0.0
+        core_pct = [
+            round(pct(prev["cpu"][i], a2[i]), 1)
+            for i in range(1, min(len(prev["cpu"]), len(a2)))
+        ]
+        down = round(max(0.0, (r2 - prev["rx"]) / span))
+        up = round(max(0.0, (u2 - prev["tx"]) / span))
+        proc_rows, proc_map = scan_procs(LIMIT, prev["procs"], span)
+    used, total = mem()
+    out = {
+        "cpu": round(cpu, 1),
+        "corePct": core_pct,
+        "ramUsed": used,
+        "ramTotal": total,
+        "down": down,
+        "up": up,
+        "procs": proc_rows,
+        "uptime": uptime_text(),
+        "disk": disk_text(),
+    }
+    if facts:
+        desc = cpu_desc()
+        out.update(
+            {
+                "user": os.environ.get("USER") or os.environ.get("LOGNAME") or "",
+                "host": os.uname().nodename,
+                "distro": os_name(),
+                "kernel": os.uname().release,
+                "cores": desc["cores"],
+                "threads": desc["threads"],
+                "cpuModel": desc["model"],
+                "gpu": gpu_name(),
+            }
+        )
+    nxt = {"cpu": a2, "rx": r2, "tx": u2, "t": t2, "procs": proc_map}
+    return out, nxt
 
-cpu = pct(a1[0], a2[0]) if a1 and a2 else 0.0
-core_pct = []
-for i in range(1, min(len(a1), len(a2))):
-    core_pct.append(round(pct(a1[i], a2[i]), 1))
-used, total = mem()
 
-out = {
-    "cpu": round(cpu, 1),
-    "corePct": core_pct,
-    "ramUsed": used,
-    "ramTotal": total,
-    "down": round(max(0.0, (r2 - r1) / span)),
-    "up": round(max(0.0, (u2 - u1) / span)),
-    "procs": procs(),
-    "uptime": uptime_text(),
-    "disk": disk_text(),
-}
-if not TICK:
-    desc = cpu_desc()
-    out.update(
-        {
-            "user": os.environ.get("USER") or os.environ.get("LOGNAME") or "",
-            "host": os.uname().nodename,
-            "distro": os_name(),
-            "kernel": os.uname().release,
-            "cores": desc["cores"],
-            "threads": desc["threads"],
-            "cpuModel": desc["model"],
-            "gpu": gpu_name(),
-        }
-    )
+def main() -> None:
+    prev = None
+    facts = True
+    while True:
+        out, prev = sample(prev, facts)
+        print(json.dumps(out), flush=True)
+        facts = False
+        if not WATCH:
+            return
+        time.sleep(INTERVAL)
 
-print(json.dumps(out))
+
+if __name__ == "__main__":
+    main()

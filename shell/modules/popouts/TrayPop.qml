@@ -14,14 +14,14 @@ Face {
     readonly property var handle: {
         if (stack.length)
             return stack[stack.length - 1];
-        return ShellState.trayItem ? ShellState.trayItem.menu : null;
+        return UiMode.trayItem ? UiMode.trayItem.menu : null;
     }
 
     Keys.onEscapePressed: {
         if (root.stack.length)
             root.stack = root.stack.slice(0, -1);
         else
-            ShellState.closeMenus();
+            UiMode.closeMenus();
     }
 
     function labelOf(s) {
@@ -39,12 +39,12 @@ Face {
     }
 
     Connections {
-        target: ShellState
+        target: UiMode
         function onTrayItemChanged() {
             root.stack = [];
         }
         function onPopoutChanged() {
-            if (ShellState.popout !== "tray")
+            if (UiMode.popout !== "tray")
                 root.stack = [];
         }
     }
@@ -107,7 +107,7 @@ Face {
                                 return;
                             }
                             modelData.triggered();
-                            ShellState.closeMenus();
+                            UiMode.closeMenus();
                         }
                         BarText {
                             text: root.mark(modelData)
@@ -123,7 +123,7 @@ Face {
             BarText {
                 visible: menuRep.count === 0 && root.stack.length === 0
                 text: {
-                    const it = ShellState.trayItem;
+                    const it = UiMode.trayItem;
                     if (!it)
                         return "";
                     return root.labelOf(it.tooltipTitle || it.title || "");

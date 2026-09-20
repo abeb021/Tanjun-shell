@@ -81,15 +81,15 @@ Item {
 
     onClicked: {
         if (drawer)
-            ShellState.toggleSidebar();
+            UiMode.toggleSidebar();
         else if (popoutName.length)
-            ShellState.togglePopout(popoutName, root);
+            UiMode.togglePopout(popoutName, root);
     }
 
     Binding {
         when: root.popoutName.length > 0
         target: root
         property: "active"
-        value: ShellState.popout === root.popoutName
+        value: UiMode.popout === root.popoutName
     }
 }

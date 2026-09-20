@@ -10,20 +10,15 @@ Scope {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
+        OverlayHost {
             id: win
             required property var modelData
             screen: modelData
-            visible: ShellState.launcherOpen || card.opacity > 0.02
-            color: "transparent"
-            exclusionMode: ExclusionMode.Ignore
-            focusable: true
-            mask: Region {
-                item: barHole
-                intersection: Intersection.Xor
-            }
+            open: UiMode.launcherOpen
+            layerName: "tanjun-launcher"
+            contentOpacity: card.opacity
+            dismissOthers: true
 
-            readonly property bool open: ShellState.launcherOpen
             readonly property string raw: query.text
             readonly property string mode: {
                 const t = raw;
@@ -43,35 +38,13 @@ Scope {
             property string calcOut: ""
             property var clipLines: []
             property bool browse: false
-
-            WlrLayershell.namespace: "tanjun-launcher"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: keys.mode
-
-            KeyPrime {
-                id: keys
-                open: win.open
-            }
-
-            Item {
-                id: barHole
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: Theme.barHeight
-            }
-
-            anchors {
-                top: true
-                left: true
-                right: true
-                bottom: true
-            }
+            property string rowsBody: ""
 
             onOpenChanged: {
                 browse = false;
                 if (open) {
                     query.text = "";
+                    rowsBody = "";
                     query.forceActiveFocus();
                 }
             }
@@ -79,13 +52,13 @@ Scope {
             Shortcut {
                 sequence: "Escape"
                 enabled: open
-                onActivated: ShellState.closeMenus()
+                onActivated: UiMode.closeMenus()
             }
 
             MouseArea {
                 anchors.fill: parent
                 enabled: open
-                onClicked: ShellState.closeMenus()
+                onClicked: UiMode.closeMenus()
             }
 
                 Face {
@@ -149,7 +122,7 @@ Scope {
                             font.pixelSize: Theme.typeBody
                             color: Theme.fg
                             clip: true
-                            Keys.onEscapePressed: ShellState.closeMenus()
+                            Keys.onEscapePressed: UiMode.closeMenus()
                             Keys.onDownPressed: win.nudgeList(1)
                             Keys.onUpPressed: win.nudgeList(-1)
                             Keys.onReturnPressed: win.activate()
@@ -160,6 +133,10 @@ Scope {
                                     win.browse = false;
                                 if (win.mode === "calc")
                                     calcTimer.restart();
+                                if (win.mode === "apps")
+                                    rowsTimer.restart();
+                                else
+                                    win.rowsBody = win.body;
                             }
                         }
                     }
@@ -186,13 +163,17 @@ Scope {
                                 win.calcOut;
                                 win.clipLines;
                                 win.mode;
-                                win.body;
+                                win.rowsBody;
                                 win.browse;
                                 win.open;
-                                Launches.gen;
-                                Media.line;
-                                Media.active;
-                                ShellState.dnd;
+                                if (win.mode === "apps")
+                                    Launches.gen;
+                                if (win.mode === "music") {
+                                    Media.line;
+                                    Media.active;
+                                }
+                                if (win.mode === "act")
+                                    UiMode.dnd;
                                 if (!win.open)
                                     return [];
                                 if (win.mode === "apps" && query.text.length === 0 && !win.browse)
@@ -252,6 +233,12 @@ Scope {
             }
 
             Timer {
+                id: rowsTimer
+                interval: 80
+                onTriggered: win.rowsBody = win.body
+            }
+
+            Timer {
                 id: calcTimer
                 interval: 140
                 onTriggered: {
@@ -277,7 +264,7 @@ Scope {
                 running: win.open && win.mode === "clip"
                 command: ["cliphist", "list"]
                 stdout: StdioCollector {
-                    onStreamFinished: win.clipLines = text.split("\n").filter(l => l.length)
+                    onStreamFinished: win.clipLines = text.split("\n").filter(l => l.length).slice(0, 40)
                 }
             }
 
@@ -323,8 +310,7 @@ Scope {
             }
 
             function rows() {
-                const mode = win.mode;
-                const q = win.body;
+            const q = mode === "apps" ? win.rowsBody : win.body;
                 const out = [];
                 if (mode === "calc") {
                     win.calcOut;
@@ -367,7 +353,7 @@ Scope {
                         { kind: "act", key: "act:logout", name: "logout", id: "logout" },
                         { kind: "act", key: "act:reboot", name: "reboot", id: "reboot" },
                         { kind: "act", key: "act:shutdown", name: "shutdown", id: "shutdown" },
-                        { kind: "act", key: "act:dnd", name: ShellState.dnd ? "do not disturb · off" : "do not disturb · on", id: "dnd" },
+                        { kind: "act", key: "act:dnd", name: UiMode.dnd ? "do not disturb · off" : "do not disturb · on", id: "dnd" },
                         { kind: "act", key: "act:clipboard", name: "clipboard", id: "clipboard" },
                         { kind: "act", key: "act:sidebar", name: "system", id: "sidebar" },
                         { kind: "act", key: "act:settings", name: "settings", id: "settings" }
@@ -471,23 +457,22 @@ Scope {
                     } catch (e) {
                         Quickshell.execDetached(["gtk-launch", row.entry.id]);
                     }
-                    ShellState.launcherOpen = false;
+                    UiMode.launcherOpen = false;
                     return;
                 }
                 if (row.kind === "calc") {
                     Quickshell.execDetached(["wl-copy", row.value]);
-                    ShellState.launcherOpen = false;
+                    UiMode.launcherOpen = false;
                     return;
                 }
                 if (row.kind === "clip") {
-                    const line = row.line.replace(/'/g, "'\\''");
-                    Quickshell.execDetached(["bash", "-c", `printf '%s\\n' '${line}' | cliphist decode | wl-copy`]);
-                    ShellState.launcherOpen = false;
+                    Quickshell.execDetached(["bash", "-c", `printf '%s\\n' ${shellQuote(row.line)} | cliphist decode | wl-copy`]);
+                    UiMode.launcherOpen = false;
                     return;
                 }
                 if (row.kind === "web") {
                     Quickshell.execDetached(["xdg-open", row.url]);
-                    ShellState.launcherOpen = false;
+                    UiMode.launcherOpen = false;
                     return;
                 }
                 if (row.kind === "act") {
@@ -504,8 +489,12 @@ Scope {
                     else if (row.id === "search")
                         Quickshell.execDetached(["xdg-open", `https://open.spotify.com/search/${encodeURIComponent(row.query)}`]);
                     if (row.id === "search")
-                        ShellState.launcherOpen = false;
+                        UiMode.launcherOpen = false;
                 }
+            }
+
+            function shellQuote(s) {
+                return "'" + String(s).replace(/'/g, "'\\''") + "'";
             }
 
             function runAct(id) {
@@ -514,38 +503,38 @@ Scope {
                     return;
                 }
                 if (id === "logout") {
-                    ShellState.closeMenus();
+                    UiMode.closeMenus();
                     Compositor.exitSession();
                     return;
                 }
                 if (id === "reboot") {
-                    ShellState.closeMenus();
+                    UiMode.closeMenus();
                     Quickshell.execDetached(["systemctl", "reboot"]);
                     return;
                 }
                 if (id === "shutdown") {
-                    ShellState.closeMenus();
+                    UiMode.closeMenus();
                     Quickshell.execDetached(["systemctl", "poweroff"]);
                     return;
                 }
                 if (id === "dnd") {
-                    ShellState.dnd = !ShellState.dnd;
-                    ShellState.closeMenus();
+                    UiMode.dnd = !UiMode.dnd;
+                    UiMode.closeMenus();
                     return;
                 }
                 if (id === "clipboard") {
-                    ShellState.closeMenus();
-                    ShellState.toggleClipboard();
+                    UiMode.closeMenus();
+                    UiMode.toggleClipboard();
                     return;
                 }
                 if (id === "sidebar") {
-                    ShellState.closeMenus();
-                    ShellState.toggleSidebar();
+                    UiMode.closeMenus();
+                    UiMode.toggleSidebar();
                     return;
                 }
                 if (id === "settings") {
-                    ShellState.closeMenus();
-                    ShellState.toggleSettings();
+                    UiMode.closeMenus();
+                    UiMode.toggleSettings();
                 }
             }
         }

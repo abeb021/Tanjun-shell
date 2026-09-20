@@ -7,17 +7,17 @@ Singleton {
     id: root
 
     property string text: ""
-    property bool live: false
+    readonly property bool wanted: UiMode.launcherOpen || (UiMode.settingsOpen && SettingsNav.page === "weather")
+    readonly property bool live: wanted
 
     readonly property string query: Config.services.weatherCity.length ? encodeURIComponent(Config.services.weatherCity) : ""
 
     function refresh() {
-        live = true;
         proc.running = true;
     }
 
     function ensure() {
-        if (!live)
+        if (wanted)
             refresh();
     }
 
@@ -33,30 +33,17 @@ Singleton {
     Connections {
         target: Config.services
         function onWeatherCityChanged() {
-            if (root.live)
+            if (root.wanted)
                 root.refresh();
         }
     }
 
-    Connections {
-        target: ShellState
-        function onLauncherOpenChanged() {
-            if (ShellState.launcherOpen)
-                root.ensure();
-        }
-        function onSidebarOpenChanged() {
-            if (ShellState.sidebarOpen)
-                root.ensure();
-        }
-        function onSettingsOpenChanged() {
-            if (ShellState.settingsOpen)
-                root.ensure();
-        }
-    }
+    onWantedChanged: if (wanted)
+        root.refresh()
 
     Timer {
         interval: 15 * 60 * 1000
-        running: root.live
+        running: root.wanted
         repeat: true
         onTriggered: proc.running = true
     }

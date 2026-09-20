@@ -3,30 +3,40 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 
-Item {
+HostBase {
     id: root
-    property bool live: false
 
-    readonly property bool hasGamma: true
-    readonly property bool grabFocus: true
-    readonly property string screenNote: "scale and mode persist in ~/.config/hypr/monitors.lua."
-    readonly property var monitorQuery: ["hyprctl", "monitors", "-j"]
-    readonly property var gammaQuery: ["hyprctl", "hyprsunset", "gamma"]
+    hasGamma: true
+    grabFocus: true
+    screenNote: "scale and mode persist in ~/.config/hypr/monitors.lua."
+    monitorQuery: ["hyprctl", "monitors", "-j"]
+    gammaQuery: ["hyprctl", "hyprsunset", "gamma"]
 
-    signal applied
-    signal overviewWanted
+    property var windowList: []
+    property string kbName: ""
+    windows: overviewOpen ? windowList : []
 
-    readonly property string focusedOutput: {
+    focusedOutput: {
         const m = Hyprland.focusedMonitor;
         return m && m.name ? `${m.name}` : "";
     }
 
-    readonly property int focusedWorkspaceId: {
+    focusedWorkspaceId: {
         const ws = Hyprland.focusedWorkspace;
         return ws && ws.id ? ws.id : 0;
     }
 
-    readonly property var occupied: {
+    function sameOcc(a, b) {
+        if (!a || !b)
+            return false;
+        for (let i = 1; i <= 10; i++) {
+            if (!!a[i] !== !!b[i])
+                return false;
+        }
+        return true;
+    }
+
+    function syncOccupied() {
         const out = {};
         const list = Hyprland.workspaces.values;
         if (list) {
@@ -36,46 +46,97 @@ Item {
                     out[id] = true;
             }
         }
-        return out;
+        if (!sameOcc(occupied, out))
+            occupied = out;
     }
 
-    readonly property var windows: {
-        if (!live)
-            return [];
-        const list = Hyprland.toplevels.values;
-        const out = [];
-        if (!list)
-            return out;
-        for (let i = 0; i < list.length; i++) {
-            const tl = list[i];
-            if (!tl)
-                continue;
-            const ipc = tl.lastIpcObject || {};
-            if (ipc.hidden || ipc.mapped === false)
-                continue;
-            const ws = tl.workspace;
-            const id = ws && ws.id ? ws.id : 0;
-            if (id < 1 || id > 10)
-                continue;
-            const mon = tl.monitor;
-            const addr = `${tl.address || ipc.address || ""}`;
-            out.push({
-                title: `${tl.title || ipc.title || ""}`,
-                appId: `${ipc.class || ""}`,
-                addr: addr.indexOf("0x") === 0 || !addr.length ? addr : `0x${addr}`,
-                workspaceId: id,
-                output: mon && mon.name ? `${mon.name}` : "",
-                capture: tl.wayland || null,
-                activated: !!tl.activated
-            });
+    function scanIdle() {
+        if (!live) {
+            if (idleInhibited)
+                idleInhibited = false;
+            return;
         }
-        return out;
+        const list = Hyprland.toplevels.values;
+        let found = false;
+        if (list) {
+            for (let i = 0; i < list.length; i++) {
+                const tl = list[i];
+                if (!tl)
+                    continue;
+                const ipc = tl.lastIpcObject || {};
+                const inh = `${ipc.idleInhibit || ipc.idle_inhibit || ""}`.toLowerCase();
+                const full = !!(ipc.fullscreen || tl.fullscreen);
+                const focused = !!tl.activated;
+                if (inh === "always" || (inh === "fullscreen" && full) || (inh === "focus" && focused)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (idleInhibited !== found)
+            idleInhibited = found;
     }
 
-    property string layoutName: ""
+    function syncWindows() {
+        if (!live || !overviewOpen) {
+            if (windowList.length)
+                windowList = [];
+            return;
+        }
+        const list = Hyprland.toplevels.values;
+        const prev = windowList;
+        const byAddr = {};
+        for (let i = 0; i < prev.length; i++)
+            byAddr[prev[i].addr] = prev[i];
+        const out = [];
+        if (list) {
+            for (let i = 0; i < list.length; i++) {
+                const tl = list[i];
+                if (!tl)
+                    continue;
+                const ipc = tl.lastIpcObject || {};
+                if (ipc.hidden || ipc.mapped === false)
+                    continue;
+                const ws = tl.workspace;
+                const id = ws && ws.id ? ws.id : 0;
+                if (id < 1 || id > 10)
+                    continue;
+                const mon = tl.monitor;
+                const addr = `${tl.address || ipc.address || ""}`;
+                const key = addr.indexOf("0x") === 0 || !addr.length ? addr : `0x${addr}`;
+                const title = `${tl.title || ipc.title || ""}`;
+                const appId = `${ipc.class || ""}`;
+                const output = mon && mon.name ? `${mon.name}` : "";
+                const capture = tl.wayland || null;
+                const activated = !!tl.activated;
+                const row = byAddr[key];
+                out.push({
+                    title: title,
+                    appId: appId,
+                    addr: key,
+                    workspaceId: id,
+                    output: output,
+                    capture: (row && row.capture) ? row.capture : capture,
+                    activated: activated
+                });
+            }
+        }
+        let same = out.length === prev.length;
+        if (same) {
+            for (let i = 0; i < out.length; i++) {
+                const a = out[i];
+                const b = prev[i];
+                if (a.addr !== b.addr || a.title !== b.title || a.appId !== b.appId || a.workspaceId !== b.workspaceId || a.output !== b.output || a.activated !== b.activated) {
+                    same = false;
+                    break;
+                }
+            }
+        }
+        if (!same)
+            windowList = out;
+    }
 
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
-    readonly property string hyprKbName: "hyprctl devices -j | python -c \"import json,sys; d=json.load(sys.stdin); ks=d.get('keyboards',[]); k=next((x for x in ks if x.get('main')), ks[0] if ks else {}); print(k.get('name',''))\""
 
     function hyprDispatch(legacy, lua) {
         Hyprland.dispatch(Hyprland.usingLua ? lua : legacy);
@@ -111,6 +172,7 @@ Item {
     function refreshWindows() {
         if (live)
             Hyprland.refreshToplevels();
+        syncWindows();
     }
 
     function setDpms(on) {
@@ -125,8 +187,12 @@ Item {
     }
 
     function cycleLayout(keyboard) {
-        const quoted = keyboard && `${keyboard}`.length ? `'${String(keyboard).replace(/'/g, "'\\''")}'` : `"$(${root.hyprKbName})"`;
-        Quickshell.execDetached(["bash", "-c", `hyprctl switchxkblayout ${quoted} next`]);
+        const name = (keyboard && `${keyboard}`.length) ? `${keyboard}` : root.kbName;
+        if (!name.length) {
+            refreshLayout();
+            return;
+        }
+        Quickshell.execDetached(["hyprctl", "switchxkblayout", name, "next"]);
     }
 
     function parseMonitors(text) {
@@ -160,9 +226,13 @@ Item {
         }
     }
 
+    function luaStr(s) {
+        return String(s || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " ");
+    }
+
     function applyMonitor(row) {
-        const name = `${row.name || ""}`.replace(/"/g, "");
-        const mode = `${row.mode || ""}`;
+        const name = luaStr(`${row.name || ""}`.replace(/"/g, ""));
+        const mode = luaStr(`${row.mode || ""}`);
         const pos = `${Math.round(row.x)}x${Math.round(row.y)}`;
         const sc = Number(row.scale) || 1;
         const off = row.disabled ? "true" : "false";
@@ -178,8 +248,8 @@ Item {
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
             body += "hl.monitor({\n";
-            body += `    output = "${r.name}",\n`;
-            body += `    mode = "${r.mode}",\n`;
+            body += `    output = "${luaStr(r.name)}",\n`;
+            body += `    mode = "${luaStr(r.mode)}",\n`;
             body += `    position = "${Math.round(r.x)}x${Math.round(r.y)}",\n`;
             body += `    scale = ${Number(r.scale) || 1},\n`;
             if (r.disabled)
@@ -205,6 +275,28 @@ Item {
         return (!isNaN(n) && n > 0) ? n : 0;
     }
 
+    function ingestDevices(text) {
+        try {
+            const d = JSON.parse(text);
+            const ks = d.keyboards || [];
+            let k = null;
+            for (let i = 0; i < ks.length; i++) {
+                if (ks[i].main) {
+                    k = ks[i];
+                    break;
+                }
+            }
+            if (!k && ks.length)
+                k = ks[0];
+            if (!k)
+                return;
+            const name = `${k.name || ""}`;
+            if (name.length)
+                root.kbName = name;
+            root.layoutName = `${k.active_keymap || ""}`.trim();
+        } catch (e) {}
+    }
+
     function refreshLayout() {
         if (!live)
             return;
@@ -224,10 +316,11 @@ Item {
 
     Process {
         id: layoutProc
-        command: ["bash", "-c", "hyprctl devices -j | python -c \"import json,sys; d=json.load(sys.stdin); ks=d.get('keyboards',[]); k=next((x for x in ks if x.get('main')), ks[0] if ks else {}); print(k.get('active_keymap',''))\""]
+        command: ["hyprctl", "devices", "-j"]
         running: false
         stdout: StdioCollector {
-            onStreamFinished: root.layoutName = text.trim()
+            waitForEnd: true
+            onStreamFinished: root.ingestDevices(text)
         }
     }
 
@@ -235,8 +328,16 @@ Item {
         target: Hyprland
         enabled: root.live
         function onRawEvent(event) {
-            if (event.name === "activelayout")
+            const n = event.name;
+            if (n === "activelayout")
                 root.refreshLayout();
+            if (n === "openwindow" || n === "closewindow" || n === "movewindow" || n === "movewindowv2" || n === "changefloatingmode" || n === "fullscreen" || n === "activewindow" || n === "windowtitle" || n === "workspace" || n === "createworkspace" || n === "destroyworkspace" || n === "focusedmon") {
+                root.scanIdle();
+                if (n !== "windowtitle" && n !== "changefloatingmode")
+                    root.syncOccupied();
+                if (root.overviewOpen)
+                    root.syncWindows();
+            }
         }
     }
 
@@ -245,5 +346,16 @@ Item {
         printErrors: false
     }
 
-    Component.onCompleted: refreshLayout()
+    onLiveChanged: {
+        scanIdle();
+        syncOccupied();
+        syncWindows();
+    }
+    onOverviewOpenChanged: syncWindows()
+
+    Component.onCompleted: {
+        refreshLayout();
+        scanIdle();
+        syncOccupied();
+    }
 }

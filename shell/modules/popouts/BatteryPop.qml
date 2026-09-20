@@ -7,7 +7,7 @@ Face {
     implicitWidth: 220
     implicitHeight: col.implicitHeight + 16
     focus: true
-    Keys.onEscapePressed: ShellState.closeMenus()
+    Keys.onEscapePressed: UiMode.closeMenus()
 
     Column {
         id: col

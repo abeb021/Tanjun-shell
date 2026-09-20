@@ -11,7 +11,7 @@ Scope {
         PanelWindow {
             required property var modelData
             screen: modelData
-            readonly property bool open: ShellState.osdKind.length > 0
+            readonly property bool open: OsdBus.kind.length > 0
             visible: open || body.opacity > 0.02
             color: "transparent"
             implicitWidth: 220
@@ -51,7 +51,7 @@ Scope {
                     anchors.centerIn: parent
                     spacing: 6
                     BarText {
-                        text: ShellState.osdKind === "brightness" ? "󰃠" : (Audio.muted ? "" : "")
+                        text: OsdBus.kind === "brightness" ? "󰃠" : (Audio.muted ? "" : "")
                         icon: true
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
@@ -60,7 +60,7 @@ Scope {
                         height: 6
                         color: Theme.bg
                         Rectangle {
-                            width: parent.width * ShellState.osdValue
+                            width: parent.width * OsdBus.value
                             height: parent.height
                             color: Theme.accent
                             Behavior on width {

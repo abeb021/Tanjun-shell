@@ -11,7 +11,7 @@ Scope {
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: (!ShellState.dnd && toast.count > 0) || toast.opacity > 0.02
+            visible: (!UiMode.dnd && toast.count > 0) || toast.opacity > 0.02
             color: "transparent"
             implicitWidth: 320
             implicitHeight: Math.min(320, Math.max(1, toast.contentHeight) + 4)
@@ -31,7 +31,7 @@ Scope {
                 anchors.fill: parent
                 model: Notifs.list
                 spacing: 6
-                opacity: !ShellState.dnd && count > 0 ? 1 : 0
+                opacity: !UiMode.dnd && count > 0 ? 1 : 0
                 Behavior on opacity {
                     enabled: Motion.ready
                     NumberAnimation {

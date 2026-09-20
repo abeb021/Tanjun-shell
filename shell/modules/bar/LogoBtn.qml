@@ -6,7 +6,7 @@ BarButton {
     mark: true
     drawer: true
     implicitWidth: 32
-    active: ShellState.sidebarOpen
+    active: UiMode.sidebarOpen
     BarText {
         text: "単"
         role: "seal"

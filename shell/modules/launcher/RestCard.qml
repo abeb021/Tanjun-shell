@@ -55,7 +55,7 @@ Item {
         PlayerCard {
             width: parent.width
             artSize: 72
-            live: ShellState.launcherOpen
+            live: UiMode.launcherOpen
         }
 
         Row {
