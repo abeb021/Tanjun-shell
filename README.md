@@ -6,17 +6,23 @@
 
 One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the shell does not care.
 
-### **[What you get](#what-you-get)  -  [Keys](#keys)  -  [Install](#install)  -  [Manual](#manual)**
+### **[▶ Demo](docs/demo.mp4)  -  [What you get](#what-you-get)  -  [Keys](#keys)  -  [Install](#install)  -  [Manual](#manual)**
 
 </div>
 
-<video src="docs/demo.mp4" width="100%" controls playsinline></video>
+<p align="center">
+  <a href="docs/demo.mp4">
+    <img src="docs/desktop.webp" alt="Watch the Tanjun demo" width="920">
+  </a>
+  <br>
+  <a href="docs/demo.mp4"><strong>▶ Watch the demo</strong></a>
+  &nbsp;·&nbsp; 54s · mp4
+</p>
 
-![](docs/desktop.webp)
-![](docs/launcher.webp)
-![](docs/system.webp)
-![](docs/settings.webp)
-![](docs/calendar.webp)
+| | |
+|---|---|
+| ![Launcher](docs/launcher.webp) | ![System drawer](docs/system.webp) |
+| ![Settings](docs/settings.webp) | ![Calendar](docs/calendar.webp) |
 
 ## What you get
 
