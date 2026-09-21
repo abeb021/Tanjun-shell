@@ -10,7 +10,7 @@ One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the
 
 </div>
 
-![](docs/demo.webp)
+<video src="docs/demo.mp4" width="100%" controls playsinline></video>
 
 ![](docs/desktop.webp)
 ![](docs/launcher.webp)
