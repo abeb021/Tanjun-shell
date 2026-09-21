@@ -1,147 +1,104 @@
-# Tanjun
+<div align="center">
 
-Wayland desktop shell ([Quickshell](https://quickshell.outfoxxed.me)). Hyprland or niri. Bar, launcher, notifications, clipboard, settings, lock — one process.
+**単 Tanjun**
 
-![Bar on an empty desk](docs/desktop.webp)
+単純 — simple in structure, unmixed.
+
+One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the shell does not care.
+
+### **[What you get](#what-you-get)  -  [Keys](#keys)  -  [Install](#install)  -  [Manual](#manual)**
+
+</div>
+
+![](docs/demo.webp)
+
+![](docs/desktop.webp)
+![](docs/launcher.webp)
+![](docs/system.webp)
+![](docs/settings.webp)
+![](docs/calendar.webp)
+
+## What you get
+
+- **Quiet bar** — 単, desks, clock, a few glyphs. Click opens a panel, not a terminal.
+- **Launcher** — rest card (clock, weather, track) until you type. Prefixes: `=` calc, `:` emoji, `/` wallpaper.
+- **Overview** — live window previews. Super+Tab on Hyprland, Super+Grave on niri.
+- **System drawer** — per-stream mixer, Bluetooth, Wi-Fi, VPN, host meters, power, skins.
+- **Settings** — rail, live JSON pins, font picker, search. Super+,
+- **Color** — named skins, From wall, or pull colors from a paper. Keep the palette so a new wall cannot jump the rice.
+- **Idle and lock** — dim, lock, DPMS, sleep in-shell. Fingerprint if PAM has it. Super+L.
+- **Wallpaper** — still or video. Lock uses a still frame.
+
+## Keys
+
+Compositor binds come from `scripts/setup.sh`. Left click on a bar glyph opens its panel.
+
+| Keybind | Action |
+|---------|--------|
+| `Super + A` | Launcher |
+| `Super + Tab` | Overview (Hyprland) |
+| `Super + Grave` | Overview (niri) |
+| `Super + 1, 2, 3…` | Desk |
+| `Super + Q` | kitty |
+| `Super + E` | yazi (float 70%) |
+| `Super + V` | Clipboard |
+| `Super + C` | Close window |
+| `Super + R` | Toggle float |
+| `Super + B` | Pair buds |
+| `Super + L` | Lock |
+| `Super + O` | Logout |
+| `Super + ,` | Settings |
+| `Super + Space` | Keyboard layout |
+| `Super + arrows` | Focus |
+| `Super + Shift + arrows` | Resize |
+| `Print` | Region screenshot |
+| `Super + Print` | Window screenshot |
+| `Alt + Print` | Active-output screenshot |
+
+Summon without aiming at a glyph:
+
+```bash
+qs ipc call tanjun toggleLauncher
+```
+
+All binds: [docs/keys.md](docs/keys.md).
 
 ## Install
 
-Arch. From the clone:
-
-```
-bash scripts/setup.sh
-```
-
-`--hyprland` / `--niri` skip the picker. Does not kill running processes. Super+Shift+R (or a new session) picks it up.
-
-| Path | Points at |
-| --- | --- |
-| `~/.local/share/tanjun` | this clone |
-| `~/.config/quickshell` | `shell/` |
-| `~/.config/hypr/hyprland.lua` | `compositors/hyprland/` (Hyprland) |
-| `~/.config/niri/config.kdl` | `compositors/niri/` (niri) |
-| `~/.config/tanjun/config.json` | optional pins |
-
-Outputs: Settings → screen (`~/.config/hypr/monitors.lua` or `~/.config/niri/output.kdl`).
-
-## Screenshots
-
-![Launcher](docs/launcher.webp)
-
-![Settings](docs/settings.webp)
-
-![Calendar](docs/calendar.webp)
-
-![System](docs/system.webp)
-
-## Binds
-
-`compositors/hyprland/modules/binds.lua` and `compositors/niri/config/keybinds.kdl`.
-
-| Bind | |
-| --- | --- |
-| Super+A | Launcher |
-| Super+V | Clipboard |
-| Super+Tab | Overview |
-| Super+Shift+S | Region screenshot |
-| Print | Region screenshot |
-| Super+Ctrl+A | Mixer |
-| Super+Ctrl+W | Network |
-| Super+Ctrl+C | Calendar |
-| Super+Ctrl+B | Battery |
-| Super+Ctrl+N | Notifications |
-| Super+Ctrl+S | System |
-| Super+Ctrl+, | Settings |
-| Ctrl+K | Search in settings |
-| Super+Ctrl+D | DND |
-| Super+L | Lock |
-| Super+1 … 0 | Desks |
-| Escape | Close |
-
-Click a bar icon for its panel. Scroll / right / middle: volume, mute, timezone, DND, backlight. Right-click a desk number moves the focused window.
-
-Launcher: type to search. `=` calc, `;` clipboard, `?` web, `/` actions, `@` music. Down lists apps.
-
-## IPC
-
-```
-quickshell ipc call tanjun toggleLauncher
-quickshell ipc call tanjun toggleSidebar
-quickshell ipc call tanjun toggleAudio
-quickshell ipc call tanjun toggleNetwork
-quickshell ipc call tanjun toggleCalendar
-quickshell ipc call tanjun toggleBattery
-quickshell ipc call tanjun toggleNotify
-quickshell ipc call tanjun toggleClipboard
-quickshell ipc call tanjun toggleSettings
-quickshell ipc call tanjun toggleOverview
-quickshell ipc call tanjun toggleDnd
-quickshell ipc call tanjun closeMenus
-quickshell ipc call tanjun lock
+```bash
+git clone https://github.com/abeb021/Tanjun-shell.git
+cd Tanjun-shell
+bash scripts/setup.sh --hyprland   # or --niri
 ```
 
-## Config
+Needs Quickshell on `PATH`. `setup.sh` links `shell/` to `~/.config/quickshell`, writes compositor autostart and binds, and copies lock PAM to `~/.config/tanjun/pam` (mode 600). Restart the compositor, or:
 
-Optional. Defaults are in the shell. Pin only what you want. See `config.example.json`.
-
-```
-{
-  "clock": {
-    "zones": [
-      { "id": "Europe/Berlin", "label": "Berlin" }
-    ]
-  },
-  "services": {
-    "weatherCity": "Berlin"
-  }
-}
+```bash
+quickshell -p ~/.config/quickshell
 ```
 
-| Key | Empty |
-| --- | --- |
-| `clock.zones` | system timezone |
-| `clock.twelveHour` | locale |
-| `services.weatherCity` | wttr.in from IP |
-| `services.backlight` | brightnessctl default |
-| `services.keyboard` | compositor |
-| `services.budsMac` / `budsName` | Super+B off |
-| `appearance.fontUi` | JetBrains Mono |
-| `appearance.fontJp` | Noto Sans CJK JP |
-| `appearance.fontIcons` | Symbols Nerd Font |
-| `appearance.fontPx` | 13 |
-| `screens.gamma` | hyprsunset (Hyprland) |
+> [!NOTE]
+> PAM under `~/.config/tanjun/pam` is trusted like sudoers. Group- or world-writable files are refused.
 
-Last palette: `~/.local/state/tanjun/state.json`.
+## Manual
 
-**From wall** builds a palette from the current wallpaper. **pick** sets the file and runs From wall. **presets**: Monochrome, Obsidian, Gray, Deep Blue, Emerald, Golden Amber, Fiery Sunset, Rose Pink, Mocha, Macchiato.
+1. [Install](docs/install.md) — clone, rice, PAM
+2. [Keys](docs/keys.md) — binds, bar clicks, launcher prefixes
+3. [Config](docs/config.md) — JSON, color pick, style, wallpaper
+4. [IPC](docs/ipc.md) — `qs ipc` verbs
 
-Fonts: Settings. Kitty keeps its own file.
+Pins live in `~/.config/tanjun/config.json`. Copy [config.example.json](config.example.json) to start; omit a key and the default stays.
 
-## Tree
+Widgets talk to `Compositor` only. Hyprland and niri each implement that contract.
 
 ```
-compositors/
-  hyprland/              lua
-    hyprland.lua         stub in ~/.config/hypr loads this
-    hypridle.conf
-    modules/
-    themes/
-    scripts/
-  niri/                  kdl
-    config.kdl           stub in ~/.config/niri includes this
-    config/
-    scripts/
-shell/                   → ~/.config/quickshell
-  shell.qml
-  modules/
-  services/
-  pam/
-  themes/
-  scripts/
-config.example.json
-scripts/setup.sh
-scripts/shots.sh
-scripts/hyprland.conf.example
+shell/                  one Quickshell process
+compositors/hyprland/   Lua rice
+compositors/niri/       KDL rice
+scripts/setup.sh        link, autostart, binds, PAM
+tests/                  bash tests/run.sh
 ```
 
-See `TODO.md`. Current: **v3.4**.
+---
+
+v3.5
