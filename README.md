@@ -10,16 +10,6 @@ One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the
 
 </div>
 
-<p align="center">
-  <a href="docs/demo.mp4">
-    <img src="docs/desktop.webp" alt="Watch the Tanjun demo" width="920">
-  </a>
-  <br>
-  <a href="docs/demo.mp4"><strong>▶ Watch the demo</strong></a>
-  &nbsp;·&nbsp; 54s · mp4
-</p>
-
-| | |
 |---|---|
 | ![Launcher](docs/launcher.webp) | ![System drawer](docs/system.webp) |
 | ![Settings](docs/settings.webp) | ![Calendar](docs/calendar.webp) |
