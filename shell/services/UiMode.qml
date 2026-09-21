@@ -10,6 +10,7 @@ Singleton {
     property var trayItem: null
     property string popoutScreen: ""
     property string sidebarScreen: ""
+    property bool launcherCatchAway: true
 
     readonly property string kind: {
         if (settingsOpen)
@@ -42,6 +43,11 @@ Singleton {
     property bool sidebarOpen: false
     property bool settingsOpen: false
     property bool dnd: false
+    property bool wallsOpen: false
+    property string wallFolder: ""
+
+    onSidebarOpenChanged: if (!sidebarOpen)
+        wallsOpen = false
 
     property bool launcherReady: false
     property bool clipboardReady: false
@@ -109,6 +115,7 @@ Singleton {
         sidebarScreen = "";
         overviewPick = "";
         overviewCount = 0;
+        wallsOpen = false;
         dropTimer.restart();
     }
 
@@ -203,6 +210,34 @@ Singleton {
         if (!overviewOpen)
             return;
         overviewCommit++;
+    }
+
+    function openWalls() {
+        if (!sidebarOpen)
+            toggleSidebar();
+        if (!wallFolder.length)
+            wallFolder = Theme.wallDir;
+        wallsOpen = true;
+    }
+
+    function setWallFolder(path) {
+        let p = `${path || ""}`;
+        if (p.startsWith("file://")) {
+            p = p.slice(7);
+            if (p.startsWith("localhost"))
+                p = p.slice("localhost".length);
+            try {
+                p = decodeURIComponent(p);
+            } catch (e) {}
+        }
+        if (p.startsWith("~/"))
+            p = `${Quickshell.env("HOME") || ""}${p.slice(1)}`;
+        wallFolder = p;
+    }
+
+    function pickWall(path) {
+        wallsOpen = false;
+        Theme.setWallpaper(path);
     }
 
     Timer {

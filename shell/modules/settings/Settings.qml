@@ -375,6 +375,20 @@ Scope {
                                     onStatusChanged: if (status === Loader.Ready || status === Loader.Null)
                                         win.resetRestScroll()
                                 }
+
+                                Binding {
+                                    target: SettingsNav
+                                    property: "toggleGap"
+                                    when: restFlick.visible
+                                    value: (win.page === "network" || win.page === "bluetooth") && restPage.item ? restPage.item.toggleRightGap : -1
+                                }
+
+                                Binding {
+                                    target: SettingsNav
+                                    property: "toggleRadius"
+                                    when: restFlick.visible
+                                    value: (win.page === "network" || win.page === "bluetooth") && restPage.item ? restPage.item.toggleRadius : -1
+                                }
                             }
                         }
                     }

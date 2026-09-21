@@ -4,6 +4,7 @@ import os
 import shutil
 import signal
 import subprocess
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -53,6 +54,7 @@ class Qs:
         self.owned = False
         self._buf: list[str] = []
         self.path = SHELL
+        self.home: Path | None = None
 
     def ipc(self, *args: str, timeout: float = 5) -> subprocess.CompletedProcess:
         cmd = [self.bin, "ipc"]
@@ -68,6 +70,16 @@ class Qs:
             return "qs not on PATH"
         env = os.environ.copy()
         env.setdefault("QT_QPA_PLATFORM", "wayland")
+        self.home = Path(tempfile.mkdtemp(prefix="tanjun-qs-"))
+        cfg = self.home / "config"
+        state = self.home / "state"
+        cache = self.home / "cache"
+        cfg.mkdir()
+        state.mkdir()
+        cache.mkdir()
+        env["XDG_CONFIG_HOME"] = str(cfg)
+        env["XDG_STATE_HOME"] = str(state)
+        env["XDG_CACHE_HOME"] = str(cache)
         self.proc = subprocess.Popen(
             [self.bin, "-p", str(self.path), "--no-color"],
             stdout=subprocess.PIPE,
@@ -115,3 +127,6 @@ class Qs:
                 self.proc.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 self.proc.kill()
+        if self.home:
+            shutil.rmtree(self.home, ignore_errors=True)
+            self.home = None

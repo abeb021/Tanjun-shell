@@ -10,7 +10,7 @@ Rectangle {
     implicitHeight: 22
     width: implicitWidth
     height: implicitHeight
-    radius: Theme.pillToggle ? height / 2 : Theme.radius
+    radius: Theme.radius
     color: on ? Theme.accent : Theme.surface
     border.width: 1
     border.color: Theme.hairline
@@ -20,7 +20,7 @@ Rectangle {
     Rectangle {
         width: 16
         height: 16
-        radius: Theme.pillToggle ? 8 : Theme.radius
+        radius: Theme.radius
         color: root.on ? Theme.bg : Theme.fg
         anchors.verticalCenter: parent.verticalCenter
         x: root.on ? parent.width - width - 3 : 3

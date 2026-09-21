@@ -62,6 +62,10 @@ ShellRoot {
         property int settingsScrollY: SettingsNav.scrollY
         property string style: Theme.style
         property int settingsStyleCount: SettingsNav.styleCount
+        property int settingsToggleGap: SettingsNav.toggleGap
+        property int settingsToggleRadius: SettingsNav.toggleRadius
+        property bool locked: Lock.locked
+        property bool wallsOpen: UiMode.wallsOpen
 
         function ping(): string {
             return "ok";
@@ -120,6 +124,35 @@ ShellRoot {
             return JSON.stringify(Theme.style);
         }
 
+        function setTheme(kind: string, name: string): string {
+            Theme.setTheme(kind, name);
+            return JSON.stringify(Theme.snapshot());
+        }
+
+        function setWallpaper(path: string): string {
+            Theme.setWallpaper(path);
+            return path;
+        }
+
+        function setSampleWall(on: string): string {
+            Theme.setSampleWall(on === "true" || on === "1");
+            return JSON.stringify(!!Config.theme.sampleWall);
+        }
+
+        function openWalls(): void {
+            UiMode.openWalls();
+        }
+
+        function setWallFolder(path: string): string {
+            UiMode.setWallFolder(path);
+            return UiMode.wallFolder;
+        }
+
+        function pickWall(path: string): string {
+            UiMode.pickWall(path);
+            return path;
+        }
+
         function toggleLauncher(): void {
             UiMode.toggleLauncher();
         }
@@ -174,6 +207,14 @@ ShellRoot {
 
         function lock(): void {
             Lock.request();
+        }
+
+        function logout(): void {
+            Compositor.exitSession();
+        }
+
+        function launcherJson(): string {
+            return TestHooks.launcherJson();
         }
     }
 }

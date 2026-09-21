@@ -5,6 +5,7 @@ import os
 import time
 
 from lib import QS_BIN, Qs
+from pathlib import Path
 
 
 def _truthy(text: str) -> bool:
@@ -18,6 +19,8 @@ def register(s) -> None:
         return
 
     qs = Qs()
+    user_cfg = Path.home() / ".config" / "tanjun" / "config.json"
+    user_before = user_cfg.read_bytes() if user_cfg.is_file() else b""
     err = qs.start()
     saved_style = None
     try:
@@ -26,6 +29,7 @@ def register(s) -> None:
             return
         s.ok("qs owned instance", qs.owned, "harness must not attach to live shell")
         s.ok("qs configuration loaded", "Configuration Loaded" in (qs.log or ""), (qs.log or "")[-400:])
+        s.eq("owned qs skips user config", user_cfg.read_bytes() if user_cfg.is_file() else b"", user_before)
 
         out = ""
         show = None
@@ -52,6 +56,12 @@ def register(s) -> None:
             "openSettingsPage",
             "snapScale",
             "setStyle",
+            "setTheme",
+            "setWallpaper",
+            "setSampleWall",
+            "openWalls",
+            "setWallFolder",
+            "pickWall",
             "styles",
             "styleJson",
             "pollJson",
@@ -59,12 +69,16 @@ def register(s) -> None:
             "settingsCatalog",
             "uiMode",
             "toggleOverview",
+            "launcherJson",
+            "logout",
         ):
             s.ok(f"ipc has {fn}", f"function {fn}" in out, out[-400:])
 
         ping = qs.ipc("call", "tanjun", "ping")
         s.eq("ping exit", ping.returncode, 0)
         s.eq("ping", (ping.stdout or "").strip(), "ok")
+        locked = qs.ipc("prop", "get", "tanjun", "locked")
+        s.ok("session not locked", not _truthy(locked.stdout or ""), locked.stdout)
 
         qs.ipc("call", "tanjun", "closeMenus")
         time.sleep(0.2)
@@ -150,6 +164,7 @@ def register(s) -> None:
         s.ok("uiMode overview not ready", mode.get("overviewReady") is False, str(mode))
         s.eq("uiMode idle overview pick", mode.get("overviewPick") or "", "")
         s.eq("uiMode idle overview count", int(mode.get("overviewCount") or 0), 0)
+        s.ok("uiMode idle walls closed", mode.get("wallsOpen") is False, str(mode))
 
         cat_raw = qs.ipc("call", "tanjun", "settingsCatalog")
         s.eq("settingsCatalog exit", cat_raw.returncode, 0)
@@ -161,7 +176,7 @@ def register(s) -> None:
             cat_err = str(e)
         s.ok("settingsCatalog list", isinstance(catalog, list) and not cat_err, cat_err or str(catalog))
         titles = [f"{row.get('title') if isinstance(row, dict) else row}" for row in catalog]
-        for title in ("system", "sound", "type", "From wall", "Monochrome"):
+        for title in ("system", "sound", "type", "From wall", "Monochrome", "Minimal", "Chrome"):
             s.ok(f"catalog has {title}", title in titles, str(titles[:20]))
 
         qs.ipc("call", "tanjun", "closeMenus")
@@ -238,6 +253,12 @@ def register(s) -> None:
                 wp = _poll()
                 s.ok("weather live on weather page", wp.get("weather") is True, str(wp))
                 s.ok("host idle on weather page", wp.get("host") is False, str(wp))
+            if pid in ("network", "bluetooth"):
+                try:
+                    gap = int((qs.ipc("prop", "get", "tanjun", "settingsToggleGap").stdout or "-1").strip())
+                except ValueError:
+                    gap = -1
+                s.ok(f"settings {pid} toggle inset", 8 <= gap <= 32, f"gap {gap}")
             if pid == "network":
                 npoll = _poll()
                 s.ok("vpn live on network page", npoll.get("vpn") is True, str(npoll))
@@ -253,12 +274,14 @@ def register(s) -> None:
             style_keys = []
             styles_err = str(e)
         s.ok("styles json", isinstance(style_keys, list) and not styles_err, styles_err or str(style_keys))
-        for sid in ("tanjun", "panel"):
+        for sid in ("minimal", "chrome"):
             s.ok(f"style has {sid}", sid in style_keys, str(style_keys))
+        s.ok("style has no tanjun key", "tanjun" not in style_keys, str(style_keys))
+        s.ok("style has no panel key", "panel" not in style_keys, str(style_keys))
         prior_style = (qs.ipc("prop", "get", "tanjun", "style").stdout or "").strip()
-        saved_style = prior_style or "panel"
+        saved_style = prior_style or "chrome"
         prior_theme = json.loads((qs.ipc("call", "tanjun", "themeJson").stdout or "").strip() or "{}")
-        other = "tanjun" if prior_style != "tanjun" else "panel"
+        other = "minimal" if prior_style != "minimal" else "chrome"
         flipped = qs.ipc("call", "tanjun", "setStyle", other)
         s.eq("setStyle exit", flipped.returncode, 0)
         time.sleep(0.15)
@@ -275,29 +298,55 @@ def register(s) -> None:
             chrome_err = str(e)
         s.ok("styleJson json", isinstance(chrome, dict) and not chrome_err, chrome_err or (chrome_raw.stdout or "")[:120])
         s.eq("styleJson key", chrome.get("key"), other)
-        s.eq("styleJson tick", chrome.get("tick"), other == "panel")
+        s.eq("styleJson tick", chrome.get("tick"), other == "chrome")
         s.eq("styleJson tickPops", chrome.get("tickPops"), False)
-        s.eq("styleJson chipBorder", chrome.get("chipBorder"), 1 if other == "panel" else 0)
-        s.eq("styleJson pip", chrome.get("pip"), other == "panel")
+        s.eq("styleJson chipBorder", chrome.get("chipBorder"), 1 if other == "chrome" else 0)
+        s.eq("styleJson pip", chrome.get("pip"), other == "chrome")
         s.ok("themeJson has no tick", "tick" not in after_theme, str(after_theme.keys()))
         s.ok("themeJson has no chipBorder", "chipBorder" not in after_theme, str(after_theme.keys()))
         cfg_style = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
         ap = cfg_style.get("appearance") if isinstance(cfg_style, dict) else None
-        if other == "panel":
+        if other == "chrome":
             s.ok(
                 "default style omitted from config",
-                not isinstance(ap, dict) or ap.get("style") in (None, "", "panel"),
+                not isinstance(ap, dict) or ap.get("style") in (None, "", "chrome"),
                 str(ap),
             )
         else:
             s.eq("config appearance.style", (ap or {}).get("style"), other)
-        qs.ipc("call", "tanjun", "setStyle", prior_style or "panel")
+        alias_panel = qs.ipc("call", "tanjun", "setStyle", "panel")
+        s.eq("panel alias exit", alias_panel.returncode, 0)
+        time.sleep(0.1)
+        s.eq("panel alias is chrome", (qs.ipc("prop", "get", "tanjun", "style").stdout or "").strip(), "chrome")
+        alias_min = qs.ipc("call", "tanjun", "setStyle", "tanjun")
+        s.eq("tanjun alias exit", alias_min.returncode, 0)
+        time.sleep(0.1)
+        s.eq("tanjun alias is minimal", (qs.ipc("prop", "get", "tanjun", "style").stdout or "").strip(), "minimal")
+        qs.ipc("call", "tanjun", "openSettingsPage", "network")
+        time.sleep(0.15)
+        try:
+            rad = int((qs.ipc("prop", "get", "tanjun", "settingsToggleRadius").stdout or "-1").strip())
+        except ValueError:
+            rad = -1
+        s.eq("wifi toggle square in minimal", rad, 1)
+        qs.ipc("call", "tanjun", "setStyle", "chrome")
+        time.sleep(0.1)
+        qs.ipc("call", "tanjun", "openSettingsPage", "network")
+        time.sleep(0.15)
+        try:
+            rad = int((qs.ipc("prop", "get", "tanjun", "settingsToggleRadius").stdout or "-1").strip())
+        except ValueError:
+            rad = -1
+        s.eq("wifi toggle square in chrome", rad, 1)
+        qs.ipc("call", "tanjun", "setStyle", prior_style or "chrome")
         time.sleep(0.1)
         s.eq(
             "style restored",
             (qs.ipc("prop", "get", "tanjun", "style").stdout or "").strip(),
-            prior_style or "panel",
+            prior_style or "chrome",
         )
+        user_after = user_cfg.read_bytes() if user_cfg.is_file() else b""
+        s.eq("tests leave user config", user_after, user_before)
 
         snap_cases = (("1.19", 1.2), ("1.27", 1.25), ("1", 1), ("1.9", 2), ("1.6", 1.5), ("1.2", 1.2))
         for raw, want in snap_cases:
@@ -335,12 +384,53 @@ def register(s) -> None:
         s.ok("launcher opened", _truthy(launch.stdout or ""), launch.stdout)
         s.ok("launcher ready", _truthy((qs.ipc("prop", "get", "tanjun", "launcherReady").stdout or "")), "")
         s.ok("weather live in launcher", _poll().get("weather") is True, str(_poll()))
+        launch_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+        s.ok("launcher has no away catcher", launch_mode.get("launcherCatchAway") is False, str(launch_mode))
         qs.ipc("call", "tanjun", "closeMenus")
         time.sleep(0.15)
         launch = qs.ipc("prop", "get", "tanjun", "launcherOpen")
         s.ok("launcher closed", not _truthy(launch.stdout or ""), launch.stdout)
         s.ok("launcher stays ready", _truthy((qs.ipc("prop", "get", "tanjun", "launcherReady").stdout or "")), "")
         s.ok("weather idle after launcher close", _poll().get("weather") is False, str(_poll()))
+
+        qs.ipc("call", "tanjun", "toggleSidebar")
+        time.sleep(0.2)
+        side_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+        s.eq("uiMode sidebar kind", side_mode.get("kind"), "sidebar")
+        opened_walls = qs.ipc("call", "tanjun", "openWalls")
+        s.eq("openWalls exit", opened_walls.returncode, 0)
+        time.sleep(0.15)
+        walls_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+        s.ok("walls picker open", walls_mode.get("wallsOpen") is True, str(walls_mode))
+        folded = qs.ipc("call", "tanjun", "setWallFolder", "/tmp")
+        s.eq("setWallFolder exit", folded.returncode, 0)
+        time.sleep(0.1)
+        walls_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+        s.ok("walls folder /tmp", (walls_mode.get("wallFolder") or "").rstrip("/") == "/tmp", str(walls_mode))
+        qs.ipc("call", "tanjun", "closeMenus")
+        time.sleep(0.15)
+        walls_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+        s.ok("walls picker closed", walls_mode.get("wallsOpen") is False, str(walls_mode))
+
+        apps = {}
+        deadline = time.time() + 2
+        while time.time() < deadline:
+            apps_raw = qs.ipc("call", "tanjun", "launcherJson")
+            try:
+                apps = json.loads((apps_raw.stdout or "").strip() or "{}")
+                apps_err = ""
+            except json.JSONDecodeError as e:
+                apps = {}
+                apps_err = str(e)
+            if int(apps.get("n") or 0) >= 3 or int(apps.get("count") or 0) >= 3:
+                break
+            time.sleep(0.1)
+        s.eq("launcherJson exit", apps_raw.returncode, 0)
+        s.ok("launcherJson json", isinstance(apps, dict) and not apps_err, apps_err or str(apps)[:200])
+        app_n = int(apps.get("n") or 0)
+        app_count = int(apps.get("count") or app_n)
+        s.ok("launcher sees several apps", max(app_n, app_count) >= 3, str(apps))
+        s.eq("launcher app keys unique", app_n, int(apps.get("unique") or 0))
 
         qs.ipc("call", "tanjun", "toggleOverview")
         ov_mode = {}

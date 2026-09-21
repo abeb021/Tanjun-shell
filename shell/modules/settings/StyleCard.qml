@@ -8,7 +8,7 @@ Rectangle {
     property string kind: ""
     property string label: ""
     property string blurb: ""
-    readonly property bool panel: kind === "panel"
+    readonly property bool panel: kind === "chrome" || kind === "panel"
     readonly property bool current: Theme.style === kind
 
     width: parent.width

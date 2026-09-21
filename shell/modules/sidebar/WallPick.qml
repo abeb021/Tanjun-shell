@@ -18,15 +18,31 @@ Item {
     visible: open
     z: 40
 
-    onOpenChanged: if (open)
+    onOpenChanged: if (open && !UiMode.wallFolder.length)
         currentFolder = ownWalls.count > 0 ? Theme.wallFolder : Qt.url("file://" + Theme.wallDirLegacy)
+
+    Connections {
+        target: UiMode
+        function onWallFolderChanged() {
+            if (!UiMode.wallFolder.length)
+                return;
+            const p = UiMode.wallFolder;
+            picker.currentFolder = Qt.url(p.startsWith("file:") ? p : ("file://" + p));
+        }
+        function onWallsOpenChanged() {
+            if (UiMode.wallsOpen && UiMode.wallFolder.length) {
+                const p = UiMode.wallFolder;
+                picker.currentFolder = Qt.url(p.startsWith("file:") ? p : ("file://" + p));
+            }
+        }
+    }
 
     function prettyPath(u) {
         return `${u}`.replace("file://", "").replace(home, "~");
     }
 
     function goHome(sub) {
-        currentFolder = Qt.url("file://" + home + (sub.length ? "/" + sub : ""));
+        UiMode.setWallFolder(home + (sub.length ? "/" + sub : ""));
     }
 
     MouseArea {
@@ -95,7 +111,7 @@ Item {
             BarButton {
                 implicitWidth: 44
                 onClicked: if (fm.parentFolder.toString().length)
-                    picker.currentFolder = fm.parentFolder
+                    UiMode.setWallFolder(Theme.urlPath(`${fm.parentFolder}`))
                 BarText {
                     text: "up"
                     px: 11
@@ -103,7 +119,7 @@ Item {
             }
             BarButton {
                 implicitWidth: 72
-                onClicked: picker.currentFolder = Theme.wallFolder
+                onClicked: UiMode.setWallFolder(Theme.wallDir)
                 BarText {
                     text: "walls"
                     px: 11
@@ -111,7 +127,7 @@ Item {
             }
             BarButton {
                 implicitWidth: 72
-                onClicked: picker.currentFolder = Qt.url("file://" + Theme.wallDirLegacy)
+                onClicked: UiMode.setWallFolder(Theme.wallDirLegacy)
                 BarText {
                     text: "rice"
                     px: 11
@@ -122,6 +138,14 @@ Item {
                 onClicked: picker.goHome("Pictures")
                 BarText {
                     text: "Pictures"
+                    px: 11
+                }
+            }
+            BarButton {
+                implicitWidth: 108
+                onClicked: picker.goHome("Pictures/Wallpapers")
+                BarText {
+                    text: "Wallpapers"
                     px: 11
                 }
             }
@@ -268,7 +292,7 @@ Item {
                         anchors.fill: parent
                         onClicked: {
                             if (tile.fileIsDir)
-                                picker.currentFolder = tile.fileUrl;
+                                UiMode.setWallFolder(Theme.urlPath(`${tile.fileUrl}`));
                             else
                                 picker.picked(`${tile.fileUrl}`);
                         }

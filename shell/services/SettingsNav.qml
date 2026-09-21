@@ -24,6 +24,8 @@ Singleton {
     property int railH: 0
     property int scrollY: 0
     property int styleCount: 0
+    property int toggleGap: -1
+    property int toggleRadius: -1
 
     readonly property var catalog: {
         const out = [
@@ -46,9 +48,9 @@ Singleton {
             { title: "screen", sub: "page", page: "screen", hay: "screen monitor display scale gamma output edp brightness layout first second extend" },
             { title: "scale", sub: "screen", page: "screen", hay: "scale 1.2 fractional scaling monitor" },
             { title: "gamma", sub: "screen", page: "screen", hay: "gamma hyprsunset night identity" },
-            { title: "style", sub: "page", page: "style", hay: "style chrome panel tanjun look shell rail ticks" },
-            { title: "Tanjun", sub: "style", page: "style", hay: "tanjun quiet plane rice chrome" },
-            { title: "Panel", sub: "style", page: "style", hay: "panel chrome ticks chips marked rail" },
+            { title: "style", sub: "page", page: "style", hay: "style chrome panel tanjun minimal look shell rail ticks" },
+            { title: "Minimal", sub: "style", page: "style", hay: "minimal quiet plane rice tanjun" },
+            { title: "Chrome", sub: "style", page: "style", hay: "chrome ticks chips marked rail panel" },
             { title: "color", sub: "page", page: "color", hay: "color theme palette preset" },
             { title: "From wall", sub: "color", page: "color", kind: "wall", name: "wall", hay: "from wall wallpaper accent sample" },
             { title: "keep palette", sub: "color", page: "color", hay: "keep palette wallpaper colors pull sample" }

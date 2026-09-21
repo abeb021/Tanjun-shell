@@ -28,13 +28,13 @@ Singleton {
     readonly property string fontUi: Config.appearance.fontUi.length ? Config.appearance.fontUi : Config.defaultFontUi
     readonly property string fontJp: Config.appearance.fontJp.length ? Config.appearance.fontJp : Config.defaultFontJp
     readonly property string fontIcons: Config.appearance.fontIcons.length ? Config.appearance.fontIcons : Config.defaultFontIcons
-    readonly property string defaultStyle: "panel"
+    readonly property string defaultStyle: "chrome"
     readonly property var styles: [
-        { key: "tanjun", label: "Tanjun", blurb: "Quiet 1px planes across the shell." },
-        { key: "panel", label: "Panel", blurb: "Ticks, chips, and marked rails. Palettes unchanged." }
+        { key: "minimal", label: "Minimal", blurb: "Quiet 1px planes across the shell." },
+        { key: "chrome", label: "Chrome", blurb: "Ticks, chips, and marked rails. Palettes unchanged." }
     ]
     readonly property string style: normStyle(Config.appearance.style)
-    readonly property bool panelStyle: style === "panel"
+    readonly property bool panelStyle: style === "chrome"
     readonly property bool tick: panelStyle
     readonly property bool tickPops: false
     readonly property bool pip: panelStyle
@@ -118,7 +118,10 @@ Singleton {
             bg: hexOf(bg),
             surface: hexOf(surface),
             surfaceHover: hexOf(surfaceHover),
-            wallDir: root.wallDir
+            wallDir: root.wallDir,
+            wall: wallFile,
+            wallStill: wallStill,
+            sampleWall: Config.theme.sampleWall
         };
     }
 
@@ -211,6 +214,11 @@ Singleton {
         Wall.setWallpaper(path);
     }
 
+    function setSampleWall(on) {
+        Config.theme.sampleWall = !!on;
+        Config.writeSparse();
+    }
+
     function setTheme(nextKind, nextName) {
         if (nextName === "wall") {
             sampleWall();
@@ -223,8 +231,10 @@ Singleton {
 
     function normStyle(id) {
         const s = `${id || ""}`.toLowerCase();
-        if (s === "tanjun" || s === "panel")
-            return s;
+        if (s === "tanjun" || s === "minimal")
+            return "minimal";
+        if (s === "panel" || s === "chrome")
+            return "chrome";
         return defaultStyle;
     }
 

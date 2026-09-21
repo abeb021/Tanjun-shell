@@ -17,7 +17,10 @@ Scope {
             open: UiMode.launcherOpen
             layerName: "tanjun-launcher"
             contentOpacity: card.opacity
-            dismissOthers: true
+            grabKeys: Compositor.isScreenFocused(modelData)
+            dismissOthers: false
+
+            readonly property bool isFocused: Compositor.isScreenFocused(modelData)
 
             readonly property string raw: query.text
             readonly property string mode: {
@@ -45,30 +48,25 @@ Scope {
                 if (open) {
                     query.text = "";
                     rowsBody = "";
-                    query.forceActiveFocus();
+                    if (isFocused)
+                        query.forceActiveFocus();
                 }
             }
 
             Shortcut {
                 sequence: "Escape"
-                enabled: open
+                enabled: open && isFocused
                 onActivated: UiMode.closeMenus()
             }
 
-            MouseArea {
-                anchors.fill: parent
-                enabled: open
-                onClicked: UiMode.closeMenus()
-            }
-
-                Face {
-                    id: card
-                    job: "plane"
-                    width: 560
-                    height: Math.min(parent.height * 0.72, (query.text.length || win.browse) ? 520 : 460)
-                    anchors.centerIn: parent
-                    opacity: open ? 1 : 0
-                    scale: open ? 1 : Motion.panelFrom
+            Face {
+                id: card
+                job: "plane"
+                width: 560
+                height: Math.min(parent.height * 0.72, (query.text.length || win.browse) ? 520 : 460)
+                anchors.centerIn: parent
+                opacity: open ? 1 : 0
+                scale: open ? 1 : Motion.panelFrom
 
                 Behavior on opacity {
                     enabled: Motion.ready
@@ -86,23 +84,24 @@ Scope {
                 }
 
                 MouseArea {
+                    id: cardPad
                     anchors.fill: parent
+                    hoverEnabled: true
                     onClicked: {}
-                }
-
-                WheelHandler {
-                    enabled: win.open
-                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                     onWheel: event => {
                         const dy = event.angleDelta.y !== 0 ? event.angleDelta.y : event.pixelDelta.y;
                         if (!dy)
                             return;
-                        win.nudgeList(dy > 0 ? -1 : 1);
-                        event.accepted = true;
+                        if (!results.visible) {
+                            if (dy < 0)
+                                win.nudgeList(1);
+                            event.accepted = true;
+                            return;
+                        }
+                        event.accepted = false;
                     }
-                }
 
-                Column {
+                    Column {
                     anchors.fill: parent
                     anchors.margins: Theme.pad
                     spacing: Theme.gap
@@ -154,7 +153,7 @@ Scope {
                         height: parent.height - 52
                         clip: true
                         reuseItems: true
-                        interactive: false
+                        interactive: true
                         boundsBehavior: Flickable.StopAtBounds
                         highlightFollowsCurrentItem: true
                         model: ScriptModel {
@@ -230,6 +229,7 @@ Scope {
                         }
                     }
                 }
+            }
             }
 
             Timer {
@@ -379,7 +379,7 @@ Scope {
                         out.push({ kind: "hint", key: "hint:music", name: "nothing playing · type to search spotify" });
                     return out;
                 }
-                const apps = DesktopEntries.applications.values;
+                const apps = [...DesktopEntries.applications.values];
                 const low = q.toLowerCase();
                 if (apps) {
                     for (let i = 0; i < apps.length; i++) {
@@ -389,7 +389,7 @@ Scope {
                         if (!appMatch(a, low))
                             continue;
                         const id = a.id || a.name || `${i}`;
-                        out.push({ kind: "app", key: "app:" + id, name: a.name, entry: a });
+                        out.push({ kind: "app", key: "app:" + i + ":" + id, name: a.name, entry: a });
                     }
                     out.sort((a, b) => {
                         const ia = a.entry && a.entry.id ? a.entry.id : a.name;

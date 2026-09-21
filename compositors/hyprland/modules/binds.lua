@@ -38,7 +38,7 @@ hl.bind("Print", hl.dsp.exec_cmd("hyprshot -m region -o ~/Pictures/Screenshots")
 hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("hyprshot -m window -o ~/Pictures/Screenshots"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region -o ~/Pictures/Screenshots"))
 
-hl.bind(mainMod .. " + O", hl.dsp.exit())
+hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(ipc .. " logout"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(ipc .. " lock"))
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd(ipc .. " lock"))
 hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd(ipc .. " lock"), { locked = true })

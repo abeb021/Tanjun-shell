@@ -23,7 +23,7 @@ binds {
     Mod+Print { screenshot-window; }
     Alt+Print { screenshot-screen; }
 
-    Mod+O { quit; }
+    Mod+O hotkey-overlay-title="Logout" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "logout"; }
     Mod+L hotkey-overlay-title="Lock" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "lock"; }
     Mod+P hotkey-overlay-title="Lock" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "lock"; }
 

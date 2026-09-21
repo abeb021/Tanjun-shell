@@ -38,6 +38,32 @@ Singleton {
         });
     }
 
+    function launcherJson() {
+        const model = DesktopEntries.applications;
+        const raw = model && model.values ? model.values : [];
+        const apps = [...raw];
+        const sample = [];
+        const keys = {};
+        let n = 0;
+        for (let i = 0; i < apps.length; i++) {
+            const a = apps[i];
+            if (!a)
+                continue;
+            const id = `${a.id || a.name || i}`;
+            const key = "app:" + i + ":" + id;
+            n++;
+            keys[key] = true;
+            if (sample.length < 12)
+                sample.push(a.name || id);
+        }
+        return JSON.stringify({
+            n: n,
+            unique: Object.keys(keys).length,
+            count: model && model.count !== undefined ? model.count : n,
+            sample: sample
+        });
+    }
+
     function uiMode() {
         return JSON.stringify({
             kind: UiMode.kind,
@@ -48,7 +74,10 @@ Singleton {
             overviewPick: UiMode.overviewPick,
             overviewCount: UiMode.overviewCount,
             clipboardReady: UiMode.clipboardReady,
-            launcherReady: UiMode.launcherReady
+            launcherReady: UiMode.launcherReady,
+            launcherCatchAway: UiMode.launcherCatchAway,
+            wallsOpen: UiMode.wallsOpen,
+            wallFolder: UiMode.wallFolder
         });
     }
 

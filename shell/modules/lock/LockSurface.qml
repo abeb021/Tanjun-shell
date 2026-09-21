@@ -174,20 +174,20 @@ Item {
     }
 
     onIsFocusedChanged: {
-        if (Lock.locked && isFocused)
+        if (Lock.locked)
             box.forceActiveFocus();
     }
 
     Connections {
         target: Lock
         function onLockedChanged() {
-            if (Lock.locked && root.isFocused)
+            if (Lock.locked)
                 box.forceActiveFocus();
         }
     }
 
     Component.onCompleted: {
-        if (root.isFocused)
+        if (Lock.locked)
             box.forceActiveFocus();
     }
 }

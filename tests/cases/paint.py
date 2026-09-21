@@ -151,6 +151,8 @@ def register(s) -> None:
 
     pam = (SHELL / "pam" / "password.conf").read_text(encoding="utf-8")
     s.ok("pam has faillock", "pam_faillock.so" in pam, pam)
+    s.ok("pam unix sufficient", "auth sufficient pam_unix.so" in pam, pam)
+    s.ok("pam unix not required", "auth required pam_unix.so" not in pam, pam)
 
     idle_hypr = (ROOT / "compositors" / "hyprland" / "hypridle.conf").read_text(encoding="utf-8")
     s.ok("hypridle unused", idle_hypr.lower().startswith("# unused") or "Idle.qml" in idle_hypr, idle_hypr[:180])

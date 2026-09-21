@@ -24,7 +24,7 @@ Singleton {
     readonly property string defaultFontJp: "Noto Sans CJK JP"
     readonly property string defaultFontIcons: "Symbols Nerd Font"
     readonly property int defaultFontPx: 13
-    readonly property string defaultStyle: "panel"
+    readonly property string defaultStyle: "chrome"
 
     readonly property string localId: {
         try {

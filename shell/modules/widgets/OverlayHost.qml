@@ -95,7 +95,16 @@ PanelWindow {
 
     signal dismissed
 
+    function reportCatchAway() {
+        if (layerName === "tanjun-launcher")
+            UiMode.launcherCatchAway = dismissOthers;
+    }
+
+    Component.onCompleted: reportCatchAway()
+    onDismissOthersChanged: reportCatchAway()
+
     MouseArea {
+        z: -1
         anchors.fill: parent
         enabled: root.open && root.onThisScreen
         onClicked: {

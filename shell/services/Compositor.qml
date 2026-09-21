@@ -54,6 +54,12 @@ Singleton {
         host.cycleWorkspace(delta);
     }
     function exitSession() {
+        Lock.unlock();
+        const sid = `${Quickshell.env("XDG_SESSION_ID") || ""}`;
+        if (sid.length) {
+            Quickshell.execDetached(["loginctl", "terminate-session", sid]);
+            return;
+        }
         host.exitSession();
     }
     function toggleOverview() {

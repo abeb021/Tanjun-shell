@@ -8,36 +8,45 @@ Column {
     spacing: 12
     property string pending: ""
     property string pw: ""
+    readonly property int toggleRightGap: {
+        const row = wifiSwitch.parent;
+        if (!row)
+            return -1;
+        return Math.round(page.width - row.x - row.width);
+    }
+    readonly property int toggleRadius: Math.round(wifiSwitch.radius)
 
-    Row {
+    Item {
         width: parent.width
         height: 28
-        spacing: 16
 
-        Item {
-            width: Math.max(0, parent.width - 44 - 28 - 16)
-            height: 1
-        }
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: 8
+            height: parent.height
+            spacing: 16
 
-        BarText {
-            text: "󰑐"
-            px: 22
-            family: Config.defaultFontUi
-            color: Theme.accent
-            opacity: Net.wifiOn ? 1 : 0.4
-            anchors.verticalCenter: parent.verticalCenter
-            MouseArea {
-                anchors.fill: parent
-                enabled: Net.wifiOn
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Net.setScanning(true)
+            BarText {
+                text: "󰑐"
+                px: 22
+                family: Config.defaultFontUi
+                color: Theme.accent
+                opacity: Net.wifiOn ? 1 : 0.4
+                anchors.verticalCenter: parent.verticalCenter
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: Net.wifiOn
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Net.setScanning(true)
+                }
             }
-        }
 
-        HudToggle {
-            anchors.verticalCenter: parent.verticalCenter
-            on: Net.wifiOn
-            onToggled: Net.toggleWifi()
+            HudToggle {
+                id: wifiSwitch
+                anchors.verticalCenter: parent.verticalCenter
+                on: Net.wifiOn
+                onToggled: Net.toggleWifi()
+            }
         }
     }
 

@@ -6,43 +6,52 @@ Column {
     id: page
     width: parent.width
     spacing: 18
+    readonly property int toggleRightGap: {
+        const row = btSwitch.parent;
+        if (!row)
+            return -1;
+        return Math.round(page.width - row.x - row.width);
+    }
+    readonly property int toggleRadius: Math.round(btSwitch.radius)
 
-    Row {
+    Item {
         width: parent.width
         height: 30
-        spacing: 16
 
-        Item {
-            width: Math.max(0, parent.width - 44 - 28 - 16)
-            height: 1
-        }
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: 8
+            height: parent.height
+            spacing: 16
 
-        BarText {
-            id: scanIcon
-            text: "󰑐"
-            px: 22
-            family: Config.defaultFontUi
-            color: Bt.scanning ? Theme.accent : Theme.fgSub
-            opacity: Bt.on ? 1 : 0.4
-            anchors.verticalCenter: parent.verticalCenter
-            RotationAnimation on rotation {
-                running: Bt.scanning
-                loops: Animation.Infinite
-                from: 0
-                to: 360
-                duration: 1600
+            BarText {
+                id: scanIcon
+                text: "󰑐"
+                px: 22
+                family: Config.defaultFontUi
+                color: Bt.scanning ? Theme.accent : Theme.fgSub
+                opacity: Bt.on ? 1 : 0.4
+                anchors.verticalCenter: parent.verticalCenter
+                RotationAnimation on rotation {
+                    running: Bt.scanning
+                    loops: Animation.Infinite
+                    from: 0
+                    to: 360
+                    duration: 1600
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Bt.scan(!Bt.scanning)
+                }
             }
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Bt.scan(!Bt.scanning)
-            }
-        }
 
-        HudToggle {
-            anchors.verticalCenter: parent.verticalCenter
-            on: Bt.on
-            onToggled: Bt.toggle()
+            HudToggle {
+                id: btSwitch
+                anchors.verticalCenter: parent.verticalCenter
+                on: Bt.on
+                onToggled: Bt.toggle()
+            }
         }
     }
 

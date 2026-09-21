@@ -34,7 +34,7 @@ OverlayHost {
         else {
             body.cpuOpen = false;
             body.presetsOpen = false;
-            body.wallsOpen = false;
+            UiMode.wallsOpen = false;
         }
     }
 
@@ -42,8 +42,8 @@ OverlayHost {
         sequence: "Escape"
         enabled: win.open
         onActivated: {
-            if (body.wallsOpen)
-                body.wallsOpen = false;
+            if (UiMode.wallsOpen)
+                UiMode.wallsOpen = false;
             else
                 UiMode.closeMenus();
         }
@@ -66,15 +66,14 @@ OverlayHost {
         scale: open ? 1 : Motion.popFrom
         focus: true
         Keys.onEscapePressed: {
-            if (body.wallsOpen)
-                body.wallsOpen = false;
+            if (UiMode.wallsOpen)
+                UiMode.wallsOpen = false;
             else
                 UiMode.closeMenus();
         }
                 property bool cpuOpen: false
                 property bool netOpen: true
                 property bool presetsOpen: false
-                property bool wallsOpen: false
 
                 Behavior on opacity {
                     enabled: Motion.ready
@@ -476,8 +475,11 @@ OverlayHost {
                                 }
                                 BarButton {
                                     implicitWidth: 48
-                                    active: body.wallsOpen
-                                    onClicked: body.wallsOpen = true
+                                    active: UiMode.wallsOpen
+                                    onClicked: {
+                                        UiMode.wallFolder = Theme.wallDir;
+                                        UiMode.wallsOpen = true;
+                                    }
                                     BarText {
                                         text: "pick"
                                         px: 11
@@ -536,10 +538,10 @@ OverlayHost {
 
             WallPick {
                 anchors.fill: parent
-                open: body.wallsOpen
-                onCanceled: body.wallsOpen = false
+                open: UiMode.wallsOpen
+                onCanceled: UiMode.wallsOpen = false
                 onPicked: path => {
-                    body.wallsOpen = false;
+                    UiMode.wallsOpen = false;
                     Theme.setWallpaper(path);
                 }
             }
