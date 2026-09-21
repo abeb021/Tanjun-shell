@@ -28,6 +28,7 @@ Singleton {
 
     readonly property int focusedWorkspaceId: host.focusedWorkspaceId
     readonly property var occupied: host.occupied
+    readonly property var activeIds: host.activeIds
     readonly property var windows: host.windows
     readonly property string focusedOutput: host.focusedOutput
     readonly property string layoutName: host.layoutName
@@ -44,6 +45,35 @@ Singleton {
         return screen.name === name;
     }
 
+    function deskOnMonitor(i) {
+        if (i === focusedWorkspaceId)
+            return true;
+        const active = activeIds || [];
+        for (let j = 0; j < active.length; j++) {
+            if (Number(active[j]) === i)
+                return true;
+        }
+        return false;
+    }
+
+    function deskList() {
+        const occ = occupied || {};
+        const out = [];
+        for (let i = 1; i <= 10; i++) {
+            const has = !!(occ[i] || occ[`${i}`]);
+            if (i <= 3 || has || deskOnMonitor(i))
+                out.push({
+                    id: i,
+                    occupied: has
+                });
+        }
+        return out;
+    }
+
+    function activeWorkspaceOn(screen) {
+        return host.activeWorkspaceOn(screen);
+    }
+
     function activateWorkspace(id) {
         host.activateWorkspace(id);
     }
@@ -55,6 +85,8 @@ Singleton {
     }
     function exitSession() {
         Lock.unlock();
+        if (`${Quickshell.env("TANJUN_TEST") || ""}` === "1")
+            return;
         const sid = `${Quickshell.env("XDG_SESSION_ID") || ""}`;
         if (sid.length) {
             Quickshell.execDetached(["loginctl", "terminate-session", sid]);

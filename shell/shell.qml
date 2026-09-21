@@ -209,6 +209,14 @@ ShellRoot {
             Lock.request();
         }
 
+        function unlock(): void {
+            Lock.unlock();
+        }
+
+        function lockJson(): string {
+            return TestHooks.lockJson();
+        }
+
         function logout(): void {
             Compositor.exitSession();
         }

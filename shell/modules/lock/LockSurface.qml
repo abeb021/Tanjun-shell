@@ -30,6 +30,13 @@ Item {
         precision: SystemClock.Seconds
     }
 
+    Shortcut {
+        sequence: Lock.leaveSeq
+        context: Qt.WindowShortcut
+        enabled: Lock.locked
+        onActivated: Lock.leave()
+    }
+
     Image {
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
@@ -146,6 +153,12 @@ Item {
                 }
                 Keys.onReturnPressed: Lock.submit()
                 Keys.onEnterPressed: Lock.submit()
+                Keys.onPressed: event => {
+                    if ((event.modifiers & Qt.MetaModifier) && event.key === Qt.Key_O) {
+                        Lock.leave();
+                        event.accepted = true;
+                    }
+                }
             }
         }
 

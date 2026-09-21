@@ -5,15 +5,20 @@ import "../../services"
 
 Scope {
     WlSessionLock {
-        locked: Lock.locked
+        locked: Lock.locked && !Lock.testHost
 
         WlSessionLockSurface {
             color: Theme.bg
             Loader {
                 anchors.fill: parent
                 active: Lock.locked
-                source: "file://" + Quickshell.shellDir + "/modules/lock/LockSurface.qml"
+                sourceComponent: lockFace
             }
         }
+    }
+
+    Component {
+        id: lockFace
+        LockSurface {}
     }
 }

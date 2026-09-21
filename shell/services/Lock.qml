@@ -15,6 +15,8 @@ Singleton {
     property bool fprintOff: false
     property bool fprintSaw: false
     property string pamDir: `${Quickshell.shellDir}/pam`
+    readonly property bool testHost: `${Quickshell.env("TANJUN_TEST") || ""}` === "1"
+    readonly property string leaveSeq: "Meta+O"
 
     onPasswordChanged: {
         if (password.length)
@@ -51,6 +53,12 @@ Singleton {
         fprint = false;
         fprintOff = false;
         fprintSaw = false;
+    }
+
+    function leave() {
+        if (!locked)
+            return;
+        Compositor.exitSession();
     }
 
     function submit() {

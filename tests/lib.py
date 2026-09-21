@@ -81,6 +81,7 @@ class Qs:
         env["XDG_CONFIG_HOME"] = str(cfg)
         env["XDG_STATE_HOME"] = str(state)
         env["XDG_CACHE_HOME"] = str(cache)
+        env["TANJUN_TEST"] = "1"
         self.proc = subprocess.Popen(
             [self.bin, "-p", str(self.path), "--no-color"],
             stdout=subprocess.PIPE,

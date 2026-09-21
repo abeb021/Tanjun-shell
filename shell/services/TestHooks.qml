@@ -84,19 +84,40 @@ Singleton {
     function workspaceJson() {
         const occ = Compositor.occupied || {};
         const focused = Compositor.focusedWorkspaceId;
+        const activeRaw = Compositor.activeIds || [];
         const occupied = [];
+        const active = [];
+        const seen = {};
+        for (let i = 0; i < activeRaw.length; i++) {
+            const n = Number(activeRaw[i]) || 0;
+            if (n >= 1 && n <= 10 && !seen[n]) {
+                seen[n] = true;
+                active.push(n);
+            }
+        }
+        const rows = Compositor.deskList();
         const ids = [];
-        for (let i = 1; i <= 10; i++) {
-            const has = !!(occ[i] || occ[`${i}`]);
-            if (has)
-                occupied.push(i);
-            if (i <= 3 || has || i === focused)
-                ids.push(i);
+        for (let i = 0; i < rows.length; i++) {
+            ids.push(rows[i].id);
+            if (rows[i].occupied)
+                occupied.push(rows[i].id);
         }
         return JSON.stringify({
             focused: focused,
             ids: ids,
-            occupied: occupied
+            occupied: occupied,
+            active: active
+        });
+    }
+
+    function lockJson() {
+        return JSON.stringify({
+            locked: Lock.locked,
+            busy: Lock.busy,
+            fail: Lock.fail,
+            pamDir: Lock.pamDir,
+            leaveSeq: Lock.leaveSeq,
+            testHost: Lock.testHost
         });
     }
 

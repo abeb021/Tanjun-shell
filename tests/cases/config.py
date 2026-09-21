@@ -96,6 +96,7 @@ def register(s) -> None:
         dump = r"""
 local keys = {}
 local shots = {}
+local locked = {}
 local function dummy()
     return setmetatable({}, {
         __call = function() return dummy() end,
@@ -111,8 +112,11 @@ local function dummy()
     })
 end
 hl = dummy()
-function hl.bind(key)
+function hl.bind(key, _, opts)
     keys[#keys + 1] = key
+    if type(opts) == "table" and opts.locked then
+        locked[#locked + 1] = key
+    end
 end
 package.path = "./?.lua;" .. package.path
 dofile("modules/binds.lua")
@@ -122,15 +126,21 @@ end
 for _, c in ipairs(shots) do
     io.write("C ", c, "\n")
 end
+for _, k in ipairs(locked) do
+    io.write("L ", k, "\n")
+end
 """
         r = run(["lua", "-e", dump], cwd=str(COMP / "hyprland"))
         hypr_keys = []
         hypr_cmds = []
+        hypr_locked = []
         for ln in (r.stdout or "").splitlines():
             if ln.startswith("K "):
                 hypr_keys.append(ln[2:].strip())
             elif ln.startswith("C "):
                 hypr_cmds.append(ln[2:].strip())
+            elif ln.startswith("L "):
+                hypr_locked.append(ln[2:].strip())
         s.eq("hypr binds dump exit", r.returncode, 0)
         s.ok("hypr binds listed", len(hypr_keys) >= 20, (r.stderr or "")[-300:] or str(hypr_keys[:8]))
         s.ok("hypr region shot Print", "Print" in hypr_keys, str(hypr_keys[-15:]))
@@ -146,10 +156,12 @@ end
             any("logout" in c for c in hypr_cmds),
             str(hypr_cmds[-8:]),
         )
+        s.ok("hypr Super+O while locked", "SUPER + O" in hypr_locked, str(hypr_locked))
 
     niri_keys = []
     niri_shift_s = False
     niri_logout = False
+    niri_logout_locked = False
     for line in (COMP / "niri" / "config" / "keybinds.kdl").read_text(encoding="utf-8").splitlines():
         t = line.strip()
         if not t or t.startswith("//") or t.startswith("binds") or t.startswith("}"):
@@ -162,10 +174,13 @@ end
             niri_shift_s = True
         if key == "Mod+O" and "logout" in t:
             niri_logout = True
+            if "allow-when-locked=true" in t:
+                niri_logout_locked = True
     s.ok("niri binds listed", "Mod+Tab" in niri_keys, str(niri_keys[:12]))
     s.ok("niri region shot Print", "Print" in niri_keys, str(niri_keys))
     s.ok("niri region shot Super+Shift+S", niri_shift_s, str(niri_keys))
     s.ok("niri Super+O logout", niri_logout, str(niri_keys))
+    s.ok("niri Super+O while locked", niri_logout_locked, "Mod+O missing allow-when-locked")
 
     for script in (
         SHELL / "scripts" / "tanjun-paint.py",

@@ -22,13 +22,14 @@ def _json_cmd(cmd: list[str]):
         return None
 
 
-def _compositor_desks() -> tuple[set[int] | None, int | None]:
-    """Windows actually on desks 1-10, plus the focused id. None if no compositor IPC."""
+def _compositor_desks() -> tuple[set[int] | None, int | None, set[int] | None]:
+    """Windows on desks 1-10, focused id, and ids active on any monitor."""
     if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
         clients = _json_cmd(["hyprctl", "clients", "-j"])
-        active = _json_cmd(["hyprctl", "activeworkspace", "-j"])
+        current = _json_cmd(["hyprctl", "activeworkspace", "-j"])
+        mons = _json_cmd(["hyprctl", "monitors", "-j"])
         if not isinstance(clients, list):
-            return None, None
+            return None, None, None
         occ: set[int] = set()
         for c in clients:
             if not isinstance(c, dict):
@@ -39,15 +40,27 @@ def _compositor_desks() -> tuple[set[int] | None, int | None]:
             n = int((ws.get("id") if isinstance(ws, dict) else 0) or 0)
             if 1 <= n <= 10:
                 occ.add(n)
-        focused = int((active or {}).get("id") or 0) if isinstance(active, dict) else 0
-        return occ, focused
+        focused = int((current or {}).get("id") or 0) if isinstance(current, dict) else 0
+        active: set[int] = set()
+        if isinstance(mons, list):
+            for m in mons:
+                if not isinstance(m, dict):
+                    continue
+                aw = m.get("activeWorkspace") or {}
+                n = int((aw.get("id") if isinstance(aw, dict) else 0) or 0)
+                if 1 <= n <= 10:
+                    active.add(n)
+        if 1 <= focused <= 10:
+            active.add(focused)
+        return occ, focused, active
     if os.environ.get("NIRI_SOCKET"):
         windows = _json_cmd(["niri", "msg", "--json", "windows"])
         workspaces = _json_cmd(["niri", "msg", "--json", "workspaces"])
         if not isinstance(windows, list) or not isinstance(workspaces, list):
-            return None, None
+            return None, None, None
         id_to_idx = {}
         focused = 0
+        active = set()
         for ws in workspaces:
             if not isinstance(ws, dict):
                 continue
@@ -55,6 +68,8 @@ def _compositor_desks() -> tuple[set[int] | None, int | None]:
             idx = int(ws.get("idx") or 0)
             if wid is not None:
                 id_to_idx[wid] = idx
+            if 1 <= idx <= 10 and (ws.get("is_active") or ws.get("is_focused")):
+                active.add(idx)
             if ws.get("is_focused"):
                 focused = idx
         occ = set()
@@ -64,8 +79,8 @@ def _compositor_desks() -> tuple[set[int] | None, int | None]:
             idx = int(id_to_idx.get(w.get("workspace_id")) or 0)
             if 1 <= idx <= 10:
                 occ.add(idx)
-        return occ, focused
-    return None, None
+        return occ, focused, active
+    return None, None, None
 
 
 def register(s) -> None:
@@ -127,6 +142,9 @@ def register(s) -> None:
             "toggleOverview",
             "launcherJson",
             "workspaceJson",
+            "lock",
+            "unlock",
+            "lockJson",
             "logout",
         ):
             s.ok(f"ipc has {fn}", f"function {fn}" in out, out[-400:])
@@ -136,6 +154,54 @@ def register(s) -> None:
         s.eq("ping", (ping.stdout or "").strip(), "ok")
         locked = qs.ipc("prop", "get", "tanjun", "locked")
         s.ok("session not locked", not _truthy(locked.stdout or ""), locked.stdout)
+
+        lock_raw = qs.ipc("call", "tanjun", "lockJson")
+        s.eq("lockJson exit", lock_raw.returncode, 0)
+        try:
+            lock_info = json.loads((lock_raw.stdout or "").strip() or "{}")
+            lock_err = ""
+        except json.JSONDecodeError as e:
+            lock_info = {}
+            lock_err = str(e)
+        s.ok("lockJson json", isinstance(lock_info, dict) and not lock_err, lock_err or str(lock_info))
+        s.ok("lockJson idle unlocked", lock_info.get("locked") is False, str(lock_info))
+        s.eq("lock leave Super+O", lock_info.get("leaveSeq") or "", "Meta+O")
+        s.ok("lock test host", lock_info.get("testHost") is True, str(lock_info))
+        s.ok("qs alive before lock", qs.proc is not None and qs.proc.poll() is None)
+
+        locked_on = qs.ipc("call", "tanjun", "lock")
+        s.eq("lock ipc exit", locked_on.returncode, 0)
+        deadline = time.time() + 2
+        locked_prop = ""
+        while time.time() < deadline:
+            locked_prop = (qs.ipc("prop", "get", "tanjun", "locked").stdout or "").strip()
+            if _truthy(locked_prop):
+                break
+            time.sleep(0.1)
+        s.ok("lock ipc locks", _truthy(locked_prop), locked_prop)
+        s.ok("qs alive while locked", qs.proc is not None and qs.proc.poll() is None, "lock killed qs")
+        try:
+            lock_info = json.loads((qs.ipc("call", "tanjun", "lockJson").stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            lock_info = {}
+        s.ok("lockJson locked", lock_info.get("locked") is True, str(lock_info))
+        s.eq("lock leave Super+O while locked", lock_info.get("leaveSeq") or "", "Meta+O")
+        pam_lock = f"{lock_info.get('pamDir') or ''}"
+        s.ok("lock pamDir set", pam_lock.endswith("/pam") or "/tanjun/pam" in pam_lock or pam_lock.endswith("shell/pam"), pam_lock)
+
+        left = qs.ipc("call", "tanjun", "logout")
+        s.eq("lock leave logout exit", left.returncode, 0)
+        deadline = time.time() + 2
+        unlocked_prop = "true"
+        while time.time() < deadline:
+            if qs.proc is None or qs.proc.poll() is not None:
+                break
+            unlocked_prop = (qs.ipc("prop", "get", "tanjun", "locked").stdout or "").strip()
+            if not _truthy(unlocked_prop):
+                break
+            time.sleep(0.1)
+        s.ok("qs alive after lock leave", qs.proc is not None and qs.proc.poll() is None, "logout killed the harness")
+        s.ok("lock leave unlocks", not _truthy(unlocked_prop), unlocked_prop)
 
         qs.ipc("call", "tanjun", "closeMenus")
         time.sleep(0.2)
@@ -241,13 +307,14 @@ def register(s) -> None:
                 s.ok(f"workspace always shows {n}", n in ids, str(ids))
             extras = [n for n in ids if n > 3]
             occ_set = set(occupied or [])
+            active_set = set(desks.get("active") or [])
             for n in extras:
                 s.ok(
-                    f"extra desk {n} occupied or focused",
-                    n in occ_set or n == focused,
+                    f"extra desk {n} occupied, focused, or on a monitor",
+                    n in occ_set or n == focused or n in active_set,
                     str(desks),
                 )
-        live_occ, live_focus = _compositor_desks()
+        live_occ, live_focus, live_active = _compositor_desks()
         if live_occ is not None:
             deadline = time.time() + 1.5
             while time.time() < deadline:
@@ -258,18 +325,25 @@ def register(s) -> None:
                     desks = {}
                 occupied = desks.get("occupied") if isinstance(desks, dict) else None
                 ids = desks.get("ids") if isinstance(desks, dict) else None
-                live_occ, live_focus = _compositor_desks()
+                live_occ, live_focus, live_active = _compositor_desks()
+                want_ids = sorted(
+                    set([1, 2, 3])
+                    | (live_occ or set())
+                    | (live_active or set())
+                    | ({live_focus} if 1 <= int(live_focus or 0) <= 10 else set())
+                )
                 if (
                     isinstance(occupied, list)
                     and isinstance(ids, list)
                     and live_occ is not None
                     and sorted(occupied) == sorted(live_occ)
+                    and sorted(ids) == want_ids
                 ):
                     break
                 time.sleep(0.1)
             focused = int(desks.get("focused") or 0) if isinstance(desks, dict) else 0
             s.eq("workspace occupied matches windows", sorted(occupied or []), sorted(live_occ or []))
-            want_ids = sorted(set([1, 2, 3]) | (live_occ or set()) | ({live_focus} if 1 <= int(live_focus or 0) <= 10 else set()))
+            s.eq("workspace active matches monitors", sorted(desks.get("active") or []), sorted(live_active or []))
             s.eq("workspace ids match occupied+pinned", sorted(ids or []), want_ids)
 
         raw = qs.ipc("call", "tanjun", "themeJson")
@@ -665,6 +739,7 @@ def register(s) -> None:
         except Exception:
             pass
         try:
+            qs.ipc("call", "tanjun", "unlock")
             qs.ipc("call", "tanjun", "closeMenus")
         except Exception:
             pass

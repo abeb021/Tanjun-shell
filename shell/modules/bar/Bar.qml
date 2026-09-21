@@ -52,7 +52,9 @@ Scope {
                     LogoBtn {
                         id: logoBtn
                     }
-                    Workspaces {}
+                    Workspaces {
+                        screen: desk.modelData
+                    }
                 }
 
                 ClockBtn {

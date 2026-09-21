@@ -36,6 +36,16 @@ HostBase {
         return true;
     }
 
+    function sameIds(a, b) {
+        if (!a || !b || a.length !== b.length)
+            return false;
+        for (let i = 0; i < a.length; i++) {
+            if (Number(a[i]) !== Number(b[i]))
+                return false;
+        }
+        return true;
+    }
+
     function ingestClients(text) {
         try {
             const raw = JSON.parse(text);
@@ -53,6 +63,37 @@ HostBase {
             }
             if (!sameOcc(occupied, out))
                 occupied = out;
+        } catch (e) {}
+    }
+
+    function ingestMonitors(text) {
+        try {
+            const raw = JSON.parse(text);
+            if (!Array.isArray(raw))
+                return;
+            const ids = [];
+            const byOut = {};
+            const seen = {};
+            for (let i = 0; i < raw.length; i++) {
+                const m = raw[i];
+                if (!m)
+                    continue;
+                const aw = m.activeWorkspace || {};
+                const id = Number(aw.id) || 0;
+                const name = `${m.name || ""}`;
+                if (id > 0 && id <= 10) {
+                    if (!seen[id]) {
+                        seen[id] = true;
+                        ids.push(id);
+                    }
+                    if (name.length)
+                        byOut[name] = id;
+                }
+            }
+            ids.sort((a, b) => a - b);
+            if (!sameIds(activeIds, ids))
+                activeIds = ids;
+            activeByOutput = byOut;
         } catch (e) {}
     }
 
@@ -324,8 +365,10 @@ HostBase {
         repeat: false
         onTriggered: {
             occProc.running = false;
+            actProc.running = false;
             Qt.callLater(() => {
                 occProc.running = true;
+                actProc.running = true;
             });
         }
     }
@@ -337,6 +380,16 @@ HostBase {
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: root.ingestClients(text)
+        }
+    }
+
+    Process {
+        id: actProc
+        command: ["hyprctl", "monitors", "-j"]
+        running: false
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root.ingestMonitors(text)
         }
     }
 

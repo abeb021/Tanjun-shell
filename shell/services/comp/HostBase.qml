@@ -15,6 +15,8 @@ Item {
     property string focusedOutput: ""
     property int focusedWorkspaceId: 0
     property var occupied: ({})
+    property var activeIds: []
+    property var activeByOutput: ({})
     property var windows: []
     property string layoutName: ""
 
@@ -32,6 +34,11 @@ Item {
     function setDpms(on) {}
     function focusWindow(addr) {}
     function cycleLayout(keyboard) {}
+    function activeWorkspaceOn(screen) {
+        const name = screen && screen.name ? `${screen.name}` : "";
+        const n = Number((activeByOutput || {})[name]) || 0;
+        return n || focusedWorkspaceId;
+    }
     function parseMonitors(text) {
         return null;
     }

@@ -6,6 +6,7 @@ import "../../services"
 Row {
     id: root
     spacing: 2
+    property var screen: null
 
     WheelHandler {
         onWheel: event => {
@@ -18,18 +19,10 @@ Row {
         model: ScriptModel {
             objectProp: "id"
             values: {
-                const occupied = Compositor.occupied || {};
+                const occupied = Compositor.occupied;
                 const focused = Compositor.focusedWorkspaceId;
-                const out = [];
-                for (let i = 1; i <= 10; i++) {
-                    const ws = !!(occupied[i] || occupied[`${i}`]);
-                    if (i <= 3 || ws || i === focused)
-                        out.push({
-                            id: i,
-                            occupied: ws
-                        });
-                }
-                return out;
+                const active = Compositor.activeIds;
+                return Compositor.deskList();
             }
         }
         delegate: BarButton {
@@ -37,7 +30,7 @@ Row {
             required property var modelData
             property int wsId: modelData.id
             property bool occupied: modelData.occupied
-            active: Compositor.focusedWorkspaceId === wsId
+            active: Compositor.activeWorkspaceOn(root.screen) === wsId
             implicitWidth: 22
             onClicked: Compositor.activateWorkspace(wsId)
             onRightClicked: Compositor.moveToWorkspace(wsId)

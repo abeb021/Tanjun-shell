@@ -13,6 +13,7 @@ HostBase {
     gammaQuery: ["true"]
 
     property var niriOccupied: ({})
+    property var niriActiveIds: []
     property var niriIdToIdx: ({})
     property var windowList: []
     property int niriFocusedId: 0
@@ -21,6 +22,7 @@ HostBase {
     focusedOutput: niriFocusedOutput
     focusedWorkspaceId: niriFocusedId
     occupied: niriOccupied
+    activeIds: niriActiveIds
     windows: overviewOpen ? windowList : []
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
 
@@ -156,6 +158,16 @@ HostBase {
         return true;
     }
 
+    function sameIds(a, b) {
+        if (!a || !b || a.length !== b.length)
+            return false;
+        for (let i = 0; i < a.length; i++) {
+            if (Number(a[i]) !== Number(b[i]))
+                return false;
+        }
+        return true;
+    }
+
     function ingestWindowOcc(list) {
         const map = niriIdToIdx || {};
         const occ = {};
@@ -177,6 +189,9 @@ HostBase {
             return;
         const occ = {};
         const idMap = {};
+        const active = [];
+        const byOut = {};
+        const seen = {};
         let focusId = 0;
         let focusOut = "";
         for (let i = 0; i < list.length; i++) {
@@ -187,13 +202,26 @@ HostBase {
             const wid = ws.active_window_id;
             if (idx > 0 && idx <= 10 && wid !== undefined && wid !== null && `${wid}` !== "" && Number(wid) !== 0)
                 occ[idx] = true;
+            if (idx > 0 && idx <= 10 && (ws.is_active || ws.is_focused) && !seen[idx]) {
+                seen[idx] = true;
+                active.push(idx);
+            }
+            if (idx > 0 && idx <= 10 && (ws.is_active || ws.is_focused)) {
+                const name = `${ws.output || ""}`;
+                if (name.length)
+                    byOut[name] = idx;
+            }
             if (ws.is_focused) {
                 focusId = idx;
                 focusOut = `${ws.output || ""}`;
             }
         }
+        active.sort((a, b) => a - b);
         niriIdToIdx = idMap;
         niriOccupied = sameOcc(niriOccupied, occ) ? niriOccupied : occ;
+        if (!sameIds(niriActiveIds, active))
+            niriActiveIds = active;
+        activeByOutput = byOut;
         if (focusId)
             niriFocusedId = focusId;
         if (focusOut.length)
