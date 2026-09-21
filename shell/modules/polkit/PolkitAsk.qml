@@ -56,7 +56,7 @@ Scope {
                     spacing: Theme.gap
 
                     BarText {
-                        text: "単"
+                        text: Theme.tan
                         role: "seal"
                     }
                     BarText {

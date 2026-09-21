@@ -1,7 +1,7 @@
 ---@module 'hl'
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("python3 ~/.local/share/tanjun/shell/scripts/tanjun-paint.py restore & quickshell & hyprsunset")
+    hl.exec_cmd("python3 ~/.local/share/tanjun/shell/scripts/tanjun-paint.py restore & QT_QUICK_BACKEND=software quickshell & hyprsunset")
     hl.exec_cmd('gsettings set org.gnome.desktop.interface gtk-theme "Dracula"')
     hl.exec_cmd('gsettings set org.gnome.desktop.wm.preferences theme "Dracula"')
     hl.exec_cmd("wl-paste --type text --watch cliphist store")

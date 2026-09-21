@@ -9,8 +9,10 @@ Scope {
 
         WlSessionLockSurface {
             color: Theme.bg
-            LockSurface {
+            Loader {
                 anchors.fill: parent
+                active: Lock.locked
+                source: "file://" + Quickshell.shellDir + "/modules/lock/LockSurface.qml"
             }
         }
     }

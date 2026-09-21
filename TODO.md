@@ -169,6 +169,7 @@ Current: **v3.5**
 ## v3.5 — speed
 
 - [x] Host: one `--watch` helper while System/settings are open; delta CPU; no Repeater rewrite if the top list is unchanged
-- [x] Overview cards keyed by window id; desk ListView; unload Settings/Overview/Clipboard after close
+- [x] Overview cards keyed by window id; desk ListView; unload Settings/Overview/Clipboard/Launcher after close
 - [x] Niri capture + debounce; weather/backlight/clip/audio/launcher/paint/wait-qs cheap paths
+- [x] Idle RSS: software scene graph (no Mesa LLVM); seal font; unload launcher; cap notifications
 

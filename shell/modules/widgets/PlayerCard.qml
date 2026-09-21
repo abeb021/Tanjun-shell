@@ -22,7 +22,7 @@ Item {
             anchors.fill: parent
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
-            cache: true
+            cache: false
             sourceSize: Qt.size(root.artSize, root.artSize)
             source: root.live && Media.artUrl.length > 0 ? Media.artUrl : ""
         }

@@ -19,7 +19,7 @@ log="$state/reload.log"
     exit 1
   fi
 } >>"$log" 2>&1
-nohup quickshell --no-color >>"$log" 2>&1 &
+nohup env QT_QUICK_BACKEND=software quickshell --no-color >>"$log" 2>&1 &
 pid=$!
 if ! python3 "$wait_py" "$log" "$pid"; then
   echo "quickshell failed to load; see $log" >>"$log"

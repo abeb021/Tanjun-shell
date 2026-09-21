@@ -84,6 +84,45 @@ def register(s) -> None:
         time.sleep(0.2)
         ready = qs.ipc("prop", "get", "tanjun", "settingsReady")
         s.ok("settings not preloaded", not _truthy(ready.stdout or ""), ready.stdout)
+        s.ok("launcher not preloaded", not _truthy((qs.ipc("prop", "get", "tanjun", "launcherReady").stdout or "")), "")
+
+        def _maps() -> str:
+            pid = qs.proc.pid if qs.proc else 0
+            if not pid:
+                return ""
+            try:
+                return Path(f"/proc/{pid}/maps").read_text(errors="replace")
+            except OSError:
+                return ""
+
+        def _ram() -> dict[str, int]:
+            out = {"rss": 0, "anon": 0}
+            pid = qs.proc.pid if qs.proc else 0
+            if not pid:
+                return out
+            try:
+                for line in Path(f"/proc/{pid}/status").read_text().splitlines():
+                    if line.startswith("VmRSS:"):
+                        out["rss"] = int(line.split()[1])
+                    elif line.startswith("RssAnon:"):
+                        out["anon"] = int(line.split()[1])
+            except (OSError, ValueError):
+                return out
+            return out
+
+        def _ram_msg(row: dict[str, int]) -> str:
+            return f"{row.get('rss') or 0} kB rss  {row.get('anon') or 0} kB anon"
+
+        maps = _maps()
+        s.ok("idle qs maps readable", bool(maps), "no /proc maps")
+        s.ok("idle skips CJK font", "NotoSansCJK" not in maps, "NotoSansCJK still mapped")
+        s.ok("idle skips color emoji", "NotoColorEmoji" not in maps, "NotoColorEmoji still mapped")
+        s.ok("idle skips Mesa LLVM", "libLLVM" not in maps, "libLLVM still mapped")
+        s.ok("idle skips gallium", "libgallium" not in maps, "libgallium still mapped")
+        ram_idle = _ram()
+        s.ok("ram idle measured", ram_idle["rss"] > 0, _ram_msg(ram_idle))
+        s.ok("ram idle under 200M", ram_idle["rss"] <= 204800, _ram_msg(ram_idle))
+        s.ok("ram idle anon under 140M", ram_idle["anon"] <= 143360, _ram_msg(ram_idle))
 
         def _poll() -> dict:
             raw_poll = qs.ipc("call", "tanjun", "pollJson")
@@ -162,6 +201,7 @@ def register(s) -> None:
         s.eq("uiMode idle kind", mode.get("kind") or "", "")
         s.ok("uiMode settings not ready", mode.get("settingsReady") is False, str(mode))
         s.ok("uiMode overview not ready", mode.get("overviewReady") is False, str(mode))
+        s.ok("uiMode launcher not ready", mode.get("launcherReady") is False, str(mode))
         s.eq("uiMode idle overview pick", mode.get("overviewPick") or "", "")
         s.eq("uiMode idle overview count", int(mode.get("overviewCount") or 0), 0)
         s.ok("uiMode idle walls closed", mode.get("wallsOpen") is False, str(mode))
@@ -186,10 +226,19 @@ def register(s) -> None:
 
         opened = qs.ipc("call", "tanjun", "toggleSettings")
         s.eq("toggleSettings exit", opened.returncode, 0)
-        time.sleep(0.25)
-        now = qs.ipc("prop", "get", "tanjun", "settingsOpen")
-        s.ok("settings opened", _truthy(now.stdout or ""), now.stdout)
+        rail_n = "0"
+        deadline = time.time() + 2
+        while time.time() < deadline:
+            now = qs.ipc("prop", "get", "tanjun", "settingsOpen")
+            rail_n = (qs.ipc("prop", "get", "tanjun", "settingsRailCount").stdout or "").strip()
+            if _truthy(now.stdout or "") and rail_n == "11":
+                break
+            time.sleep(0.05)
+        s.ok("settings opened", _truthy((qs.ipc("prop", "get", "tanjun", "settingsOpen").stdout or "")), "")
         s.ok("settings ready after toggle", _truthy((qs.ipc("prop", "get", "tanjun", "settingsReady").stdout or "")), "")
+        ram_settings = _ram()
+        s.ok("ram settings measured", ram_settings["rss"] > 0, _ram_msg(ram_settings))
+        s.ok("ram settings under 280M", ram_settings["rss"] <= 286720, _ram_msg(ram_settings))
         busy_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
         s.eq("uiMode settings kind", busy_mode.get("kind"), "settings")
         busy = _poll()
@@ -372,6 +421,9 @@ def register(s) -> None:
         s.ok("settings dropped after close", dropped, "settingsReady stayed true")
         after = qs.ipc("prop", "get", "tanjun", "settingsOpen")
         s.ok("settings closed", not _truthy(after.stdout or ""), after.stdout)
+        ram_after_settings = _ram()
+        s.ok("ram after settings close measured", ram_after_settings["rss"] > 0, _ram_msg(ram_after_settings))
+        s.ok("ram after settings close under 280M", ram_after_settings["rss"] <= 286720, _ram_msg(ram_after_settings))
         idle_again = _poll()
         s.ok("host idle after close", idle_again.get("host") is False, str(idle_again))
         s.ok("vpn idle after close", idle_again.get("vpn") is False, str(idle_again))
@@ -379,19 +431,33 @@ def register(s) -> None:
         s.ok("mixer idle after close", idle_again.get("mixer") is False, str(idle_again))
 
         qs.ipc("call", "tanjun", "toggleLauncher")
-        time.sleep(0.2)
-        launch = qs.ipc("prop", "get", "tanjun", "launcherOpen")
-        s.ok("launcher opened", _truthy(launch.stdout or ""), launch.stdout)
+        launch_mode = {}
+        deadline = time.time() + 2
+        while time.time() < deadline:
+            launch = qs.ipc("prop", "get", "tanjun", "launcherOpen")
+            launch_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+            if _truthy(launch.stdout or "") and launch_mode.get("launcherCatchAway") is False:
+                break
+            time.sleep(0.05)
+        s.ok("launcher opened", _truthy((qs.ipc("prop", "get", "tanjun", "launcherOpen").stdout or "")), "")
         s.ok("launcher ready", _truthy((qs.ipc("prop", "get", "tanjun", "launcherReady").stdout or "")), "")
         s.ok("weather live in launcher", _poll().get("weather") is True, str(_poll()))
-        launch_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
         s.ok("launcher has no away catcher", launch_mode.get("launcherCatchAway") is False, str(launch_mode))
         qs.ipc("call", "tanjun", "closeMenus")
         time.sleep(0.15)
         launch = qs.ipc("prop", "get", "tanjun", "launcherOpen")
         s.ok("launcher closed", not _truthy(launch.stdout or ""), launch.stdout)
-        s.ok("launcher stays ready", _truthy((qs.ipc("prop", "get", "tanjun", "launcherReady").stdout or "")), "")
+        dropped_launch = False
+        deadline = time.time() + 1.2
+        while time.time() < deadline:
+            if not _truthy((qs.ipc("prop", "get", "tanjun", "launcherReady").stdout or "")):
+                dropped_launch = True
+                break
+            time.sleep(0.05)
+        s.ok("launcher dropped after close", dropped_launch, "launcherReady stayed true")
         s.ok("weather idle after launcher close", _poll().get("weather") is False, str(_poll()))
+        ram_after_launcher = _ram()
+        s.ok("ram after launcher close under 280M", ram_after_launcher["rss"] <= 286720, _ram_msg(ram_after_launcher))
 
         qs.ipc("call", "tanjun", "toggleSidebar")
         time.sleep(0.2)
@@ -469,6 +535,21 @@ def register(s) -> None:
         time.sleep(0.1)
         back = qs.ipc("prop", "get", "tanjun", "dnd")
         s.eq("dnd restored", _truthy(back.stdout or ""), _truthy(before.stdout or ""))
+
+        qs.ipc("call", "tanjun", "closeMenus")
+        time.sleep(0.35)
+        ram_end = _ram()
+        s.ok("ram end measured", ram_end["rss"] > 0, _ram_msg(ram_end))
+        s.ok("ram end under 280M", ram_end["rss"] <= 286720, _ram_msg(ram_end))
+        s.ok("ram end still software", "libLLVM" not in _maps(), "libLLVM mapped after menus")
+        print(
+            "qs ram"
+            f"  idle={ram_idle['rss']}k/{ram_idle['anon']}k"
+            f"  settings={ram_settings['rss']}k"
+            f"  closed={ram_after_settings['rss']}k"
+            f"  launcher={ram_after_launcher['rss']}k"
+            f"  end={ram_end['rss']}k/{ram_end['anon']}k"
+        )
     finally:
         try:
             if saved_style:

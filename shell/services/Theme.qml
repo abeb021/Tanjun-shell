@@ -28,6 +28,9 @@ Singleton {
     readonly property string fontUi: Config.appearance.fontUi.length ? Config.appearance.fontUi : Config.defaultFontUi
     readonly property string fontJp: Config.appearance.fontJp.length ? Config.appearance.fontJp : Config.defaultFontJp
     readonly property string fontIcons: Config.appearance.fontIcons.length ? Config.appearance.fontIcons : Config.defaultFontIcons
+    readonly property string fontSeal: sealFont.status === FontLoader.Ready ? sealFont.name : ""
+    readonly property string tan: fontSeal.length ? "単" : ""
+    readonly property string jun: fontSeal.length ? "純" : ""
     readonly property string defaultStyle: "chrome"
     readonly property var styles: [
         { key: "minimal", label: "Minimal", blurb: "Quiet 1px planes across the shell." },
@@ -317,5 +320,10 @@ Singleton {
                 root.apply(JSON.parse(text()));
             } catch (e) {}
         }
+    }
+
+    FontLoader {
+        id: sealFont
+        source: Qt.resolvedUrl("../assets/tanjun-seal.ttf")
     }
 }

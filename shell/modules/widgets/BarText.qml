@@ -35,7 +35,7 @@ Text {
             return Theme.fgSub;
         return Theme.fg;
     }
-    font.family: family.length ? family : (resolved === "seal" ? Theme.fontJp : (resolved === "icon" ? Theme.fontIcons : Theme.fontUi))
+    font.family: family.length ? family : (resolved === "seal" ? Theme.fontSeal : (resolved === "icon" ? Theme.fontIcons : Theme.fontUi))
     font.pixelSize: size
     font.weight: resolved === "display" ? Font.Light : (resolved === "caption" || resolved === "head" ? Font.Normal : Font.Medium)
     font.letterSpacing: resolved === "display" ? -1.2 : (resolved === "head" ? Theme.captionTracking : 0)

@@ -66,6 +66,10 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        launcherReady = false;
+        clipboardReady = false;
+        overviewReady = false;
+        settingsReady = false;
         dropTimer.restart();
         if (name !== "tray")
             trayItem = null;
@@ -87,6 +91,10 @@ Singleton {
         overviewOpen = false;
         sidebarOpen = false;
         settingsOpen = false;
+        launcherReady = false;
+        clipboardReady = false;
+        overviewReady = false;
+        settingsReady = false;
         dropTimer.restart();
         popoutAnchor = anchor ?? popoutAnchor;
         popoutScreen = screenNameOf(anchor);
@@ -129,6 +137,10 @@ Singleton {
         clipboardOpen = false;
         overviewOpen = false;
         settingsOpen = false;
+        launcherReady = false;
+        clipboardReady = false;
+        overviewReady = false;
+        settingsReady = false;
         dropTimer.restart();
         sidebarScreen = Compositor.focusedOutput;
         sidebarOpen = true;
@@ -149,6 +161,7 @@ Singleton {
         settingsReady = false;
         launcherReady = true;
         launcherOpen = true;
+        dropTimer.restart();
     }
 
     function toggleClipboard() {
@@ -163,8 +176,10 @@ Singleton {
         settingsOpen = false;
         overviewReady = false;
         settingsReady = false;
+        launcherReady = false;
         clipboardReady = true;
         clipboardOpen = true;
+        dropTimer.restart();
     }
 
     function toggleSettings() {
@@ -179,10 +194,12 @@ Singleton {
         sidebarOpen = false;
         clipboardReady = false;
         overviewReady = false;
+        launcherReady = false;
         settingsReady = true;
         if (!SettingsNav.pageOk(SettingsNav.page))
             SettingsNav.page = "system";
         settingsOpen = true;
+        dropTimer.restart();
     }
 
     property int overviewNudge: 0
@@ -200,10 +217,12 @@ Singleton {
         settingsOpen = false;
         clipboardReady = false;
         settingsReady = false;
+        launcherReady = false;
         overviewPick = "";
         overviewCount = 0;
         overviewReady = true;
         overviewOpen = true;
+        dropTimer.restart();
     }
 
     function confirmOverview() {
@@ -251,6 +270,8 @@ Singleton {
                 root.overviewReady = false;
             if (!root.clipboardOpen)
                 root.clipboardReady = false;
+            if (!root.launcherOpen)
+                root.launcherReady = false;
         }
     }
 }

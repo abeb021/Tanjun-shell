@@ -70,6 +70,7 @@ class Qs:
             return "qs not on PATH"
         env = os.environ.copy()
         env.setdefault("QT_QPA_PLATFORM", "wayland")
+        env["QT_QUICK_BACKEND"] = "software"
         self.home = Path(tempfile.mkdtemp(prefix="tanjun-qs-"))
         cfg = self.home / "config"
         state = self.home / "state"

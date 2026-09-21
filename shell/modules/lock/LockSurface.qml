@@ -6,7 +6,17 @@ import "../../services"
 Item {
     id: root
 
-    readonly property var lockScreen: parent.screen
+    readonly property var lockScreen: {
+        try {
+            const win = QsWindow.window;
+            if (win && win.screen)
+                return win.screen;
+        } catch (e) {}
+        const p = parent;
+        if (p && p.screen)
+            return p.screen;
+        return null;
+    }
     readonly property bool isFocused: Compositor.isScreenFocused(lockScreen)
     readonly property string wallSrc: {
         const p = Theme.wallStill.length ? Theme.wallStill : (Theme.wallFile.length ? Theme.wallFile : `${Config.configHome}/background`);
@@ -23,10 +33,11 @@ Item {
     Image {
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        asynchronous: false
+        asynchronous: true
         cache: false
-        source: root.wallSrc
-        visible: status === Image.Ready
+        sourceSize: Qt.size(Math.max(1, Math.round(width)), Math.max(1, Math.round(height)))
+        source: Lock.locked ? root.wallSrc : ""
+        visible: Lock.locked && status === Image.Ready
     }
 
     Rectangle {
@@ -38,7 +49,7 @@ Item {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.margins: Theme.pad
-        text: "単"
+        text: Theme.tan
         role: "seal"
     }
 

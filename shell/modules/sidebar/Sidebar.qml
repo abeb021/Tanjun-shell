@@ -122,12 +122,12 @@ OverlayHost {
                                     id: mark
                                     spacing: 0
                                     BarText {
-                                        text: "単"
+                                        text: Theme.tan
                                         role: "seal"
                                         px: 20
                                     }
                                     BarText {
-                                        text: "純"
+                                        text: Theme.jun
                                         role: "seal"
                                         px: 20
                                     }
@@ -536,13 +536,21 @@ OverlayHost {
                 }
             }
 
-            WallPick {
+            Loader {
+                id: wallLoad
                 anchors.fill: parent
-                open: UiMode.wallsOpen
-                onCanceled: UiMode.wallsOpen = false
-                onPicked: path => {
-                    UiMode.wallsOpen = false;
-                    Theme.setWallpaper(path);
+                active: UiMode.wallsOpen
+                source: "file://" + Quickshell.shellDir + "/modules/sidebar/WallPick.qml"
+                onLoaded: {
+                    item.anchors.fill = wallLoad;
+                    item.open = Qt.binding(() => UiMode.wallsOpen);
+                    item.canceled.connect(() => {
+                        UiMode.wallsOpen = false;
+                    });
+                    item.picked.connect(path => {
+                        UiMode.wallsOpen = false;
+                        Theme.setWallpaper(path);
+                    });
                 }
             }
         }

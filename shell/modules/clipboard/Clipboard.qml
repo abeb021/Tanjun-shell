@@ -156,7 +156,7 @@ Scope {
                                 height: 64
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
-                                cache: true
+                                cache: false
                                 sourceSize: Qt.size(64, 64)
                                 source: win.thumbOf(row.line)
                             }

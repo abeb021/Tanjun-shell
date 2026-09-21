@@ -234,7 +234,7 @@ Item {
                         visible: !tile.fileIsDir && !tile.isVideo
                         anchors.fill: parent
                         asynchronous: true
-                        cache: true
+                        cache: false
                         fillMode: Image.PreserveAspectCrop
                         sourceSize: Qt.size(Math.ceil(width * 1.4), Math.ceil(height * 1.4))
                         source: tile.fileIsDir || tile.isVideo ? "" : tile.fileUrl

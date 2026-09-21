@@ -8,7 +8,7 @@ BarButton {
     implicitWidth: 32
     active: UiMode.sidebarOpen
     BarText {
-        text: "単"
+        text: Theme.tan
         role: "seal"
     }
 }
