@@ -4,12 +4,68 @@ import json
 import os
 import time
 
-from lib import QS_BIN, Qs
+from lib import QS_BIN, Qs, run
 from pathlib import Path
 
 
 def _truthy(text: str) -> bool:
     return text.strip().lower() in ("true", "1")
+
+
+def _json_cmd(cmd: list[str]):
+    r = run(cmd, timeout=3)
+    if r.returncode != 0:
+        return None
+    try:
+        return json.loads((r.stdout or "").strip() or "null")
+    except json.JSONDecodeError:
+        return None
+
+
+def _compositor_desks() -> tuple[set[int] | None, int | None]:
+    """Windows actually on desks 1-10, plus the focused id. None if no compositor IPC."""
+    if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        clients = _json_cmd(["hyprctl", "clients", "-j"])
+        active = _json_cmd(["hyprctl", "activeworkspace", "-j"])
+        if not isinstance(clients, list):
+            return None, None
+        occ: set[int] = set()
+        for c in clients:
+            if not isinstance(c, dict):
+                continue
+            if c.get("hidden") or c.get("mapped") is False:
+                continue
+            ws = c.get("workspace") or {}
+            n = int((ws.get("id") if isinstance(ws, dict) else 0) or 0)
+            if 1 <= n <= 10:
+                occ.add(n)
+        focused = int((active or {}).get("id") or 0) if isinstance(active, dict) else 0
+        return occ, focused
+    if os.environ.get("NIRI_SOCKET"):
+        windows = _json_cmd(["niri", "msg", "--json", "windows"])
+        workspaces = _json_cmd(["niri", "msg", "--json", "workspaces"])
+        if not isinstance(windows, list) or not isinstance(workspaces, list):
+            return None, None
+        id_to_idx = {}
+        focused = 0
+        for ws in workspaces:
+            if not isinstance(ws, dict):
+                continue
+            wid = ws.get("id")
+            idx = int(ws.get("idx") or 0)
+            if wid is not None:
+                id_to_idx[wid] = idx
+            if ws.get("is_focused"):
+                focused = idx
+        occ = set()
+        for w in windows:
+            if not isinstance(w, dict):
+                continue
+            idx = int(id_to_idx.get(w.get("workspace_id")) or 0)
+            if 1 <= idx <= 10:
+                occ.add(idx)
+        return occ, focused
+    return None, None
 
 
 def register(s) -> None:
@@ -70,6 +126,7 @@ def register(s) -> None:
             "uiMode",
             "toggleOverview",
             "launcherJson",
+            "workspaceJson",
             "logout",
         ):
             s.ok(f"ipc has {fn}", f"function {fn}" in out, out[-400:])
@@ -163,6 +220,57 @@ def register(s) -> None:
         pam_dir = f"{caps.get('pamDir') or ''}"
         s.ok("pamDir set", pam_dir.endswith("/pam") or "/tanjun/pam" in pam_dir or pam_dir.endswith("shell/pam"), pam_dir)
         s.ok("pamDir not world path junk", ".." not in pam_dir, pam_dir)
+
+        ws_raw = qs.ipc("call", "tanjun", "workspaceJson")
+        s.eq("workspaceJson exit", ws_raw.returncode, 0)
+        try:
+            desks = json.loads((ws_raw.stdout or "").strip() or "{}")
+            desks_err = ""
+        except json.JSONDecodeError as e:
+            desks = {}
+            desks_err = str(e)
+        s.ok("workspaceJson json", isinstance(desks, dict) and not desks_err, desks_err or str(desks))
+        ids = desks.get("ids") if isinstance(desks, dict) else None
+        occupied = desks.get("occupied") if isinstance(desks, dict) else None
+        focused = int(desks.get("focused") or 0) if isinstance(desks, dict) else 0
+        s.ok("workspace ids list", isinstance(ids, list) and all(isinstance(n, int) for n in (ids or [])), str(ids))
+        s.ok("workspace occupied list", isinstance(occupied, list) and all(isinstance(n, int) for n in (occupied or [])), str(occupied))
+        if isinstance(ids, list):
+            s.ok("workspace ids unique", len(ids) == len(set(ids)), str(ids))
+            for n in (1, 2, 3):
+                s.ok(f"workspace always shows {n}", n in ids, str(ids))
+            extras = [n for n in ids if n > 3]
+            occ_set = set(occupied or [])
+            for n in extras:
+                s.ok(
+                    f"extra desk {n} occupied or focused",
+                    n in occ_set or n == focused,
+                    str(desks),
+                )
+        live_occ, live_focus = _compositor_desks()
+        if live_occ is not None:
+            deadline = time.time() + 1.5
+            while time.time() < deadline:
+                ws_raw = qs.ipc("call", "tanjun", "workspaceJson")
+                try:
+                    desks = json.loads((ws_raw.stdout or "").strip() or "{}")
+                except json.JSONDecodeError:
+                    desks = {}
+                occupied = desks.get("occupied") if isinstance(desks, dict) else None
+                ids = desks.get("ids") if isinstance(desks, dict) else None
+                live_occ, live_focus = _compositor_desks()
+                if (
+                    isinstance(occupied, list)
+                    and isinstance(ids, list)
+                    and live_occ is not None
+                    and sorted(occupied) == sorted(live_occ)
+                ):
+                    break
+                time.sleep(0.1)
+            focused = int(desks.get("focused") or 0) if isinstance(desks, dict) else 0
+            s.eq("workspace occupied matches windows", sorted(occupied or []), sorted(live_occ or []))
+            want_ids = sorted(set([1, 2, 3]) | (live_occ or set()) | ({live_focus} if 1 <= int(live_focus or 0) <= 10 else set()))
+            s.eq("workspace ids match occupied+pinned", sorted(ids or []), want_ids)
 
         raw = qs.ipc("call", "tanjun", "themeJson")
         s.eq("themeJson exit", raw.returncode, 0)

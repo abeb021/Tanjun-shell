@@ -24,9 +24,10 @@ Scope {
                 if (!win.open)
                     return [];
                 const occ = Compositor.occupied || {};
+                const focused = Compositor.focusedWorkspaceId;
                 const out = [];
                 for (let i = 1; i <= 10; i++) {
-                    if (i <= 3 || occ[i])
+                    if (i <= 3 || occ[i] || i === focused)
                         out.push(i);
                 }
                 return out;

@@ -88,6 +88,12 @@ HostBase {
 
     function ingestWindows(raw) {
         const list = Array.isArray(raw) ? raw : (raw && raw.windows) || [];
+        ingestWindowOcc(list);
+        if (!overviewOpen) {
+            if (windowList.length)
+                windowList = [];
+            return;
+        }
         const map = niriIdToIdx || {};
         const prev = windowList;
         const byAddr = {};
@@ -150,6 +156,22 @@ HostBase {
         return true;
     }
 
+    function ingestWindowOcc(list) {
+        const map = niriIdToIdx || {};
+        const occ = {};
+        if (list) {
+            for (let i = 0; i < list.length; i++) {
+                const w = list[i];
+                if (!w)
+                    continue;
+                const idx = Number(map[w.workspace_id]) || 0;
+                if (idx > 0 && idx <= 10)
+                    occ[idx] = true;
+            }
+        }
+        niriOccupied = sameOcc(niriOccupied, occ) ? niriOccupied : occ;
+    }
+
     function ingestWorkspaces(list) {
         if (!list || !list.length)
             return;
@@ -162,15 +184,16 @@ HostBase {
             const idx = Number(ws.idx) || 0;
             if (ws.id !== undefined)
                 idMap[ws.id] = idx;
-            if (idx > 0 && idx <= 10)
+            const wid = ws.active_window_id;
+            if (idx > 0 && idx <= 10 && wid !== undefined && wid !== null && `${wid}` !== "" && Number(wid) !== 0)
                 occ[idx] = true;
             if (ws.is_focused) {
                 focusId = idx;
                 focusOut = `${ws.output || ""}`;
             }
         }
-        niriOccupied = sameOcc(niriOccupied, occ) ? niriOccupied : occ;
         niriIdToIdx = idMap;
+        niriOccupied = sameOcc(niriOccupied, occ) ? niriOccupied : occ;
         if (focusId)
             niriFocusedId = focusId;
         if (focusOut.length)
@@ -193,9 +216,11 @@ HostBase {
             const ev = JSON.parse(s);
             if (ev.WorkspacesChanged && ev.WorkspacesChanged.workspaces)
                 ingestWorkspaces(ev.WorkspacesChanged.workspaces);
+            if (ev.WindowsChanged && ev.WindowsChanged.windows)
+                ingestWindowOcc(ev.WindowsChanged.windows);
             if (ev.WindowsChanged || ev.WindowOpenedOrChanged || ev.WindowClosed)
                 root.refreshWindows();
-            if (ev.WorkspaceActivated && ev.WorkspaceActivated.focused) {
+            if (ev.WindowOpenedOrChanged || ev.WindowClosed || (ev.WorkspaceActivated && ev.WorkspaceActivated.focused)) {
                 refreshProc.running = false;
                 Qt.callLater(() => {
                     refreshProc.running = true;

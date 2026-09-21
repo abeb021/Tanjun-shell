@@ -7,20 +7,6 @@ Row {
     id: root
     spacing: 2
 
-    readonly property var items: {
-        const occupied = Compositor.occupied || {};
-        const out = [];
-        for (let i = 1; i <= 10; i++) {
-            const ws = occupied[i] ? true : occupied[`${i}`] ? true : false;
-            if (i <= 3 || ws)
-                out.push({
-                    id: i,
-                    occupied: ws
-                });
-        }
-        return out;
-    }
-
     WheelHandler {
         onWheel: event => {
             Compositor.cycleWorkspace(event.angleDelta.y > 0 ? 1 : -1);
@@ -29,7 +15,23 @@ Row {
     }
 
     Repeater {
-        model: root.items
+        model: ScriptModel {
+            objectProp: "id"
+            values: {
+                const occupied = Compositor.occupied || {};
+                const focused = Compositor.focusedWorkspaceId;
+                const out = [];
+                for (let i = 1; i <= 10; i++) {
+                    const ws = !!(occupied[i] || occupied[`${i}`]);
+                    if (i <= 3 || ws || i === focused)
+                        out.push({
+                            id: i,
+                            occupied: ws
+                        });
+                }
+                return out;
+            }
+        }
         delegate: BarButton {
             id: wsBtn
             required property var modelData

@@ -216,5 +216,9 @@ ShellRoot {
         function launcherJson(): string {
             return TestHooks.launcherJson();
         }
+
+        function workspaceJson(): string {
+            return TestHooks.workspaceJson();
+        }
     }
 }

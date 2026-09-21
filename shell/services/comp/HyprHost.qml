@@ -36,18 +36,30 @@ HostBase {
         return true;
     }
 
-    function syncOccupied() {
-        const out = {};
-        const list = Hyprland.workspaces.values;
-        if (list) {
-            for (let i = 0; i < list.length; i++) {
-                const id = list[i].id;
+    function ingestClients(text) {
+        try {
+            const raw = JSON.parse(text);
+            if (!Array.isArray(raw))
+                return;
+            const out = {};
+            for (let i = 0; i < raw.length; i++) {
+                const c = raw[i];
+                if (!c || c.hidden || c.mapped === false)
+                    continue;
+                const ws = c.workspace || {};
+                const id = Number(ws.id) || 0;
                 if (id > 0 && id <= 10)
                     out[id] = true;
             }
-        }
-        if (!sameOcc(occupied, out))
-            occupied = out;
+            if (!sameOcc(occupied, out))
+                occupied = out;
+        } catch (e) {}
+    }
+
+    function syncOccupied() {
+        if (!live)
+            return;
+        occDelay.restart();
     }
 
     function scanIdle() {
@@ -304,6 +316,28 @@ HostBase {
         Qt.callLater(() => {
             layoutProc.running = true;
         });
+    }
+
+    Timer {
+        id: occDelay
+        interval: 30
+        repeat: false
+        onTriggered: {
+            occProc.running = false;
+            Qt.callLater(() => {
+                occProc.running = true;
+            });
+        }
+    }
+
+    Process {
+        id: occProc
+        command: ["hyprctl", "clients", "-j"]
+        running: false
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root.ingestClients(text)
+        }
     }
 
     Process {

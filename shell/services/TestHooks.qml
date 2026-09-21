@@ -81,6 +81,25 @@ Singleton {
         });
     }
 
+    function workspaceJson() {
+        const occ = Compositor.occupied || {};
+        const focused = Compositor.focusedWorkspaceId;
+        const occupied = [];
+        const ids = [];
+        for (let i = 1; i <= 10; i++) {
+            const has = !!(occ[i] || occ[`${i}`]);
+            if (has)
+                occupied.push(i);
+            if (i <= 3 || has || i === focused)
+                ids.push(i);
+        }
+        return JSON.stringify({
+            focused: focused,
+            ids: ids,
+            occupied: occupied
+        });
+    }
+
     function settingsCatalog() {
         const rows = SettingsNav.catalog;
         const out = [];
