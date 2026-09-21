@@ -10,6 +10,7 @@ One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the
 
 </div>
 
+| | |
 |---|---|
 | ![Launcher](docs/launcher.webp) | ![System drawer](docs/system.webp) |
 | ![Settings](docs/settings.webp) | ![Calendar](docs/calendar.webp) |
