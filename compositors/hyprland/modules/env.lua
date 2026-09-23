@@ -39,4 +39,8 @@ hl.env("MOZ_ENABLE_WAYLAND", "1")
 
 hl.env("GTK_THEME", "Dracula")
 
-hl.env("XCURSOR_THEME", "Dracu2la")
+-- rose-pine = hyprcursor (compositor). Bibata = XCursor (GTK); path set in NixOS.
+hl.env("HYPRCURSOR_THEME", "rose-pine-hyprcursor")
+hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
+hl.env("XCURSOR_SIZE", "24")

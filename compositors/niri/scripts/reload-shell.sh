@@ -9,9 +9,10 @@ log="$state/reload.log"
 : >"$log"
 {
   echo "=== $(date -Iseconds) ==="
+  # NixOS wraps long names as .quickshell-wrapped (comm truncated to 15).
   killall -q quickshell 2>/dev/null || true
   for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-    pgrep -x quickshell >/dev/null || break
+    pgrep -x quickshell >/dev/null || pgrep -x '.quickshell-wra' >/dev/null || break
     sleep 0.1
   done
   if ! command -v quickshell >/dev/null; then

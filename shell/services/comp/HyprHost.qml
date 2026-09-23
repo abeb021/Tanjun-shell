@@ -400,7 +400,7 @@ HostBase {
     function ensureSunset() {
         if (testHost())
             return;
-        Quickshell.execDetached(["sh", "-c", "pgrep -x hyprsunset >/dev/null || hyprsunset"]);
+        Quickshell.execDetached(["sh", "-c", "pgrep -x hyprsunset >/dev/null || pgrep -x '.hyprsunset-wrap' >/dev/null || hyprsunset"]);
     }
 
     function reloadSunset() {
