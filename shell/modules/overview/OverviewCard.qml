@@ -13,6 +13,14 @@ Face {
     lit: selected
     border.color: selected ? Theme.accent : Theme.hairline
     color: selected ? Theme.hot : Theme.surface
+    scale: selected ? 1 : 0.98
+    Behavior on scale {
+        enabled: Motion.ready
+        NumberAnimation {
+            duration: Motion.fast
+            easing.type: Motion.enterEase
+        }
+    }
 
     signal clicked
     signal hovered
@@ -41,6 +49,13 @@ Face {
             clip: true
             radius: Theme.radius
             opacity: root.selected ? 1 : 0.48
+            Behavior on opacity {
+                enabled: Motion.ready
+                NumberAnimation {
+                    duration: Motion.fast
+                    easing.type: Motion.easeOut
+                }
+            }
 
             ScreencopyView {
                 id: preview

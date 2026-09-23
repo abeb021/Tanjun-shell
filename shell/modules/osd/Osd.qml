@@ -31,19 +31,24 @@ Scope {
                 anchors.fill: parent
                 opacity: open ? 1 : 0
                 scale: open ? 1 : Motion.osdFrom
+                transform: Slide {
+                    open: open
+                    fromY: Motion.osdY
+                    duration: Motion.fast
+                }
 
                 Behavior on opacity {
                     enabled: Motion.ready
                     NumberAnimation {
                         duration: Motion.fast
-                        easing.type: open ? Motion.easeOut : Motion.easeIn
+                        easing.type: open ? Motion.enterEase : Motion.easeIn
                     }
                 }
                 Behavior on scale {
                     enabled: Motion.ready
                     NumberAnimation {
                         duration: Motion.fast
-                        easing.type: open ? Motion.easeOut : Motion.easeIn
+                        easing.type: open ? Motion.enterEase : Motion.easeIn
                     }
                 }
 

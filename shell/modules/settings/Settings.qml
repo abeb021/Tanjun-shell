@@ -52,6 +52,8 @@ Scope {
                     return "BluetoothPage.qml";
                 if (page === "screen")
                     return "ScreenPage.qml";
+                if (page === "battery")
+                    return "BatteryPage.qml";
                 if (page === "clock")
                     return "ClockPage.qml";
                 if (page === "weather")

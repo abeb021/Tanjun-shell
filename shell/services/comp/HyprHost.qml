@@ -9,7 +9,7 @@ HostBase {
     hasGamma: true
     grabFocus: true
     screenNote: "scale and mode persist in ~/.config/hypr/monitors.lua."
-    monitorQuery: ["hyprctl", "monitors", "-j"]
+    monitorQuery: ["hyprctl", "monitors", "all", "-j"]
     gammaQuery: ["hyprctl", "hyprsunset", "gamma"]
 
     property var windowList: []
@@ -91,6 +91,27 @@ HostBase {
                 }
             }
             ids.sort((a, b) => a - b);
+            const screens = Quickshell.screens;
+            if (screens) {
+                for (let i = 0; i < screens.length; i++) {
+                    const sc = screens[i];
+                    if (!sc)
+                        continue;
+                    const qsName = `${sc.name || ""}`;
+                    if (!qsName.length)
+                        continue;
+                    let id = Number(byOut[qsName]) || 0;
+                    if (!id) {
+                        const mon = Hyprland.monitorFor(sc);
+                        const ws = mon && mon.activeWorkspace;
+                        id = (ws && ws.id) ? Number(ws.id) : 0;
+                        if (!id && mon && mon.name)
+                            id = Number(byOut[`${mon.name}`]) || 0;
+                    }
+                    if (id > 0)
+                        byOut[qsName] = id;
+                }
+            }
             if (!sameIds(activeIds, ids))
                 activeIds = ids;
             activeByOutput = byOut;
@@ -248,6 +269,13 @@ HostBase {
         Quickshell.execDetached(["hyprctl", "switchxkblayout", name, "next"]);
     }
 
+    function parseModeSize(mode) {
+        const hit = `${mode || ""}`.match(/^(\d+)x(\d+)/);
+        if (!hit)
+            return { w: 0, h: 0 };
+        return { w: Number(hit[1]) || 0, h: Number(hit[2]) || 0 };
+    }
+
     function parseMonitors(text) {
         try {
             const raw = JSON.parse(text);
@@ -260,13 +288,22 @@ HostBase {
                 const av = m.availableModes || [];
                 for (let j = 0; j < av.length; j++)
                     modes.push(`${av[j]}`);
+                let w = Math.round(Number(m.width) || 0);
+                let h = Math.round(Number(m.height) || 0);
+                let mode = `${w}x${h}@${m.refreshRate}`;
+                if (w < 1 || h < 1) {
+                    mode = modes.length ? `${modes[0]}` : "preferred";
+                    const sz = parseModeSize(mode);
+                    w = sz.w || w;
+                    h = sz.h || h;
+                }
                 out.push({
                     name: `${m.name || ""}`,
                     desc: `${m.description || m.make || ""}`.trim(),
-                    width: Math.round(m.width),
-                    height: Math.round(m.height),
+                    width: w,
+                    height: h,
                     scale: Number(m.scale) || 1,
-                    mode: `${Math.round(m.width)}x${Math.round(m.height)}@${m.refreshRate}`,
+                    mode: mode,
                     modes: modes,
                     x: Number(m.x) || 0,
                     y: Number(m.y) || 0,
@@ -283,18 +320,46 @@ HostBase {
         return String(s || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " ");
     }
 
-    function applyMonitor(row) {
+    function testHost() {
+        return `${Quickshell.env("TANJUN_TEST") || ""}` === "1";
+    }
+
+    function monitorLua(row) {
         const name = luaStr(`${row.name || ""}`.replace(/"/g, ""));
         const mode = luaStr(`${row.mode || ""}`);
         const pos = `${Math.round(row.x)}x${Math.round(row.y)}`;
         const sc = Number(row.scale) || 1;
         const off = row.disabled ? "true" : "false";
-        applyProc.command = ["hyprctl", "eval", `hl.monitor({ output = "${name}", mode = "${mode}", position = "${pos}", scale = ${sc}, disabled = ${off} })`];
+        return `hl.monitor({ output = "${name}", mode = "${mode}", position = "${pos}", scale = ${sc}, disabled = ${off} })`;
+    }
+
+    function applyMonitor(row) {
+        applyMonitors(row ? [row] : []);
+    }
+
+    function applyMonitors(rows) {
+        if (!rows || !rows.length || testHost())
+            return;
+        const ordered = [];
+        for (let i = 0; i < rows.length; i++) {
+            if (!rows[i].disabled)
+                ordered.push(rows[i]);
+        }
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i].disabled)
+                ordered.push(rows[i]);
+        }
+        let lua = "";
+        for (let i = 0; i < ordered.length; i++)
+            lua += monitorLua(ordered[i]) + "\n";
+        applyProc.command = ["hyprctl", "eval", lua];
         applyProc.running = false;
         Qt.callLater(() => {
             applyProc.running = true;
         });
     }
+
+    property string _pinBody: ""
 
     function persistMonitors(rows) {
         let body = "---@module 'hl'\n\n";
@@ -309,18 +374,39 @@ HostBase {
                 body += "    disabled = true,\n";
             body += "})\n\n";
         }
-        const dir = `${configHome}/hypr`;
-        Quickshell.execDetached(["mkdir", "-p", dir]);
-        pinFile.path = `${dir}/monitors.lua`;
-        pinFile.setText(body);
+        _pinBody = body;
+        pinMk.command = ["mkdir", "-p", `${configHome}/hypr`];
+        pinMk.running = false;
+        Qt.callLater(() => {
+            pinMk.running = true;
+        });
     }
 
-    function setGamma(n) {
-        Quickshell.execDetached(["hyprctl", "hyprsunset", "gamma", `${n}`]);
-    }
+    function setGamma(n) {}
 
     function identityGamma() {
-        Quickshell.execDetached(["hyprctl", "hyprsunset", "identity"]);
+        if (testHost())
+            return;
+        Quickshell.execDetached(["sh", "-c", "hyprctl hyprsunset identity >/dev/null 2>&1 || { hyprsunset >/dev/null 2>&1 & sleep 0.2; hyprctl hyprsunset identity; }"]);
+    }
+
+    function setTemperature(n) {
+        if (testHost())
+            return;
+        const k = Math.max(1000, Math.min(20000, Math.round(Number(n) || 0)));
+        Quickshell.execDetached(["sh", "-c", `hyprctl hyprsunset temperature ${k} >/dev/null 2>&1 || { hyprsunset >/dev/null 2>&1 & sleep 0.2; hyprctl hyprsunset temperature ${k}; }`]);
+    }
+
+    function ensureSunset() {
+        if (testHost())
+            return;
+        Quickshell.execDetached(["sh", "-c", "pgrep -x hyprsunset >/dev/null || hyprsunset"]);
+    }
+
+    function reloadSunset() {
+        if (testHost())
+            return;
+        Quickshell.execDetached(["sh", "-c", "killall -q hyprsunset; hyprsunset"]);
     }
 
     function readGamma(text) {
@@ -428,9 +514,19 @@ HostBase {
         }
     }
 
+    Process {
+        id: pinMk
+        running: false
+        onExited: {
+            pinFile.path = `${root.configHome}/hypr/monitors.lua`;
+            pinFile.setText(root._pinBody);
+        }
+    }
+
     FileView {
         id: pinFile
         printErrors: false
+        atomicWrites: true
     }
 
     onLiveChanged: {

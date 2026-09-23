@@ -53,7 +53,7 @@ Scope {
                         id: logoBtn
                     }
                     Workspaces {
-                        screen: desk.modelData
+                        screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
                     }
                 }
 
@@ -92,12 +92,12 @@ Scope {
 
             LazyLoader {
                 id: clockLoad
-                active: UiMode.popout === "clock"
+                active: UiMode.popout === "clock" || UiMode.popoutKeep === "clock"
                 BarPop {
                     name: "clock"
                     barWindow: barWin
                     anchorItem: clockBtn
-                    growFrom: Item.Top
+                    align: Item.Top
                     cardW: cal.implicitWidth
                     cardH: cal.implicitHeight
                     CalendarPop {
@@ -108,12 +108,12 @@ Scope {
 
             LazyLoader {
                 id: audioLoad
-                active: UiMode.popout === "audio"
+                active: UiMode.popout === "audio" || UiMode.popoutKeep === "audio"
                 BarPop {
                     name: "audio"
                     barWindow: barWin
                     anchorItem: audioBtn
-                    growFrom: Item.TopRight
+                    align: Item.TopRight
                     cardW: ap.implicitWidth
                     cardH: ap.implicitHeight
                     AudioPop {
@@ -124,12 +124,12 @@ Scope {
 
             LazyLoader {
                 id: netLoad
-                active: UiMode.popout === "network"
+                active: UiMode.popout === "network" || UiMode.popoutKeep === "network"
                 BarPop {
                     name: "network"
                     barWindow: barWin
                     anchorItem: netBtn
-                    growFrom: Item.TopRight
+                    align: Item.TopRight
                     cardW: np.implicitWidth
                     cardH: np.implicitHeight
                     NetPop {
@@ -140,12 +140,12 @@ Scope {
 
             LazyLoader {
                 id: notifyLoad
-                active: UiMode.popout === "notify"
+                active: UiMode.popout === "notify" || UiMode.popoutKeep === "notify"
                 BarPop {
                     name: "notify"
                     barWindow: barWin
                     anchorItem: notifyBtn
-                    growFrom: Item.TopRight
+                    align: Item.TopRight
                     cardW: ntp.implicitWidth
                     cardH: ntp.implicitHeight
                     NotifyPop {
@@ -156,12 +156,12 @@ Scope {
 
             LazyLoader {
                 id: batteryLoad
-                active: UiMode.popout === "battery"
+                active: UiMode.popout === "battery" || UiMode.popoutKeep === "battery"
                 BarPop {
                     name: "battery"
                     barWindow: barWin
                     anchorItem: batteryBtn
-                    growFrom: Item.TopRight
+                    align: Item.TopRight
                     cardW: bp.implicitWidth
                     cardH: bp.implicitHeight
                     BatteryPop {
@@ -172,12 +172,12 @@ Scope {
 
             LazyLoader {
                 id: trayLoad
-                active: UiMode.popout === "tray"
+                active: UiMode.popout === "tray" || UiMode.popoutKeep === "tray"
                 BarPop {
                     name: "tray"
                     barWindow: barWin
                     anchorItem: UiMode.popoutAnchor || batteryBtn
-                    growFrom: Item.TopRight
+                    align: Item.TopRight
                     cardW: tp.implicitWidth
                     cardH: tp.implicitHeight
                     TrayPop {
@@ -188,7 +188,7 @@ Scope {
 
             LazyLoader {
                 id: sideLoad
-                active: UiMode.sidebarOpen
+                active: UiMode.sidebarReady
                 Sidebar {
                     barWindow: barWin
                 }

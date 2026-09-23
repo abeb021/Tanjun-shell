@@ -41,6 +41,27 @@ Scope {
                 height: col.implicitHeight + 28
                 anchors.centerIn: parent
                 opacity: win.open ? 1 : 0
+                scale: win.open ? 1 : Motion.panelFrom
+                transform: Slide {
+                    open: win.open
+                    fromY: Motion.panelY
+                    duration: Motion.panel
+                }
+
+                Behavior on opacity {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.panel
+                        easing.type: win.open ? Motion.enterEase : Motion.easeIn
+                    }
+                }
+                Behavior on scale {
+                    enabled: Motion.ready
+                    NumberAnimation {
+                        duration: Motion.panel
+                        easing.type: win.open ? Motion.enterEase : Motion.easeIn
+                    }
+                }
 
                 MouseArea {
                     anchors.fill: parent

@@ -15,6 +15,18 @@ Rectangle {
     color: current || hover.containsMouse ? Theme.hotSoft : "transparent"
     border.width: Theme.chipBorder
     border.color: current || hover.containsMouse ? Theme.accent : Theme.hairline
+    Behavior on color {
+        enabled: Motion.ready
+        ColorAnimation {
+            duration: Motion.fast
+        }
+    }
+    Behavior on border.color {
+        enabled: Motion.ready
+        ColorAnimation {
+            duration: Motion.fast
+        }
+    }
 
     signal clicked
 

@@ -33,4 +33,46 @@ Column {
         }
         Component.onCompleted: SettingsNav.styleCount = count
     }
+
+    BarText {
+        text: "ANIMATION"
+        role: "head"
+    }
+    BarText {
+        text: "Pops drop from the bar. Panels, lock, and toasts travel."
+        px: 11
+        family: Config.defaultFontUi
+        color: Theme.fgSub
+        width: parent.width
+        wrapMode: Text.Wrap
+    }
+    Row {
+        width: parent.width
+        spacing: 10
+        Repeater {
+            model: Motion.styles
+            HudPick {
+                required property var modelData
+                width: (parent.width - parent.spacing * 3) / 4
+                label: modelData.label
+                current: Motion.kind === modelData.key
+                onClicked: Motion.setMotion(modelData.key)
+            }
+        }
+    }
+    BarText {
+        text: {
+            const rows = Motion.styles;
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].key === Motion.kind)
+                    return rows[i].blurb;
+            }
+            return "";
+        }
+        px: 11
+        family: Config.defaultFontUi
+        color: Theme.fgSub
+        width: parent.width
+        wrapMode: Text.Wrap
+    }
 }

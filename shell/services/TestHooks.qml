@@ -75,9 +75,33 @@ Singleton {
             overviewCount: UiMode.overviewCount,
             clipboardReady: UiMode.clipboardReady,
             launcherReady: UiMode.launcherReady,
+            sidebarReady: UiMode.sidebarReady,
             launcherCatchAway: UiMode.launcherCatchAway,
+            popoutKeep: UiMode.popoutKeep,
             wallsOpen: UiMode.wallsOpen,
             wallFolder: UiMode.wallFolder
+        });
+    }
+
+    function sidebarJson() {
+        return JSON.stringify({
+            open: UiMode.sidebarOpen,
+            ready: UiMode.sidebarReady,
+            x: Math.round(UiMode.sidebarX),
+            w: Math.round(UiMode.sidebarW),
+            fromX: Math.round(UiMode.sidebarFromX),
+            edge: UiMode.sidebarEdge
+        });
+    }
+
+    function popJson() {
+        return JSON.stringify({
+            open: !!UiMode.popout.length,
+            name: UiMode.popout,
+            grow: UiMode.popGrow,
+            origin: UiMode.popOrigin,
+            scaleX: UiMode.popScaleX,
+            fromY: Math.round(UiMode.popFromY)
         });
     }
 
@@ -102,11 +126,17 @@ Singleton {
             if (rows[i].occupied)
                 occupied.push(rows[i].id);
         }
+        const by = Compositor.activeByOutput || {};
+        const onOutput = {};
+        const keys = Object.keys(by);
+        for (let i = 0; i < keys.length; i++)
+            onOutput[keys[i]] = Number(by[keys[i]]) || 0;
         return JSON.stringify({
             focused: focused,
             ids: ids,
             occupied: occupied,
-            active: active
+            active: active,
+            onOutput: onOutput
         });
     }
 

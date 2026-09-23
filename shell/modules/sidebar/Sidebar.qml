@@ -29,6 +29,7 @@ OverlayHost {
     }
 
     onOpenChanged: {
+        body.revealed = open;
         if (open)
             body.forceActiveFocus();
         else {
@@ -57,14 +58,36 @@ OverlayHost {
 
     Item {
         id: body
-        x: 0
+        property bool revealed: false
+        x: revealed ? 0 : -width
         y: Theme.barHeight
         width: 320
         height: win.maxH
-        transformOrigin: Item.TopLeft
-        opacity: open ? 1 : 0
-        scale: open ? 1 : Motion.popFrom
+        opacity: revealed ? 1 : 0
         focus: true
+
+        function reportSlide() {
+            UiMode.sidebarX = x;
+            UiMode.sidebarW = width;
+            UiMode.sidebarFromX = -width;
+            UiMode.sidebarEdge = "left";
+        }
+
+        Component.onCompleted: Qt.callLater(() => {
+            reportSlide();
+            revealed = win.open;
+        })
+        onXChanged: reportSlide()
+        onWidthChanged: reportSlide()
+        onRevealedChanged: reportSlide()
+
+        Behavior on x {
+            enabled: Motion.ready
+            NumberAnimation {
+                duration: Motion.pop
+                easing.type: win.open ? Motion.enterEase : Motion.easeIn
+            }
+        }
         Keys.onEscapePressed: {
             if (UiMode.wallsOpen)
                 UiMode.wallsOpen = false;
@@ -79,14 +102,7 @@ OverlayHost {
                     enabled: Motion.ready
                     NumberAnimation {
                         duration: Motion.pop
-                        easing.type: open ? Motion.easeOut : Motion.easeIn
-                    }
-                }
-                Behavior on scale {
-                    enabled: Motion.ready
-                    NumberAnimation {
-                        duration: Motion.pop
-                        easing.type: open ? Motion.easeOut : Motion.easeIn
+                        easing.type: win.open ? Motion.enterEase : Motion.easeIn
                     }
                 }
 

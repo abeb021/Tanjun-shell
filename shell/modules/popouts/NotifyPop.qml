@@ -42,6 +42,28 @@ Face {
         clip: true
         spacing: 6
         model: Notifs.list
+        add: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Motion.fast
+                easing.type: Motion.enterEase
+            }
+            NumberAnimation {
+                property: "y"
+                from: Motion.popY
+                duration: Motion.fast
+                easing.type: Motion.enterEase
+            }
+        }
+        displaced: Transition {
+            NumberAnimation {
+                properties: "y"
+                duration: Motion.fast
+                easing.type: Motion.easeOut
+            }
+        }
         delegate: Rectangle {
             required property var modelData
             width: list.width

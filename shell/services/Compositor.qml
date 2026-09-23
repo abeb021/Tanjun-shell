@@ -29,6 +29,7 @@ Singleton {
     readonly property int focusedWorkspaceId: host.focusedWorkspaceId
     readonly property var occupied: host.occupied
     readonly property var activeIds: host.activeIds
+    readonly property var activeByOutput: host.activeByOutput
     readonly property var windows: host.windows
     readonly property string focusedOutput: host.focusedOutput
     readonly property string layoutName: host.layoutName
@@ -109,6 +110,9 @@ Singleton {
     function applyMonitor(row) {
         host.applyMonitor(row);
     }
+    function applyMonitors(rows) {
+        host.applyMonitors(rows);
+    }
     function persistMonitors(rows) {
         host.persistMonitors(rows);
     }
@@ -117,6 +121,15 @@ Singleton {
     }
     function identityGamma() {
         host.identityGamma();
+    }
+    function setTemperature(n) {
+        host.setTemperature(n);
+    }
+    function reloadSunset() {
+        host.reloadSunset();
+    }
+    function ensureSunset() {
+        host.ensureSunset();
     }
     function readGamma(text) {
         return host.readGamma(text);

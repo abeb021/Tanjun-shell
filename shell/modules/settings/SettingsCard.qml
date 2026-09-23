@@ -11,19 +11,24 @@ Item {
     opacity: open ? 1 : 0
     visible: opacity > 0.01
     scale: open ? 1 : Motion.panelFrom
+    transform: Slide {
+        open: root.open
+        fromY: Motion.panelY
+        duration: Motion.panel
+    }
 
     Behavior on opacity {
         enabled: Motion.ready
         NumberAnimation {
             duration: Motion.panel
-            easing.type: open ? Motion.easeOut : Motion.easeIn
+            easing.type: open ? Motion.enterEase : Motion.easeIn
         }
     }
     Behavior on scale {
         enabled: Motion.ready
         NumberAnimation {
             duration: Motion.panel
-            easing.type: open ? Motion.easeOut : Motion.easeIn
+            easing.type: open ? Motion.enterEase : Motion.easeIn
         }
     }
 

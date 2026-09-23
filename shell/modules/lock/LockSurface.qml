@@ -50,6 +50,14 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: Qt.rgba(Theme.bg.r, Theme.bg.g, Theme.bg.b, 0.55)
+        opacity: Lock.locked ? 1 : 0
+        Behavior on opacity {
+            enabled: Motion.ready
+            NumberAnimation {
+                duration: Motion.panel
+                easing.type: Lock.locked ? Motion.enterEase : Motion.easeIn
+            }
+        }
     }
 
     BarText {
@@ -79,6 +87,27 @@ Item {
         anchors.verticalCenterOffset: -24
         spacing: 4
         width: 360
+        opacity: Lock.locked ? 1 : 0
+        scale: Lock.locked ? 1 : Motion.panelFrom
+        transform: Slide {
+            open: Lock.locked
+            fromY: Motion.panelY
+            duration: Motion.panel
+        }
+        Behavior on opacity {
+            enabled: Motion.ready
+            NumberAnimation {
+                duration: Motion.panel
+                easing.type: Lock.locked ? Motion.enterEase : Motion.easeIn
+            }
+        }
+        Behavior on scale {
+            enabled: Motion.ready
+            NumberAnimation {
+                duration: Motion.panel
+                easing.type: Lock.locked ? Motion.enterEase : Motion.easeIn
+            }
+        }
 
         BarText {
             width: parent.width

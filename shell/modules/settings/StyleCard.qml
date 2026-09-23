@@ -18,6 +18,18 @@ Rectangle {
     color: current ? Theme.wash(Theme.accent, panel ? 0.10 : 0.06) : (hover.containsMouse ? Theme.surfaceHover : "transparent")
     border.width: 1
     border.color: current || hover.containsMouse ? Theme.accent : Theme.hairline
+    Behavior on color {
+        enabled: Motion.ready
+        ColorAnimation {
+            duration: Motion.fast
+        }
+    }
+    Behavior on border.color {
+        enabled: Motion.ready
+        ColorAnimation {
+            duration: Motion.fast
+        }
+    }
 
     signal clicked
 

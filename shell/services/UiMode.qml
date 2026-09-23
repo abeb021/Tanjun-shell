@@ -6,6 +6,7 @@ Singleton {
     id: root
 
     property string popout: ""
+    property string popoutKeep: ""
     property var popoutAnchor: null
     property var trayItem: null
     property string popoutScreen: ""
@@ -53,6 +54,15 @@ Singleton {
     property bool clipboardReady: false
     property bool overviewReady: false
     property bool settingsReady: false
+    property bool sidebarReady: false
+    property real sidebarX: 0
+    property real sidebarW: 0
+    property real sidebarFromX: 0
+    property string sidebarEdge: ""
+    property string popGrow: ""
+    property string popOrigin: ""
+    property real popScaleX: 1
+    property real popFromY: 0
     property string overviewPick: ""
     property int overviewCount: 0
 
@@ -70,6 +80,7 @@ Singleton {
         clipboardReady = false;
         overviewReady = false;
         settingsReady = false;
+        sidebarReady = false;
         dropTimer.restart();
         if (name !== "tray")
             trayItem = null;
@@ -77,6 +88,7 @@ Singleton {
         popoutScreen = screenNameOf(anchor);
         if (!popoutScreen.length)
             popoutScreen = Compositor.focusedOutput;
+        popoutKeep = name;
         popout = name;
     }
 
@@ -95,26 +107,33 @@ Singleton {
         clipboardReady = false;
         overviewReady = false;
         settingsReady = false;
+        sidebarReady = false;
         dropTimer.restart();
         popoutAnchor = anchor ?? popoutAnchor;
         popoutScreen = screenNameOf(anchor);
         if (!popoutScreen.length)
             popoutScreen = Compositor.focusedOutput;
+        popoutKeep = "tray";
         popout = "tray";
+    }
+
+    function clearPop() {
+        popoutKeep = "";
+        popoutAnchor = null;
+        popoutScreen = "";
+        trayItem = null;
+        popGrow = "";
+        popOrigin = "";
+        popFromY = 0;
     }
 
     function closePopout() {
         popout = "";
-        popoutAnchor = null;
-        popoutScreen = "";
-        trayItem = null;
+        clearPop();
     }
 
     function closeMenus() {
         popout = "";
-        popoutAnchor = null;
-        popoutScreen = "";
-        trayItem = null;
         launcherOpen = false;
         clipboardOpen = false;
         overviewOpen = false;
@@ -141,6 +160,7 @@ Singleton {
         clipboardReady = false;
         overviewReady = false;
         settingsReady = false;
+        sidebarReady = true;
         dropTimer.restart();
         sidebarScreen = Compositor.focusedOutput;
         sidebarOpen = true;
@@ -159,6 +179,7 @@ Singleton {
         clipboardReady = false;
         overviewReady = false;
         settingsReady = false;
+        sidebarReady = false;
         launcherReady = true;
         launcherOpen = true;
         dropTimer.restart();
@@ -177,6 +198,7 @@ Singleton {
         overviewReady = false;
         settingsReady = false;
         launcherReady = false;
+        sidebarReady = false;
         clipboardReady = true;
         clipboardOpen = true;
         dropTimer.restart();
@@ -195,6 +217,7 @@ Singleton {
         clipboardReady = false;
         overviewReady = false;
         launcherReady = false;
+        sidebarReady = false;
         settingsReady = true;
         if (!SettingsNav.pageOk(SettingsNav.page))
             SettingsNav.page = "system";
@@ -218,6 +241,7 @@ Singleton {
         clipboardReady = false;
         settingsReady = false;
         launcherReady = false;
+        sidebarReady = false;
         overviewPick = "";
         overviewCount = 0;
         overviewReady = true;
@@ -272,6 +296,10 @@ Singleton {
                 root.clipboardReady = false;
             if (!root.launcherOpen)
                 root.launcherReady = false;
+            if (!root.sidebarOpen)
+                root.sidebarReady = false;
+            if (!root.popout.length)
+                root.clearPop();
         }
     }
 }

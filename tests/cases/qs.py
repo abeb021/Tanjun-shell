@@ -135,6 +135,9 @@ def register(s) -> None:
             "pickWall",
             "styles",
             "styleJson",
+            "motionStyles",
+            "motionJson",
+            "setMotion",
             "pollJson",
             "hostCaps",
             "settingsCatalog",
@@ -146,6 +149,14 @@ def register(s) -> None:
             "unlock",
             "lockJson",
             "logout",
+            "sunsetJson",
+            "setSunset",
+            "deskJson",
+            "setDesk",
+            "idleJson",
+            "setIdle",
+            "sidebarJson",
+            "popJson",
         ):
             s.ok(f"ipc has {fn}", f"function {fn}" in out, out[-400:])
 
@@ -345,6 +356,37 @@ def register(s) -> None:
             s.eq("workspace occupied matches windows", sorted(occupied or []), sorted(live_occ or []))
             s.eq("workspace active matches monitors", sorted(desks.get("active") or []), sorted(live_active or []))
             s.eq("workspace ids match occupied+pinned", sorted(ids or []), want_ids)
+            on_out = desks.get("onOutput") if isinstance(desks, dict) else None
+            s.ok("workspace onOutput map", isinstance(on_out, dict), str(on_out))
+            live_on = {}
+            if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+                mons = _json_cmd(["hyprctl", "monitors", "-j"])
+                if isinstance(mons, list):
+                    for m in mons:
+                        if not isinstance(m, dict):
+                            continue
+                        name = f"{m.get('name') or ''}"
+                        aw = m.get("activeWorkspace") or {}
+                        n = int((aw.get("id") if isinstance(aw, dict) else 0) or 0)
+                        if name and 1 <= n <= 10:
+                            live_on[name] = n
+            elif os.environ.get("NIRI_SOCKET"):
+                workspaces = _json_cmd(["niri", "msg", "--json", "workspaces"])
+                if isinstance(workspaces, list):
+                    for ws in workspaces:
+                        if not isinstance(ws, dict):
+                            continue
+                        if not (ws.get("is_active") or ws.get("is_focused")):
+                            continue
+                        name = f"{ws.get('output') or ''}"
+                        n = int(ws.get("idx") or 0)
+                        if name and 1 <= n <= 10:
+                            live_on[name] = n
+            if live_on and isinstance(on_out, dict):
+                for name, n in live_on.items():
+                    got = int(on_out.get(name) or 0)
+                    s.eq(f"workspace active on {name}", got, n)
+                s.ok("workspace onOutput covers monitors", len(on_out) >= len(live_on), str(on_out))
 
         raw = qs.ipc("call", "tanjun", "themeJson")
         s.eq("themeJson exit", raw.returncode, 0)
@@ -387,6 +429,8 @@ def register(s) -> None:
         s.eq("uiMode idle overview pick", mode.get("overviewPick") or "", "")
         s.eq("uiMode idle overview count", int(mode.get("overviewCount") or 0), 0)
         s.ok("uiMode idle walls closed", mode.get("wallsOpen") is False, str(mode))
+        s.ok("uiMode sidebar not ready", mode.get("sidebarReady") is False, str(mode))
+        s.eq("uiMode idle popout keep", mode.get("popoutKeep") or "", "")
 
         cat_raw = qs.ipc("call", "tanjun", "settingsCatalog")
         s.eq("settingsCatalog exit", cat_raw.returncode, 0)
@@ -398,7 +442,7 @@ def register(s) -> None:
             cat_err = str(e)
         s.ok("settingsCatalog list", isinstance(catalog, list) and not cat_err, cat_err or str(catalog))
         titles = [f"{row.get('title') if isinstance(row, dict) else row}" for row in catalog]
-        for title in ("system", "sound", "type", "From wall", "Monochrome", "Minimal", "Chrome"):
+        for title in ("system", "sound", "type", "From wall", "Monochrome", "Minimal", "Chrome", "Night light", "Night at", "Day at", "battery", "Dim", "Sleep", "Hibernate", "Quiet", "Snappy", "Instant"):
             s.ok(f"catalog has {title}", title in titles, str(titles[:20]))
 
         qs.ipc("call", "tanjun", "closeMenus")
@@ -413,7 +457,7 @@ def register(s) -> None:
         while time.time() < deadline:
             now = qs.ipc("prop", "get", "tanjun", "settingsOpen")
             rail_n = (qs.ipc("prop", "get", "tanjun", "settingsRailCount").stdout or "").strip()
-            if _truthy(now.stdout or "") and rail_n == "11":
+            if _truthy(now.stdout or "") and rail_n == "12":
                 break
             time.sleep(0.05)
         s.ok("settings opened", _truthy((qs.ipc("prop", "get", "tanjun", "settingsOpen").stdout or "")), "")
@@ -440,9 +484,10 @@ def register(s) -> None:
             pages = []
             pages_err = str(e)
         s.ok("settingsPages json", isinstance(pages, list) and not pages_err, pages_err or str(pages))
-        for pid in ("system", "sound", "screen", "network", "bluetooth", "type", "clock", "weather", "devices", "style", "color"):
+        for pid in ("system", "sound", "screen", "battery", "network", "bluetooth", "type", "clock", "weather", "devices", "style", "color"):
             s.ok(f"settings has {pid}", pid in pages, str(pages))
         s.ok("settings has no session", "session" not in pages, str(pages))
+        s.ok("battery after screen", pages.index("battery") == pages.index("screen") + 1 if "battery" in pages and "screen" in pages else False, str(pages))
         s.ok("style before color", pages.index("style") < pages.index("color") if "style" in pages and "color" in pages else False, str(pages))
         switched = qs.ipc("call", "tanjun", "openSettingsPage", "sound")
         s.eq("openSettingsPage exit", switched.returncode, 0)
@@ -458,20 +503,22 @@ def register(s) -> None:
         qs.ipc("call", "tanjun", "openSettingsPage", "system")
         time.sleep(0.2)
         rail_n = (qs.ipc("prop", "get", "tanjun", "settingsRailCount").stdout or "").strip()
-        s.eq("settings rail count", rail_n, "11")
+        s.eq("settings rail count", rail_n, "12")
         try:
             rail_h = int((qs.ipc("prop", "get", "tanjun", "settingsRailH").stdout or "0").strip())
         except ValueError:
             rail_h = 0
         s.ok("settings rail visible", rail_h >= 200, f"height {rail_h}")
-        for pid in ("network", "bluetooth", "screen", "type", "clock", "weather", "devices", "style", "color"):
+        for pid in ("network", "bluetooth", "screen", "battery", "type", "clock", "weather", "devices", "style", "color"):
             qs.ipc("call", "tanjun", "openSettingsPage", pid)
-            time.sleep(0.12)
-            s.eq(
-                f"settings page {pid}",
-                (qs.ipc("prop", "get", "tanjun", "settingsPage").stdout or "").strip(),
-                pid,
-            )
+            page_now = ""
+            deadline = time.time() + 1.5
+            while time.time() < deadline:
+                page_now = (qs.ipc("prop", "get", "tanjun", "settingsPage").stdout or "").strip()
+                if page_now == pid:
+                    break
+                time.sleep(0.05)
+            s.eq(f"settings page {pid}", page_now, pid)
             try:
                 sy = int((qs.ipc("prop", "get", "tanjun", "settingsScrollY").stdout or "0").strip())
             except ValueError:
@@ -576,8 +623,102 @@ def register(s) -> None:
             (qs.ipc("prop", "get", "tanjun", "style").stdout or "").strip(),
             prior_style or "chrome",
         )
+
+        motion_keys_raw = qs.ipc("call", "tanjun", "motionStyles")
+        s.eq("motionStyles exit", motion_keys_raw.returncode, 0)
+        try:
+            motion_keys = json.loads((motion_keys_raw.stdout or "").strip() or "[]")
+            motion_keys_err = ""
+        except json.JSONDecodeError as e:
+            motion_keys = []
+            motion_keys_err = str(e)
+        s.ok("motionStyles json", isinstance(motion_keys, list) and not motion_keys_err, motion_keys_err or str(motion_keys))
+        for mid in ("instant", "quiet", "snappy", "soft"):
+            s.ok(f"motion has {mid}", mid in motion_keys, str(motion_keys))
+        quiet_raw = qs.ipc("call", "tanjun", "motionJson")
+        s.eq("motionJson exit", quiet_raw.returncode, 0)
+        try:
+            quiet_motion = json.loads((quiet_raw.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            quiet_motion = {}
+        s.eq("motion default quiet", quiet_motion.get("key"), "quiet")
+        s.eq("motion quiet pop", int(quiet_motion.get("pop") or 0), 220)
+        s.eq("motion quiet popY", int(quiet_motion.get("popY") or 0), 10)
+        s.eq("motion quiet panelY", int(quiet_motion.get("panelY") or 0), 18)
+        s.eq("motion quiet toastX", int(quiet_motion.get("toastX") or 0), 32)
+        s.ok("motion quiet press", 0.9 <= float(quiet_motion.get("pressFrom") or 0) < 1, str(quiet_motion))
+        snap = qs.ipc("call", "tanjun", "setMotion", "snappy")
+        s.eq("setMotion snappy exit", snap.returncode, 0)
+        try:
+            snap_motion = json.loads((snap.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            snap_motion = {}
+        s.eq("setMotion snappy key", snap_motion.get("key"), "snappy")
+        s.ok("setMotion snappy faster pop", int(snap_motion.get("pop") or 0) < 220, str(snap_motion))
+        s.ok("setMotion snappy travels", int(snap_motion.get("popY") or 0) > 0, str(snap_motion))
+        s.eq("setMotion snappy spring", snap_motion.get("spring"), True)
+        s.eq("motion prop snappy", (qs.ipc("prop", "get", "tanjun", "motion").stdout or "").strip(), "snappy")
+        cfg_motion = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
+        ap_motion = cfg_motion.get("appearance") if isinstance(cfg_motion, dict) else None
+        s.eq("config appearance.motion", (ap_motion or {}).get("motion"), "snappy")
+        instant = qs.ipc("call", "tanjun", "setMotion", "off")
+        s.eq("setMotion off exit", instant.returncode, 0)
+        try:
+            instant_motion = json.loads((instant.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            instant_motion = {}
+        s.eq("setMotion off is instant", instant_motion.get("key"), "instant")
+        s.eq("setMotion instant pop", int(instant_motion.get("pop") or 0), 1)
+        s.eq("setMotion instant popY", int(instant_motion.get("popY") or 0), 0)
+        s.eq("setMotion instant toastX", int(instant_motion.get("toastX") or 0), 0)
+        s.eq("setMotion instant pressFrom", float(instant_motion.get("pressFrom") or 0), 1.0)
+        s.eq("setMotion instant spring", instant_motion.get("spring"), False)
+        qs.ipc("call", "tanjun", "setMotion", "quiet")
+        time.sleep(0.1)
+        after_quiet = json.loads((qs.ipc("call", "tanjun", "motionJson").stdout or "").strip() or "{}")
+        s.eq("motion restored quiet", after_quiet.get("key"), "quiet")
+        cfg_quiet = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
+        ap_quiet = cfg_quiet.get("appearance") if isinstance(cfg_quiet, dict) else None
+        s.ok(
+            "default motion omitted from config",
+            not isinstance(ap_quiet, dict) or ap_quiet.get("motion") in (None, "", "quiet"),
+            str(ap_quiet),
+        )
         user_after = user_cfg.read_bytes() if user_cfg.is_file() else b""
         s.eq("tests leave user config", user_after, user_before)
+
+        qs.ipc("call", "tanjun", "toggleAudio")
+        pop = {}
+        pop_mode = {}
+        deadline = time.time() + 2
+        while time.time() < deadline:
+            pop_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+            try:
+                pop = json.loads((qs.ipc("call", "tanjun", "popJson").stdout or "").strip() or "{}")
+            except json.JSONDecodeError:
+                pop = {}
+            if pop.get("open") is True and pop.get("grow") == "down" and pop_mode.get("popoutKeep") == "audio":
+                break
+            time.sleep(0.05)
+        s.ok("bar pop open", pop.get("open") is True, str(pop))
+        s.eq("bar pop keep", pop_mode.get("popoutKeep"), "audio")
+        s.eq("bar pop grow", pop.get("grow"), "down")
+        s.eq("bar pop origin", pop.get("origin"), "top")
+        s.eq("bar pop scaleX", float(pop.get("scaleX") if pop.get("scaleX") is not None else 0), 1.0)
+        s.ok("bar pop drops", int(pop.get("fromY") or 0) < 0, str(pop))
+        s.ok("mixer live in audio pop", _poll().get("mixer") is True, str(_poll()))
+        qs.ipc("call", "tanjun", "closeMenus")
+        s.eq("bar pop closed", (qs.ipc("prop", "get", "tanjun", "popout").stdout or "").strip(), "")
+        s.ok("mixer idle while pop exits", _poll().get("mixer") is False, str(_poll()))
+        dropped_pop = False
+        deadline = time.time() + 1.2
+        while time.time() < deadline:
+            pop_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+            if not (pop_mode.get("popoutKeep") or ""):
+                dropped_pop = True
+                break
+            time.sleep(0.05)
+        s.ok("bar pop dropped after close", dropped_pop, "popoutKeep stayed set")
 
         snap_cases = (("1.19", 1.2), ("1.27", 1.25), ("1", 1), ("1.9", 2), ("1.6", 1.5), ("1.2", 1.2))
         for raw, want in snap_cases:
@@ -591,6 +732,164 @@ def register(s) -> None:
                 err = str(e)
             s.ok(f"snapScale {raw} json", val is not None and not err, err or (got.stdout or "")[:80])
             s.eq(f"snapScale {raw}", val, want)
+
+        sun_raw = qs.ipc("call", "tanjun", "sunsetJson")
+        s.eq("sunsetJson exit", sun_raw.returncode, 0)
+        try:
+            sun = json.loads((sun_raw.stdout or "").strip() or "{}")
+            sun_err = ""
+        except json.JSONDecodeError as e:
+            sun = {}
+            sun_err = str(e)
+        s.ok("sunsetJson json", isinstance(sun, dict) and not sun_err, sun_err or str(sun))
+        s.ok("sunset nightAt clock", isinstance(sun.get("nightAt"), str) and ":" in f"{sun.get('nightAt')}", str(sun))
+        s.ok("sunset dayAt clock", isinstance(sun.get("dayAt"), str) and ":" in f"{sun.get('dayAt')}", str(sun))
+        s.ok("sunset on by default", sun.get("on") is True, str(sun))
+        set_sun = qs.ipc("call", "tanjun", "setSunset", '{"nightAt":"22:15","dayAt":"6:00","nightTemp":4000,"on":true}')
+        s.eq("setSunset exit", set_sun.returncode, 0)
+        try:
+            after_sun = json.loads((set_sun.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            after_sun = {}
+        s.eq("setSunset nightAt", after_sun.get("nightAt"), "22:15")
+        s.eq("setSunset dayAt", after_sun.get("dayAt"), "6:00")
+        s.eq("setSunset nightTemp", int(after_sun.get("nightTemp") or 0), 4000)
+        s.eq("setSunset on", after_sun.get("on"), True)
+        cfg_sun = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
+        screens_cfg = cfg_sun.get("screens") if isinstance(cfg_sun, dict) else None
+        s.ok("config screens object after sunset", isinstance(screens_cfg, dict), str(cfg_sun))
+        if isinstance(screens_cfg, dict):
+            s.eq("config nightAt", screens_cfg.get("nightAt"), "22:15")
+            s.eq("config dayAt", screens_cfg.get("dayAt"), "6:00")
+        sun_path = Path(qs.home) / "config" / "hypr" / "hyprsunset.conf" if qs.home else None
+        deadline = time.time() + 2
+        while sun_path and time.time() < deadline:
+            if sun_path.is_file() and "temperature = 4000" in sun_path.read_text(encoding="utf-8"):
+                break
+            time.sleep(0.05)
+        s.ok("hyprsunset.conf written", bool(sun_path and sun_path.is_file()), str(sun_path))
+        if sun_path and sun_path.is_file():
+            body = sun_path.read_text(encoding="utf-8")
+            s.ok("hyprsunset night profile 22:15", "time = 22:15" in body, body[:400])
+            s.ok("hyprsunset day profile 6:00", "time = 6:00" in body, body[:400])
+            s.ok("hyprsunset night temperature", "temperature = 4000" in body, body[:400])
+            s.ok("hyprsunset day identity", "identity = true" in body, body[:400])
+            s.ok("hyprsunset night is kelvin not gamma", "gamma = 0.8" not in body, body[:400])
+        off_sun = qs.ipc("call", "tanjun", "setSunset", '{"on":false}')
+        s.eq("setSunset off exit", off_sun.returncode, 0)
+        try:
+            after_off = json.loads((off_sun.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            after_off = {}
+        s.eq("setSunset off", after_off.get("on"), False)
+        s.eq("setSunset off keeps kelvin", int(after_off.get("nightTemp") or 0), 4000)
+        deadline = time.time() + 2
+        off_body = ""
+        while sun_path and time.time() < deadline:
+            if sun_path.is_file():
+                off_body = sun_path.read_text(encoding="utf-8")
+                if "temperature =" not in off_body and "identity = true" in off_body:
+                    break
+            time.sleep(0.05)
+        s.ok("hyprsunset off is identity", "identity = true" in off_body and "temperature =" not in off_body, off_body[:400])
+        on_sun = qs.ipc("call", "tanjun", "setSunset", '{"on":true}')
+        s.eq("setSunset on exit", on_sun.returncode, 0)
+        try:
+            after_on = json.loads((on_sun.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            after_on = {}
+        s.eq("setSunset on again", after_on.get("on"), True)
+        deadline = time.time() + 2
+        on_body = ""
+        while sun_path and time.time() < deadline:
+            if sun_path.is_file():
+                on_body = sun_path.read_text(encoding="utf-8")
+                if "temperature = 4000" in on_body:
+                    break
+            time.sleep(0.05)
+        s.ok("hyprsunset on restores kelvin", "temperature = 4000" in on_body, on_body[:400])
+
+        idle_raw = qs.ipc("call", "tanjun", "idleJson")
+        s.eq("idleJson exit", idle_raw.returncode, 0)
+        try:
+            idle_info = json.loads((idle_raw.stdout or "").strip() or "{}")
+            idle_err = ""
+        except json.JSONDecodeError as e:
+            idle_info = {}
+            idle_err = str(e)
+        s.ok("idleJson json", isinstance(idle_info, dict) and not idle_err, idle_err or str(idle_info))
+        s.eq("idle default dim min", int(idle_info.get("dim") or 0), 2)
+        s.eq("idle default lock min", int(idle_info.get("lock") or 0), 5)
+        s.eq("idle default dpms min", int(idle_info.get("dpms") or 0), 10)
+        s.eq("idle default sleep min", int(idle_info.get("sleep") or 0), 15)
+        s.eq("idle default hibernate min", int(idle_info.get("hibernate") or 0), 30)
+        s.eq("idle default dim sec", int(idle_info.get("dimSec") or 0), 120)
+        s.eq("idle default hibernate sec", int(idle_info.get("hibernateSec") or 0), 1800)
+        set_idle = qs.ipc("call", "tanjun", "setIdle", '{"dim":3,"hibernate":45}')
+        s.eq("setIdle exit", set_idle.returncode, 0)
+        try:
+            after_idle = json.loads((set_idle.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            after_idle = {}
+        s.eq("setIdle dim min", int(after_idle.get("dim") or 0), 3)
+        s.eq("setIdle hibernate min", int(after_idle.get("hibernate") or 0), 45)
+        s.eq("setIdle dim sec", int(after_idle.get("dimSec") or 0), 180)
+        s.eq("setIdle hibernate sec", int(after_idle.get("hibernateSec") or 0), 2700)
+        s.eq("setIdle keeps sleep", int(after_idle.get("sleep") or 0), 15)
+        cfg_idle = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
+        idle_cfg = cfg_idle.get("idle") if isinstance(cfg_idle, dict) else None
+        s.ok("config idle object after set", isinstance(idle_cfg, dict), str(cfg_idle))
+        if isinstance(idle_cfg, dict):
+            s.eq("config idle dimMin", int(idle_cfg.get("dimMin") or 0), 3)
+            s.eq("config idle hibernateMin", int(idle_cfg.get("hibernateMin") or 0), 45)
+        qs.ipc("call", "tanjun", "setIdle", '{"dim":2,"hibernate":30}')
+
+        desk_raw = qs.ipc("call", "tanjun", "deskJson")
+        s.eq("deskJson exit", desk_raw.returncode, 0)
+        try:
+            desk = json.loads((desk_raw.stdout or "").strip() or "{}")
+            desk_err = ""
+        except json.JSONDecodeError as e:
+            desk = {}
+            desk_err = str(e)
+        s.ok("deskJson json", isinstance(desk, dict) and not desk_err, desk_err or str(desk))
+        names = desk.get("names") if isinstance(desk, dict) else None
+        s.ok("desk names list", isinstance(names, list) and len(names or []) >= 1, str(desk))
+        s.ok("desk internal named", bool(desk.get("internal")), str(desk))
+        s.ok("desk kind known", desk.get("kind") in ("first", "second", "extend", ""), str(desk))
+        if isinstance(names, list) and len(names) >= 2:
+            first = qs.ipc("call", "tanjun", "setDesk", "first")
+            s.eq("setDesk first exit", first.returncode, 0)
+            try:
+                after_first = json.loads((first.stdout or "").strip() or "{}")
+            except json.JSONDecodeError:
+                after_first = {}
+            s.eq("setDesk first kind", after_first.get("kind"), "first")
+            enabled = after_first.get("enabled") or []
+            s.eq("setDesk first only laptop", enabled, [after_first.get("internal")])
+            ext = qs.ipc("call", "tanjun", "setDesk", "extend")
+            s.eq("setDesk extend exit", ext.returncode, 0)
+            try:
+                after_ext = json.loads((ext.stdout or "").strip() or "{}")
+            except json.JSONDecodeError:
+                after_ext = {}
+            s.eq("setDesk extend kind", after_ext.get("kind"), "extend")
+            s.eq("setDesk extend both on", len(after_ext.get("enabled") or []), 2)
+            pin = Path(qs.home) / "config" / "hypr" / "monitors.lua" if qs.home else None
+            lua = ""
+            deadline = time.time() + 2
+            while pin and time.time() < deadline:
+                if pin.is_file():
+                    lua = pin.read_text(encoding="utf-8")
+                    if all(n in lua for n in names[:2]) and "0x0@" not in lua:
+                        break
+                time.sleep(0.05)
+            s.ok("monitors.lua written", bool(pin and pin.is_file()), str(pin))
+            if lua or (pin and pin.is_file()):
+                lua = lua or pin.read_text(encoding="utf-8")
+                s.ok("monitors.lua has both outputs", all(n in lua for n in names[:2]), lua[:400])
+                s.ok("monitors.lua no 0x0 mode", "0x0@" not in lua, lua[:400])
+            qs.ipc("call", "tanjun", "setDesk", desk.get("kind") or "extend")
 
         qs.ipc("call", "tanjun", "closeMenus")
         dropped = False
@@ -642,9 +941,30 @@ def register(s) -> None:
         s.ok("ram after launcher close under 280M", ram_after_launcher["rss"] <= 286720, _ram_msg(ram_after_launcher))
 
         qs.ipc("call", "tanjun", "toggleSidebar")
-        time.sleep(0.2)
-        side_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+        side = {}
+        side_mode = {}
+        deadline = time.time() + 2
+        while time.time() < deadline:
+            side_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
+            try:
+                side = json.loads((qs.ipc("call", "tanjun", "sidebarJson").stdout or "").strip() or "{}")
+            except json.JSONDecodeError:
+                side = {}
+            rest_x = side.get("x")
+            if (
+                side_mode.get("kind") == "sidebar"
+                and side.get("ready") is True
+                and int(side.get("w") or 0) >= 280
+                and rest_x == 0
+            ):
+                break
+            time.sleep(0.05)
         s.eq("uiMode sidebar kind", side_mode.get("kind"), "sidebar")
+        s.ok("system ready", side.get("ready") is True, str(side))
+        s.ok("system panel width", int(side.get("w") or 0) >= 280, str(side))
+        s.eq("system edge", side.get("edge"), "left")
+        s.eq("system from side", int(side.get("fromX") or 0), -int(side.get("w") or 0))
+        s.eq("system rest x", side.get("x"), 0)
         opened_walls = qs.ipc("call", "tanjun", "openWalls")
         s.eq("openWalls exit", opened_walls.returncode, 0)
         time.sleep(0.15)

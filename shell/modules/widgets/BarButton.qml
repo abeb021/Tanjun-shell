@@ -9,6 +9,14 @@ Item {
     property bool mark: false
     implicitHeight: Theme.barHeight
     implicitWidth: Math.max(Theme.barHeight, content.implicitWidth + 10)
+    scale: mouse.pressed ? Motion.pressFrom : 1
+    Behavior on scale {
+        enabled: Motion.ready
+        NumberAnimation {
+            duration: Motion.fast
+            easing.type: Motion.easeOut
+        }
+    }
 
     default property alias contentData: content.data
     property alias overlay: overlayLayer

@@ -18,6 +18,7 @@ Singleton {
     readonly property alias services: adapter.services
     readonly property alias appearance: adapter.appearance
     readonly property alias screens: adapter.screens
+    readonly property alias idle: adapter.idle
     readonly property alias theme: adapter.theme
 
     readonly property string defaultFontUi: "JetBrains Mono"
@@ -25,6 +26,7 @@ Singleton {
     readonly property string defaultFontIcons: "Symbols Nerd Font"
     readonly property int defaultFontPx: 13
     readonly property string defaultStyle: "chrome"
+    readonly property string defaultMotion: "quiet"
 
     readonly property string localId: {
         try {
@@ -78,7 +80,7 @@ Singleton {
     function isFlat(obj) {
         if (!obj || typeof obj !== "object")
             return false;
-        if (obj.clock || obj.services || obj.theme || obj.appearance)
+        if (obj.clock || obj.services || obj.theme || obj.appearance || obj.screens || obj.idle)
             return false;
         return obj.zones !== undefined || obj.weatherCity !== undefined || obj.backlight !== undefined || obj.keyboard !== undefined || obj.themeHook !== undefined;
     }
@@ -146,12 +148,38 @@ Singleton {
             ap.fontPx = appearance.fontPx;
         if (appearance.style.length && appearance.style !== defaultStyle)
             ap.style = appearance.style;
+        if (appearance.motion.length && appearance.motion !== defaultMotion)
+            ap.motion = appearance.motion;
         if (Object.keys(ap).length)
             out.appearance = ap;
         if (theme.sampleWall === false)
             out.theme = { sampleWall: false };
+        const sc = {};
         if (screens.gamma > 0)
-            out.screens = { gamma: screens.gamma };
+            sc.gamma = screens.gamma;
+        if (screens.nightAt.length)
+            sc.nightAt = screens.nightAt;
+        if (screens.dayAt.length)
+            sc.dayAt = screens.dayAt;
+        if (screens.nightTemp > 0)
+            sc.nightTemp = screens.nightTemp;
+        if (screens.nightOn === false)
+            sc.nightOn = false;
+        if (Object.keys(sc).length)
+            out.screens = sc;
+        const idl = {};
+        if (idle.dimMin > 0 && idle.dimMin !== 2)
+            idl.dimMin = idle.dimMin;
+        if (idle.lockMin > 0 && idle.lockMin !== 5)
+            idl.lockMin = idle.lockMin;
+        if (idle.dpmsMin > 0 && idle.dpmsMin !== 10)
+            idl.dpmsMin = idle.dpmsMin;
+        if (idle.sleepMin > 0 && idle.sleepMin !== 15)
+            idl.sleepMin = idle.sleepMin;
+        if (idle.hibernateMin > 0 && idle.hibernateMin !== 30)
+            idl.hibernateMin = idle.hibernateMin;
+        if (Object.keys(idl).length)
+            out.idle = idl;
         return out;
     }
 
@@ -226,10 +254,23 @@ Singleton {
                 property string fontIcons: ""
                 property int fontPx: 0
                 property string style: ""
+                property string motion: ""
             }
 
             property JsonObject screens: JsonObject {
                 property int gamma: 0
+                property string nightAt: ""
+                property string dayAt: ""
+                property int nightTemp: 0
+                property bool nightOn: true
+            }
+
+            property JsonObject idle: JsonObject {
+                property int dimMin: 0
+                property int lockMin: 0
+                property int dpmsMin: 0
+                property int sleepMin: 0
+                property int hibernateMin: 0
             }
 
             property JsonObject theme: JsonObject {

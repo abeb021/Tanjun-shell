@@ -10,6 +10,7 @@ Pins live in `~/.config/tanjun/config.json`. Copy [config.example.json](../confi
 | `appearance.fontPx` | UI size |
 | `appearance.fontUi` / `fontMono` | Families from `fc-list` |
 | `appearance.style` | `chrome` (default) or `minimal` |
+| `appearance.motion` | `quiet` (default), `instant`, `snappy`, or `soft` |
 
 Color lives in Settings → Color and in the System drawer.
 

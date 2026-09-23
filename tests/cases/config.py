@@ -62,6 +62,30 @@ def register(s) -> None:
                 s.ok("config.screens object", isinstance(screens, dict), str(type(screens)))
                 if "gamma" in (screens or {}):
                     s.ok("config.screens.gamma int", isinstance(screens["gamma"], int), str(screens["gamma"]))
+                if "nightAt" in (screens or {}):
+                    val = f"{screens.get('nightAt') or ''}"
+                    bits = val.split(":")
+                    s.ok(
+                        "config.screens.nightAt clock",
+                        len(bits) == 2 and bits[0].isdigit() and bits[1].isdigit() and 0 <= int(bits[0]) <= 23 and 0 <= int(bits[1]) <= 59,
+                        val,
+                    )
+                if "dayAt" in (screens or {}):
+                    val = f"{screens.get('dayAt') or ''}"
+                    bits = val.split(":")
+                    s.ok(
+                        "config.screens.dayAt clock",
+                        len(bits) == 2 and bits[0].isdigit() and bits[1].isdigit() and 0 <= int(bits[0]) <= 23 and 0 <= int(bits[1]) <= 59,
+                        val,
+                    )
+            idle = cfg.get("idle")
+            if idle is not None:
+                s.ok("config.idle object", isinstance(idle, dict), str(type(idle)))
+                if isinstance(idle, dict):
+                    for key in ("dimMin", "lockMin", "dpmsMin", "sleepMin", "hibernateMin"):
+                        if key in idle:
+                            n = idle[key]
+                            s.ok(f"config.idle.{key} min", isinstance(n, int) and n > 0, str(n))
             appearance = cfg.get("appearance")
             if appearance is not None:
                 s.ok("config.appearance object", isinstance(appearance, dict), str(type(appearance)))
@@ -70,6 +94,12 @@ def register(s) -> None:
                         "config.appearance.style chrome",
                         appearance["style"] in ("minimal", "chrome", "tanjun", "panel", ""),
                         str(appearance["style"]),
+                    )
+                if isinstance(appearance, dict) and "motion" in appearance:
+                    s.ok(
+                        "config.appearance.motion known",
+                        appearance["motion"] in ("quiet", "instant", "snappy", "soft", "off", "none", ""),
+                        str(appearance["motion"]),
                     )
     else:
         s.ok("user config.json omitted", True)

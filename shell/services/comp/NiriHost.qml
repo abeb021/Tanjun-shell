@@ -303,15 +303,34 @@ HostBase {
         }
     }
 
+    function testHost() {
+        return `${Quickshell.env("TANJUN_TEST") || ""}` === "1";
+    }
+
     function applyMonitor(row) {
-        const name = `${row.name || ""}`;
-        if (!name.length)
+        applyMonitors(row ? [row] : []);
+    }
+
+    function applyMonitors(rows) {
+        if (!rows || !rows.length || testHost())
             return;
-        const sc = Number(row.scale) || 1;
-        const mode = `${row.mode || ""}`;
-        Quickshell.execDetached(["niri", "msg", "output", name, "scale", `${sc}`]);
-        if (mode.length)
-            Quickshell.execDetached(["niri", "msg", "output", name, "mode", mode]);
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const name = `${row.name || ""}`;
+            if (!name.length)
+                continue;
+            if (row.disabled) {
+                Quickshell.execDetached(["niri", "msg", "output", name, "off"]);
+                continue;
+            }
+            Quickshell.execDetached(["niri", "msg", "output", name, "on"]);
+            const sc = Number(row.scale) || 1;
+            const mode = `${row.mode || ""}`;
+            Quickshell.execDetached(["niri", "msg", "output", name, "scale", `${sc}`]);
+            if (mode.length)
+                Quickshell.execDetached(["niri", "msg", "output", name, "mode", mode]);
+            Quickshell.execDetached(["niri", "msg", "output", name, "position", "set", `${Math.round(row.x)}`, `${Math.round(row.y)}`]);
+        }
         Qt.callLater(() => root.applied());
     }
 
@@ -319,26 +338,36 @@ HostBase {
         return String(s || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]/g, " ");
     }
 
+    property string _pinBody: ""
+
     function persistMonitors(rows) {
         let body = "// Outputs. Written by Settings → screen.\n\n";
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
-            if (r.disabled)
-                continue;
             body += `output "${kdlStr(r.name)}" {\n`;
+            if (r.disabled) {
+                body += "    off\n";
+                body += "}\n\n";
+                continue;
+            }
             body += `    mode "${kdlStr(r.mode)}"\n`;
             body += `    scale ${Number(r.scale) || 1}\n`;
             body += `    position x=${Math.round(r.x)} y=${Math.round(r.y)}\n`;
             body += "}\n\n";
         }
-        const dir = `${configHome}/niri`;
-        Quickshell.execDetached(["mkdir", "-p", dir]);
-        pinFile.path = `${dir}/output.kdl`;
-        pinFile.setText(body);
+        _pinBody = body;
+        pinMk.command = ["mkdir", "-p", `${configHome}/niri`];
+        pinMk.running = false;
+        Qt.callLater(() => {
+            pinMk.running = true;
+        });
     }
 
     function setGamma(n) {}
     function identityGamma() {}
+    function setTemperature(n) {}
+    function reloadSunset() {}
+    function ensureSunset() {}
     function readGamma(text) {
         return 0;
     }
@@ -401,9 +430,19 @@ HostBase {
         }
     }
 
+    Process {
+        id: pinMk
+        running: false
+        onExited: {
+            pinFile.path = `${root.configHome}/niri/output.kdl`;
+            pinFile.setText(root._pinBody);
+        }
+    }
+
     FileView {
         id: pinFile
         printErrors: false
+        atomicWrites: true
     }
 
     onOverviewOpenChanged: {

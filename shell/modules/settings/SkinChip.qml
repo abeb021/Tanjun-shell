@@ -22,6 +22,12 @@ Item {
         border.width: 1
         border.color: root.active || hover.containsMouse ? root.accent : Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.2)
         radius: Theme.radius
+        Behavior on border.color {
+            enabled: Motion.ready
+            ColorAnimation {
+                duration: Motion.fast
+            }
+        }
 
         Column {
             anchors.fill: parent

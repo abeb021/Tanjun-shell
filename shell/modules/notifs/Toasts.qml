@@ -45,20 +45,26 @@ Scope {
                         from: 0
                         to: 1
                         duration: Motion.fast
-                        easing.type: Motion.easeOut
+                        easing.type: Motion.enterEase
                     }
                     NumberAnimation {
                         property: "x"
-                        from: 24
+                        from: Motion.toastX
                         to: 0
-                        duration: Motion.fast
-                        easing.type: Motion.easeOut
+                        duration: Motion.pop
+                        easing.type: Motion.enterEase
                     }
                 }
                 remove: Transition {
                     NumberAnimation {
                         property: "opacity"
                         to: 0
+                        duration: Motion.fast
+                        easing.type: Motion.easeIn
+                    }
+                    NumberAnimation {
+                        property: "x"
+                        to: Motion.toastX
                         duration: Motion.fast
                         easing.type: Motion.easeIn
                     }

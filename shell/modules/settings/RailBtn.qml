@@ -14,6 +14,12 @@ Rectangle {
     color: current ? Theme.hot : (hover.containsMouse ? Theme.hotSoft : "transparent")
     border.width: Theme.railMark && current ? 1 : 0
     border.color: Theme.accent
+    Behavior on color {
+        enabled: Motion.ready
+        ColorAnimation {
+            duration: Motion.fast
+        }
+    }
 
     signal clicked
 

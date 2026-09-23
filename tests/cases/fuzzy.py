@@ -45,8 +45,10 @@ def register(s) -> None:
         ("font", "fonts UI Japanese icons size"),
         ("gamma", "screen monitor display scale gamma output edp"),
         ("lock", "lock idle password fingerprint"),
+        ("battery", "battery idle dim sleep hibernate lock"),
         ("wall", "wallpaper color from wall presets"),
         ("clock", "clock zones moscow melbourne"),
+        ("snappy", "animation motion quiet snappy instant"),
     ):
         hit, code = _js(f"score({q!r}, {hay!r})")
         s.ok(f"fuzzy hits {q}", code == 0 and json.loads(hit) > 0, hit)

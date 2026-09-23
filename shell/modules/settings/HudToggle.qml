@@ -14,6 +14,12 @@ Rectangle {
     color: on ? Theme.accent : Theme.surface
     border.width: 1
     border.color: Theme.hairline
+    Behavior on color {
+        enabled: Motion.ready
+        ColorAnimation {
+            duration: Motion.fast
+        }
+    }
 
     signal toggled
 
@@ -28,6 +34,7 @@ Rectangle {
             enabled: Motion.ready
             NumberAnimation {
                 duration: Motion.fast
+                easing.type: Motion.easeOut
             }
         }
     }

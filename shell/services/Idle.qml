@@ -14,6 +14,80 @@ Singleton {
 
     readonly property bool restBlocked: Compositor.idleInhibited || logindBlock
 
+    readonly property int dimMin: minsOf(Config.idle.dimMin, 2)
+    readonly property int lockMin: minsOf(Config.idle.lockMin, 5)
+    readonly property int dpmsMin: minsOf(Config.idle.dpmsMin, 10)
+    readonly property int sleepMin: minsOf(Config.idle.sleepMin, 15)
+    readonly property int hibernateMin: minsOf(Config.idle.hibernateMin, 30)
+
+    readonly property int dimSec: dimMin * 60
+    readonly property int lockSec: lockMin * 60
+    readonly property int dpmsSec: dpmsMin * 60
+    readonly property int sleepSec: sleepMin * 60
+    readonly property int hibernateSec: hibernateMin * 60
+
+    function minsOf(raw, fallback) {
+        const n = Math.round(Number(raw) || 0);
+        return n > 0 ? n : fallback;
+    }
+
+    function clampMin(n, lo, hi) {
+        const v = Math.round(Number(n) || 0);
+        return Math.max(lo, Math.min(hi, v));
+    }
+
+    function idleJson() {
+        return JSON.stringify({
+            dim: dimMin,
+            lock: lockMin,
+            dpms: dpmsMin,
+            sleep: sleepMin,
+            hibernate: hibernateMin,
+            dimSec: dimSec,
+            lockSec: lockSec,
+            dpmsSec: dpmsSec,
+            sleepSec: sleepSec,
+            hibernateSec: hibernateSec
+        });
+    }
+
+    function applyIdle(raw) {
+        let obj = {};
+        try {
+            obj = JSON.parse(`${raw || ""}`);
+        } catch (e) {
+            obj = {};
+        }
+        if (obj.dim !== undefined)
+            Config.idle.dimMin = clampMin(obj.dim, 1, 15);
+        if (obj.lock !== undefined)
+            Config.idle.lockMin = clampMin(obj.lock, 1, 30);
+        if (obj.dpms !== undefined)
+            Config.idle.dpmsMin = clampMin(obj.dpms, 1, 60);
+        if (obj.sleep !== undefined)
+            Config.idle.sleepMin = clampMin(obj.sleep, 5, 120);
+        if (obj.hibernate !== undefined)
+            Config.idle.hibernateMin = clampMin(obj.hibernate, 5, 180);
+        Config.writeSparse();
+        return idleJson();
+    }
+
+    function bump(key, delta) {
+        const next = {};
+        const cur = {
+            dim: dimMin,
+            lock: lockMin,
+            dpms: dpmsMin,
+            sleep: sleepMin,
+            hibernate: hibernateMin
+        };
+        const k = `${key || ""}`;
+        if (!(k in cur))
+            return idleJson();
+        next[k] = cur[k] + Number(delta);
+        return applyIdle(JSON.stringify(next));
+    }
+
     function dim() {
         Quickshell.execDetached(["brightnessctl", "-s", "set", "30%"]);
         Quickshell.execDetached(["brightnessctl", "-sd", "rgb:kbd_backlight", "set", "0"]);
@@ -81,7 +155,7 @@ Singleton {
     }
 
     IdleMonitor {
-        timeout: 120
+        timeout: Math.max(30, root.dimSec)
         onIsIdleChanged: {
             if (isIdle)
                 root.goIdle("dim");
@@ -91,7 +165,7 @@ Singleton {
     }
 
     IdleMonitor {
-        timeout: 300
+        timeout: Math.max(30, root.lockSec)
         onIsIdleChanged: {
             if (isIdle)
                 root.goIdle("lock");
@@ -99,7 +173,7 @@ Singleton {
     }
 
     IdleMonitor {
-        timeout: 600
+        timeout: Math.max(30, root.dpmsSec)
         onIsIdleChanged: {
             if (isIdle)
                 root.goIdle("dpms");
@@ -109,7 +183,7 @@ Singleton {
     }
 
     IdleMonitor {
-        timeout: 900
+        timeout: Math.max(30, root.sleepSec)
         onIsIdleChanged: {
             if (isIdle)
                 root.goIdle("suspend");
@@ -117,7 +191,7 @@ Singleton {
     }
 
     IdleMonitor {
-        timeout: 1800
+        timeout: Math.max(30, root.hibernateSec)
         onIsIdleChanged: {
             if (isIdle)
                 root.goIdle("hibernate");

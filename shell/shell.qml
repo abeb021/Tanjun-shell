@@ -55,12 +55,15 @@ ShellRoot {
         property bool overviewReady: UiMode.overviewReady
         property bool clipboardReady: UiMode.clipboardReady
         property bool launcherReady: UiMode.launcherReady
+        property bool sidebarReady: UiMode.sidebarReady
         property string popout: UiMode.popout
+        property string popoutKeep: UiMode.popoutKeep
         property string settingsPage: SettingsNav.page
         property int settingsRailCount: SettingsNav.railCount
         property int settingsRailH: SettingsNav.railH
         property int settingsScrollY: SettingsNav.scrollY
         property string style: Theme.style
+        property string motion: Motion.kind
         property int settingsStyleCount: SettingsNav.styleCount
         property int settingsToggleGap: SettingsNav.toggleGap
         property int settingsToggleRadius: SettingsNav.toggleRadius
@@ -107,8 +110,41 @@ ShellRoot {
             return TestHooks.uiMode();
         }
 
+        function sidebarJson(): string {
+            return TestHooks.sidebarJson();
+        }
+
+        function popJson(): string {
+            return TestHooks.popJson();
+        }
+
         function snapScale(raw: string): string {
             return JSON.stringify(Screens.snapScale(Number(raw)));
+        }
+
+        function sunsetJson(): string {
+            return Screens.sunsetJson();
+        }
+
+        function setSunset(raw: string): string {
+            return Screens.applySunset(raw);
+        }
+
+        function deskJson(): string {
+            return Screens.deskJson();
+        }
+
+        function setDesk(kind: string): string {
+            Screens.setDesk(kind);
+            return Screens.deskJson();
+        }
+
+        function idleJson(): string {
+            return Idle.idleJson();
+        }
+
+        function setIdle(raw: string): string {
+            return Idle.applyIdle(raw);
         }
 
         function styles(): string {
@@ -122,6 +158,19 @@ ShellRoot {
         function setStyle(id: string): string {
             Theme.setStyle(id);
             return JSON.stringify(Theme.style);
+        }
+
+        function motionStyles(): string {
+            return JSON.stringify(Motion.styleKeys());
+        }
+
+        function motionJson(): string {
+            return JSON.stringify(Motion.snapshot());
+        }
+
+        function setMotion(id: string): string {
+            Motion.setMotion(id);
+            return JSON.stringify(Motion.snapshot());
         }
 
         function setTheme(kind: string, name: string): string {

@@ -26,6 +26,7 @@ Column {
                     required property var modelData
                     width: (parent.width - parent.spacing * 2) / 3
                     label: modelData.label
+                    current: Screens.deskKind === modelData.id
                     onClicked: Screens.setDesk(modelData.id)
                 }
             }
@@ -41,46 +42,117 @@ Column {
         onCommitted: v => Backlight.setPercent(v * 100)
     }
 
-    Item {
+    Column {
         visible: Compositor.hasGamma
         width: parent.width
-        height: 58
+        spacing: 10
+        BarText {
+            text: "NIGHT LIGHT"
+            role: "head"
+        }
         Row {
-            anchors.fill: parent
+            width: parent.width
             spacing: 25
             HudSlider {
                 width: parent.width - 70 - parent.spacing
-                height: parent.height
-                label: "NIGHT LIGHT"
+                label: Screens.nightKelvin + "K"
                 icon: ""
-                value: (Screens.gamma - 50) / 100
-                onMoved: v => Screens.setGamma(50 + v * 100)
+                value: (6500 - Screens.nightKelvin) / 3500
+                onMoved: v => Screens.previewNight(6500 - v * 3500)
+                onCommitted: v => Screens.setNightTemp(6500 - v * 3500)
             }
             Rectangle {
                 width: 70
                 height: 36
                 radius: Theme.radius
                 anchors.verticalCenter: parent.verticalCenter
-                color: Screens.gammaLive ? Theme.wash(Theme.accent, 0.1) : Theme.wash(Theme.fgSub, 0.15)
+                color: Screens.nightOn ? Theme.wash(Theme.accent, 0.1) : Theme.wash(Theme.fgSub, 0.15)
                 border.width: 1
-                border.color: Screens.gammaLive ? Theme.accent : Theme.fgSub
+                border.color: Screens.nightOn ? Theme.accent : Theme.fgSub
                 BarText {
                     anchors.centerIn: parent
-                    text: Screens.gammaLive ? "ON" : "OFF"
+                    text: Screens.nightOn ? "ON" : "OFF"
                     px: 10
                     family: Config.defaultFontUi
-                    color: Screens.gammaLive ? Theme.accent : Theme.fgSub
+                    color: Screens.nightOn ? Theme.accent : Theme.fgSub
                 }
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (Screens.gammaLive)
-                            Screens.identity();
-                        else
-                            Screens.setGamma(Screens.gamma === 100 ? 80 : Screens.gamma);
-                    }
+                    onClicked: Screens.setNightOn(!Screens.nightOn)
                 }
+            }
+        }
+        Row {
+            width: parent.width
+            spacing: 10
+            BarText {
+                width: 90
+                anchors.verticalCenter: parent.verticalCenter
+                text: "NIGHT AT"
+                px: 12
+                family: Config.defaultFontUi
+                font.letterSpacing: 1
+            }
+            HudPick {
+                width: 42
+                label: "−"
+                onClicked: Screens.bumpNight(-15)
+            }
+            Rectangle {
+                width: 72
+                height: 42
+                radius: Theme.radius
+                color: Theme.surface
+                border.width: 1
+                border.color: Theme.hairline
+                BarText {
+                    anchors.centerIn: parent
+                    text: Screens.nightAt
+                    px: 13
+                    family: Config.defaultFontUi
+                }
+            }
+            HudPick {
+                width: 42
+                label: "+"
+                onClicked: Screens.bumpNight(15)
+            }
+        }
+        Row {
+            width: parent.width
+            spacing: 10
+            BarText {
+                width: 90
+                anchors.verticalCenter: parent.verticalCenter
+                text: "DAY AT"
+                px: 12
+                family: Config.defaultFontUi
+                font.letterSpacing: 1
+            }
+            HudPick {
+                width: 42
+                label: "−"
+                onClicked: Screens.bumpDay(-15)
+            }
+            Rectangle {
+                width: 72
+                height: 42
+                radius: Theme.radius
+                color: Theme.surface
+                border.width: 1
+                border.color: Theme.hairline
+                BarText {
+                    anchors.centerIn: parent
+                    text: Screens.dayAt
+                    px: 13
+                    family: Config.defaultFontUi
+                }
+            }
+            HudPick {
+                width: 42
+                label: "+"
+                onClicked: Screens.bumpDay(15)
             }
         }
     }

@@ -43,9 +43,18 @@ Item {
         return null;
     }
     function applyMonitor(row) {}
+    function applyMonitors(rows) {
+        if (!rows)
+            return;
+        for (let i = 0; i < rows.length; i++)
+            applyMonitor(rows[i]);
+    }
     function persistMonitors(rows) {}
     function setGamma(n) {}
     function identityGamma() {}
+    function setTemperature(n) {}
+    function reloadSunset() {}
+    function ensureSunset() {}
     function readGamma(text) {
         return 0;
     }
