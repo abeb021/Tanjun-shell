@@ -22,3 +22,39 @@ Restart the compositor after setup, or start Quickshell yourself:
 ```bash
 quickshell -p ~/.config/quickshell
 ```
+
+## NixOS / Home Manager
+
+The repo ships a flake with `homeManagerModules.default` and an optional `nixosModules.default`.
+
+1. Add a flake input (path checkout for live edits):
+
+```nix
+tanjun.url = "path:../Programming/Tanjun-shell";
+```
+
+2. Import the Home Manager module and point `checkout` at the same tree:
+
+```nix
+{ inputs, tanjunCheckout, ... }:
+{
+  imports = [ inputs.tanjun.homeManagerModules.default ];
+  programs.tanjun = {
+    enable = true;
+    checkout = tanjunCheckout;
+    compositor = "hyprland"; # or "niri"
+  };
+}
+```
+
+Pass `tanjunCheckout` from your flake `specialArgs` (for example `../Programming/Tanjun-shell` next to the `nixos` config).
+
+On rebuild, Home Manager:
+
+- symlinks `~/.local/share/tanjun` and `~/.config/quickshell` to that checkout
+- writes the Hyprland or niri compositor stub under `~/.config`
+- installs `tanjun-quickshell` on `PATH` (`QT_QUICK_BACKEND=software`)
+
+System packages (quickshell, cliphist, hypr tools) stay in your NixOS modules. Hyprland autostart in the Tanjun rice still starts Quickshell; you can call `tanjun-quickshell` manually instead.
+
+Compositor integration on NixOS is the same as on Arch: rice lives in the checkout under `compositors/`, not inside the HM module.

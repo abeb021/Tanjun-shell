@@ -15,7 +15,7 @@ hl.window_rule({
 })
 
 hl.window_rule({
-    match = { title = "File Upload|Open|Save|Select|Library" },
+    match = { title = "^(File Upload|Open|Save|Select|Library|.* - Open File|.* - Save File)$" },
     float = true,
     center = true,
     size = "(monitor_w*0.5) (monitor_h*0.5)",
