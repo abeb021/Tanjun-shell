@@ -20,11 +20,15 @@ in
 
     checkout = lib.mkOption {
       type = lib.types.path;
-      example = lib.literalExpression "inputs.tanJun";
+      default = self.outPath;
+      defaultText = lib.literalExpression "tanjun flake source (from inputs.tanjun)";
+      example = "/home/you/Programming/Tanjun-shell";
       description = ''
-        Path to the Tanjun-shell repository root (the directory that contains
-        `shell/` and `compositors/`). Use your git checkout for live edits;
-        a flake `path:` input works but is snapshotted into the store until rebuild.
+        Tree that contains `shell/` and `compositors/`. Defaults to the Tanjun
+        flake source (GitHub pin updates on `nix flake update` + rebuild).
+
+        Override with a local git checkout path for live QML edits without
+        rebuilding the home-manager generation.
       '';
     };
 

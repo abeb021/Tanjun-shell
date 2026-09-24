@@ -27,27 +27,31 @@ quickshell -p ~/.config/quickshell
 
 The repo ships a flake with `homeManagerModules.default` and an optional `nixosModules.default`.
 
-1. Add a flake input (path checkout for live edits):
+1. Add a flake input:
 
 ```nix
-tanjun.url = "path:../Programming/Tanjun-shell";
+tanjun.url = "github:abeb021/Tanjun-shell";
+tanjun.inputs.nixpkgs.follows = "nixpkgs";
 ```
 
-2. Import the Home Manager module and point `checkout` at the same tree:
+2. Import the Home Manager module:
 
 ```nix
-{ inputs, tanjunCheckout, ... }:
+{ inputs, ... }:
 {
   imports = [ inputs.tanjun.homeManagerModules.default ];
   programs.tanjun = {
     enable = true;
-    checkout = tanjunCheckout;
     compositor = "hyprland"; # or "niri"
   };
 }
 ```
 
-Pass `tanjunCheckout` from your flake `specialArgs` (for example `../Programming/Tanjun-shell` next to the `nixos` config).
+`checkout` defaults to the pinned flake source (`nix flake update tanjun` to move versions). For live edits against a git clone:
+
+```nix
+programs.tanjun.checkout = "/path/to/Tanjun-shell";
+```
 
 On rebuild, Home Manager:
 
