@@ -84,10 +84,21 @@ Singleton {
     function cycleWorkspace(delta) {
         host.cycleWorkspace(delta);
     }
+    function usesUwsm() {
+        const desktop = `${Quickshell.env("DESKTOP_SESSION") || ""}`;
+        if (desktop.includes("uwsm"))
+            return true;
+        return `${Quickshell.env("UWSM_WAIT_VARNAMES") || ""}`.length > 0;
+    }
+
     function exitSession() {
         Lock.unlock();
         if (`${Quickshell.env("TANJUN_TEST") || ""}` === "1")
             return;
+        if (usesUwsm()) {
+            Quickshell.execDetached(["uwsm", "stop"]);
+            return;
+        }
         const sid = `${Quickshell.env("XDG_SESSION_ID") || ""}`;
         if (sid.length) {
             Quickshell.execDetached(["loginctl", "terminate-session", sid]);

@@ -27,6 +27,15 @@ hl.window_rule({
     stay_focused = true,
 })
 
+-- Zoom's meeting surface is an alpha XWayland window. Inactive opacity
+-- and blur punch a hole through the call UI and the camera tile.
+hl.window_rule({
+    name = "zoom-opaque",
+    match = { class = "[Zz]oom" },
+    opacity = "1 override 1 override 1 override",
+    no_blur = true,
+})
+
 hl.window_rule({
     match = { title = "Picture-in-Picture" },
     float = true,
