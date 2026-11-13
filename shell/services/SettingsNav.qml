@@ -25,6 +25,7 @@ Singleton {
     property int railH: 0
     property int scrollY: 0
     property int styleCount: 0
+    property int demoRuns: 0
     property int toggleGap: -1
     property int toggleRadius: -1
 

@@ -65,6 +65,7 @@ ShellRoot {
         property string style: Theme.style
         property string motion: Motion.kind
         property int settingsStyleCount: SettingsNav.styleCount
+        property int settingsDemoRuns: SettingsNav.demoRuns
         property int settingsToggleGap: SettingsNav.toggleGap
         property int settingsToggleRadius: SettingsNav.toggleRadius
         property bool locked: Lock.locked

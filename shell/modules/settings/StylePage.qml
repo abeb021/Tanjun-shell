@@ -46,6 +46,10 @@ Column {
         width: parent.width
         wrapMode: Text.Wrap
     }
+    MotionDemo {
+        width: parent.width
+    }
+
     Row {
         width: parent.width
         spacing: 10
@@ -53,7 +57,7 @@ Column {
             model: Motion.styles
             HudPick {
                 required property var modelData
-                width: (parent.width - parent.spacing * 3) / 4
+                width: (parent.width - parent.spacing * Math.max(0, Motion.styles.length - 1)) / Math.max(1, Motion.styles.length)
                 label: modelData.label
                 current: Motion.kind === modelData.key
                 onClicked: Motion.setMotion(modelData.key)
@@ -69,6 +73,15 @@ Column {
             }
             return "";
         }
+        px: 11
+        family: Config.defaultFontUi
+        color: Theme.fgSub
+        width: parent.width
+        wrapMode: Text.Wrap
+    }
+
+    BarText {
+        text: "Click the strip to replay it with the current preset."
         px: 11
         family: Config.defaultFontUi
         color: Theme.fgSub
