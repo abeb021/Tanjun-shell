@@ -32,24 +32,11 @@ Singleton {
         return null;
     }
 
-    readonly property var liveNetworks: wifiDevice && wifiDevice.networks ? wifiDevice.networks.values : []
-    // The scan list exists only while something watches it, and it collapses back
-    // to the connected network when the radio stops scanning. Only the count is
-    // remembered here: the network objects die with the scan, so the menu reserves
-    // its height from the number and fills it in again on open.
-    property int seenRows: 0
-    readonly property var networks: liveNetworks
+    readonly property var networks: wifiDevice && wifiDevice.networks ? wifiDevice.networks.values : []
 
-    onLiveNetworksChanged: {
-        if (!(watching || scanning) || !liveNetworks)
-            return;
-        if (liveNetworks.length > seenRows)
-            seenRows = liveNetworks.length;
-    }
-
-    // One scan at startup so the menu knows how tall its list will be before the
-    // first click: it is only scanned while something watches it, and the panel
-    // must not grow a row after it has already rolled out.
+    // One scan at startup so the menu already has rows the first time it opens:
+    // the radio only scans while something watches it, and a list that fills in
+    // after the card has rolled out changes its height under the pointer.
     Component.onCompleted: warmUp.start()
 
     onWifiOnChanged: {
@@ -84,11 +71,9 @@ Singleton {
 
     property string vpn: ""
     readonly property bool vpnUp: vpn.length > 0
-    property bool scanning: false
     readonly property bool watching: UiMode.sidebarOpen || UiMode.popout === "network" || (UiMode.settingsOpen && SettingsNav.page === "network")
 
     function setScanning(on) {
-        scanning = !!on;
         if (wifiDevice && wifiDevice.scannerEnabled !== undefined)
             wifiDevice.scannerEnabled = on;
     }
