@@ -26,7 +26,8 @@ OverlayHost {
     open: UiMode.popout === name && onThisScreen
     layerName: "tanjun-pop-" + name
     dismissOthers: true
-    contentOpacity: morph.opacity
+    // opacity is constant now, so keep the surface up while the spring retracts
+    contentOpacity: (root.open || morph.height > 1) ? 1 : 0
 
     onOpenChanged: {
         if (open) {
@@ -66,8 +67,12 @@ OverlayHost {
         else if (align === Item.Top)
             x = sx + (anchorItem.width - w) / 2;
         const maxX = scr.width - w - 8;
+        // Overlap the bar's last row by a pixel: the panel is the bar's own
+        // material, so covering the edge (including the chrome rule) makes the
+        // two read as one surface instead of a card with a line across it.
+        const overlap = 1;
         morph.x = Math.round(Math.max(8, Math.min(x, maxX)));
-        morph.y = Math.round(Math.max(Theme.barHeight, sy));
+        morph.y = Math.round(Math.max(Theme.barHeight - overlap, sy - overlap));
         morph.width = w;
         root.reportPop();
     }
@@ -85,13 +90,21 @@ OverlayHost {
         onActivated: UiMode.closeMenus()
     }
 
+    // Serpantinum's reveal: the panel is *pulled out of the bar* by a damped
+    // spring, so it grows past its final size by a hair and settles. Its top edge
+    // never moves, and nothing fades — the surface is simply uncovered downward.
+    SpringProgress {
+        id: reveal
+        open: morph.revealed
+    }
+
     Item {
         id: morph
         property bool revealed: false
         width: root.cardW
-        height: revealed ? root.cardH : 0
+        height: Math.round(root.cardH * reveal.value)
         clip: true
-        opacity: revealed ? 1 : 0
+        opacity: 1
         focus: true
         Keys.onEscapePressed: UiMode.closeMenus()
 
@@ -103,7 +116,7 @@ OverlayHost {
 
         transform: Slide {
             open: morph.revealed
-            fromY: -Motion.popY
+            fromY: 0
             duration: Motion.pop
         }
 
@@ -120,19 +133,6 @@ OverlayHost {
             height: root.cardH
         }
 
-        Behavior on height {
-            enabled: Motion.ready
-            NumberAnimation {
-                duration: Motion.pop
-                easing.type: morph.revealed ? Motion.easeOut : Motion.easeIn
-            }
-        }
-        Behavior on opacity {
-            enabled: Motion.ready
-            NumberAnimation {
-                duration: Motion.pop
-                easing.type: morph.revealed ? Motion.enterEase : Motion.easeIn
-            }
-        }
+
     }
 }

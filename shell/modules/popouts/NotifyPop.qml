@@ -4,6 +4,7 @@ import "../../services"
 
 Face {
     job: "pop"
+    attach: true
     implicitWidth: 300
     implicitHeight: 360
     focus: true

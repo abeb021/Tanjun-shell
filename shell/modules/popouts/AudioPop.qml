@@ -5,6 +5,7 @@ import "../../services"
 Face {
     id: root
     job: "pop"
+    attach: true
     implicitWidth: 280
     implicitHeight: Math.min(col.implicitHeight + 16, 420)
     focus: true

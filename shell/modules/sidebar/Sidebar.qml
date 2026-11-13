@@ -59,11 +59,17 @@ OverlayHost {
     Item {
         id: body
         property bool revealed: false
-        x: revealed ? 0 : -width
+        // Open progress, driven by the drawer itself rather than by a Behavior on
+        // x: the drawer must always start fully off-screen and travel in, instead
+        // of appearing at its final spot and only then animating. Setting the
+        // state first and letting one animation run from 0 -> 1 makes the slide
+        // the first thing you see, on every preset.
+        property real reveal: win.open ? 1 : 0
+        x: Math.round(-(width * (1 - reveal)))
         y: Theme.barHeight
         width: 320
         height: win.maxH
-        opacity: revealed ? 1 : 0
+        opacity: reveal
         focus: true
 
         function reportSlide() {
@@ -77,14 +83,16 @@ OverlayHost {
             reportSlide();
             revealed = win.open;
         })
-        onXChanged: reportSlide()
+        // Report while the drawer is on screen only: a closed drawer needs no
+        // per-frame updates, an open one has to track its own position.
+        onXChanged: if (revealed) reportSlide()
         onWidthChanged: reportSlide()
         onRevealedChanged: reportSlide()
 
-        Behavior on x {
+        Behavior on reveal {
             enabled: Motion.ready
             NumberAnimation {
-                duration: Motion.pop
+                duration: win.open ? Motion.panel : Motion.pop
                 easing.type: win.open ? Motion.enterEase : Motion.easeIn
             }
         }
@@ -98,14 +106,6 @@ OverlayHost {
                 property bool netOpen: true
                 property bool presetsOpen: false
 
-                Behavior on opacity {
-                    enabled: Motion.ready
-                    NumberAnimation {
-                        duration: Motion.pop
-                        easing.type: win.open ? Motion.enterEase : Motion.easeIn
-                    }
-                }
-
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {}
@@ -113,6 +113,7 @@ OverlayHost {
 
                 Face {
                     job: "plane"
+                    attach: true
                     anchors.fill: parent
                 }
 
