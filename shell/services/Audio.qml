@@ -107,6 +107,29 @@ Singleton {
         return node.nickname || node.description || node.name || "device";
     }
 
+    // A glyph for a device, from what PipeWire says about it: the icon name the
+    // rest of the desktop uses, then the device name, then the media class.
+    function deviceIcon(node) {
+        if (!node)
+            return "";
+        const p = node.properties || {};
+        const icon = `${p["device.icon-name"] || ""}`.toLowerCase();
+        const label = `${node.nickname || ""} ${node.description || ""} ${node.name || ""}`.toLowerCase();
+        const cls = `${p["media.class"] || ""}`.toLowerCase();
+        const both = icon + " " + label;
+        if (both.indexOf("headset") >= 0 || both.indexOf("headphone") >= 0)
+            return "󰋋";
+        if (both.indexOf("hdmi") >= 0 || both.indexOf("displayport") >= 0)
+            return "󰍹";
+        if (both.indexOf("bluetooth") >= 0)
+            return "󰂯";
+        if (both.indexOf("microphone") >= 0)
+            return "󰍬";
+        if (both.indexOf("speaker") >= 0 || both.indexOf("card") >= 0)
+            return "󰓃";
+        return cls.indexOf("source") >= 0 ? "󰍬" : "󰓃";
+    }
+
     function attached(node) {
         if (!node || !node.ready)
             return false;

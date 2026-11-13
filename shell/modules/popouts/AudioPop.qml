@@ -60,14 +60,13 @@ Face {
                 spacing: 10
 
                 PopHead {
-                    title: "AUDIO"
+                    icon: "󰕾"
                     status: Audio.muted ? "MUTED" : `${Math.round(Audio.volume * 100)}%`
                     BarText {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Audio.muted ? "UNMUTE" : "MUTE"
-                        px: 9
-                        family: Config.defaultFontUi
-                        font.letterSpacing: 1
+                        text: Audio.muted ? "󰝟" : "󰕾"
+                        icon: true
+                        px: 12
                         color: Theme.accent
                         MouseArea {
                             anchors.fill: parent
@@ -85,10 +84,6 @@ Face {
                     onMoved: v => Audio.setVolume(v)
                 }
 
-                PopHead {
-                    title: "OUTPUT"
-                }
-
                 Repeater {
                     model: Audio.sinks
                     PopRow {
@@ -96,7 +91,7 @@ Face {
                         required property int index
                         active: Audio.isCurrent(modelData, Audio.sink) || catcher.currentIndex === index
                         clickable: true
-                        icon: Audio.isCurrent(modelData, Audio.sink) ? "●" : "○"
+                        icon: Audio.deviceIcon(modelData)
                         label: Audio.deviceName(modelData)
                         onClicked: Audio.setSink(modelData)
                     }
@@ -104,14 +99,13 @@ Face {
 
                 PopHead {
                     visible: Audio.sources.length > 0
-                    title: "MIC"
+                    icon: "󰍬"
                     BarText {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Audio.micMuted ? "UNMUTE" : "MUTE"
-                        px: 9
-                        family: Config.defaultFontUi
-                        font.letterSpacing: 1
-                        color: Theme.accent
+                        text: Audio.micMuted ? "󰍭" : "󰍬"
+                        icon: true
+                        px: 12
+                        color: Audio.micMuted ? Theme.critical : Theme.accent
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
@@ -127,7 +121,7 @@ Face {
                         required property int index
                         active: Audio.isCurrent(modelData, Audio.source) || catcher.currentIndex === (Audio.sinks.length + index)
                         clickable: true
-                        icon: Audio.isCurrent(modelData, Audio.source) ? "●" : "○"
+                        icon: Audio.deviceIcon(modelData)
                         label: Audio.deviceName(modelData)
                         onClicked: Audio.setSource(modelData)
                     }
@@ -144,7 +138,7 @@ Face {
 
                 PopHead {
                     visible: Audio.streams.length > 0
-                    title: "APPS"
+                    icon: "󰀻"
                     status: `${Audio.streams.length}`
                 }
 
@@ -156,6 +150,7 @@ Face {
                         spacing: 3
 
                         PopRow {
+                            icon: "󰎆"
                             danger: !!(modelData.audio && modelData.audio.muted)
                             clickable: true
                             label: Audio.streamName(modelData)

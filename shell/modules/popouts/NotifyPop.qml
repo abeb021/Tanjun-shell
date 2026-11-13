@@ -18,7 +18,8 @@ Face {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: 12
-        title: "NOTIFICATIONS"
+        title: ""
+        icon: "󰂚"
         status: `${Notifs.list.length}`
 
         BarText {
@@ -156,7 +157,7 @@ Face {
                 }
                 BarText {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: UiMode.dnd ? "DO NOT DISTURB" : "NO NOTIFICATIONS"
+                    text: UiMode.dnd ? "DND" : "EMPTY"
                     px: 10
                     family: Config.defaultFontUi
                     font.letterSpacing: 1

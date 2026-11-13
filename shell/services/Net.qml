@@ -73,6 +73,31 @@ Singleton {
     readonly property bool vpnUp: vpn.length > 0
     readonly property bool watching: UiMode.sidebarOpen || UiMode.popout === "network" || (UiMode.settingsOpen && SettingsNav.page === "network")
 
+    function signalIcon(n) {
+        if (!n || n.signalStrength === undefined)
+            return "󰖩";
+        let s = Number(n.signalStrength);
+        if (!isFinite(s) || s < 0)
+            return "󰖩";
+        if (s > 1)
+            s = s / 100;
+        if (s >= 0.75)
+            return "󰤨";
+        if (s >= 0.5)
+            return "󰤥";
+        if (s >= 0.25)
+            return "󰤢";
+        if (s > 0.05)
+            return "󰤟";
+        return "󰤯";
+    }
+
+    function secured(n) {
+        if (!n || n.security === undefined)
+            return false;
+        return n.security !== WifiSecurityType.Open && n.security !== WifiSecurityType.Unknown;
+    }
+
     function setScanning(on) {
         if (wifiDevice && wifiDevice.scannerEnabled !== undefined)
             wifiDevice.scannerEnabled = on;

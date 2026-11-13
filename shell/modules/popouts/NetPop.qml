@@ -50,13 +50,12 @@ Face {
                 spacing: 10
 
                 PopHead {
-                    title: "NETWORK"
+                    icon: "󰖩"
                     status: Net.connected ? Net.ssid : (Net.wifiOn ? "ON" : "OFF")
                 }
 
                 PopRow {
-                    icon: "󰖩"
-                    label: "WI-FI"
+                    icon: Net.wifiOn ? "󰖩" : "󰖪"
                     clickable: true
                     onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
                     BarText {
@@ -71,21 +70,8 @@ Face {
                 PopRow {
                     visible: Net.vpnUp
                     icon: "󰖂"
-                    label: "VPN"
-                    sub: Net.vpn
+                    label: Net.vpn
                     active: true
-                }
-
-                BarText {
-                    visible: !Net.wifiOn
-                    width: parent.width
-                    topPadding: 6
-                    horizontalAlignment: Text.AlignHCenter
-                    text: "WI-FI IS OFF"
-                    px: 10
-                    family: Config.defaultFontUi
-                    font.letterSpacing: 1
-                    color: Theme.fgSub
                 }
 
                 BarText {
@@ -93,7 +79,7 @@ Face {
                     width: parent.width
                     topPadding: 6
                     horizontalAlignment: Text.AlignHCenter
-                    text: "NO NETWORKS"
+                    text: "SCANNING"
                     px: 10
                     family: Config.defaultFontUi
                     font.letterSpacing: 1
@@ -107,13 +93,21 @@ Face {
                         required property int index
                         active: modelData.connected || catcher.currentIndex === index
                         clickable: true
-                        icon: modelData.connected ? "●" : "○"
+                        icon: Net.signalIcon(modelData)
                         label: modelData.name || "hidden"
                         onClicked: {
                             if (modelData.connected)
                                 modelData.disconnect();
                             else
                                 modelData.connect();
+                        }
+
+                        BarText {
+                            visible: Net.secured(modelData)
+                            text: "󰌾"
+                            icon: true
+                            px: 10
+                            color: Theme.fgSub
                         }
                     }
                 }

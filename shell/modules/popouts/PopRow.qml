@@ -37,20 +37,20 @@ Item {
 
     BarText {
         visible: root.hasIcon
-        width: visible ? 18 : 0
+        width: visible ? 20 : 0
         anchors.left: parent.left
-        anchors.leftMargin: 4
+        anchors.leftMargin: 5
         anchors.verticalCenter: parent.verticalCenter
         text: root.icon
         icon: true
-        px: 12
+        px: 13
         color: root.dimmed ? Theme.fgSub : (root.danger ? Theme.critical : (root.active ? Theme.accent : Theme.fgSub))
     }
 
     Column {
         id: copy
         anchors.left: parent.left
-        anchors.leftMargin: root.hasIcon ? 26 : 4
+        anchors.leftMargin: root.hasIcon ? 29 : 5
         anchors.right: controlSlot.left
         anchors.rightMargin: 10
         anchors.verticalCenter: parent.verticalCenter
