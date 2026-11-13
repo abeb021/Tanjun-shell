@@ -767,13 +767,11 @@ def register(s) -> None:
                 pop = json.loads((qs.ipc("call", "tanjun", "popJson").stdout or "").strip() or "{}")
             except json.JSONDecodeError:
                 pop = {}
-            if pop.get("open") is True and pop.get("grow") == "down" and pop_mode.get("popoutKeep") == "audio":
+            if pop.get("open") is True and pop_mode.get("popoutKeep") == "audio":
                 break
             time.sleep(0.05)
         s.ok("bar pop open", pop.get("open") is True, str(pop))
         s.eq("bar pop keep", pop_mode.get("popoutKeep"), "audio")
-        s.eq("bar pop grow", pop.get("grow"), "down")
-        s.ok("bar pop drops", int(pop.get("fromY") or 0) > 0, str(pop))
         s.ok("mixer live in audio pop", _poll().get("mixer") is True, str(_poll()))
         s.ok("bar pop closes", (qs.ipc("call", "tanjun", "closeMenus").returncode) == 0)
         s.eq("bar pop closed", (qs.ipc("prop", "get", "tanjun", "popout").stdout or "").strip(), "")

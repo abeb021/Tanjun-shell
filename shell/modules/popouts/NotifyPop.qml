@@ -6,6 +6,7 @@ Face {
     id: root
     job: "pop"
     attach: true
+    frosted: true
     implicitWidth: 320
     implicitHeight: 380
     focus: true

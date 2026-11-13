@@ -32,6 +32,34 @@ Column {
     }
 
     SetHead {
+        title: "MATERIAL"
+        desc: "Frosted wallpaper behind the bar, its menus and the drawer."
+
+        HudToggle {
+            anchors.verticalCenter: parent.verticalCenter
+            on: Config.appearance.glass
+            onToggled: {
+                Config.appearance.glass = !Config.appearance.glass;
+                Config.writeSparse();
+            }
+        }
+    }
+
+    SetHead {
+        title: "HOVER"
+        desc: "Resting on a bar button opens its menu; leaving closes it again. Clicked menus stay put."
+
+        HudToggle {
+            anchors.verticalCenter: parent.verticalCenter
+            on: Config.appearance.hoverMenus
+            onToggled: {
+                Config.appearance.hoverMenus = !Config.appearance.hoverMenus;
+                Config.writeSparse();
+            }
+        }
+    }
+
+    SetHead {
         title: "CHROME"
         desc: "Whole shell chrome. Palettes stay on Color."
     }

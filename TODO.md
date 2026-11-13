@@ -177,10 +177,12 @@ Current: **v3.5**
 
 From the Serpantinum source read (see `.cursor/research.md`). All shell-side: no compositor requirement.
 
-- [ ] Bounded popup windows (sized to the panel, not a full-screen overlay)
-- [ ] Bar + open popup in one window, one path, per-region input masks — a real joint
-- [ ] SDF `smin` union shader, `.qsb` built in nix (only after the one-window change)
-- [ ] In-shell wallpaper blur (`ScreencopyView` + `MultiEffect`) and an `elementOpacity` token — budget against the 200 MB RSS ceiling
-- [ ] Two-phase growth: clear the bar, then expand along it (calendar-sized panels)
-- [ ] Hover-intent popouts with a grace timer (decide the UX first)
-- [ ] Close duration 140 → ~180 ms `InQuad` to match their cadence
+- [x] Bar + open popup in one window, one path, per-region input masks — a real joint (`ac7d16f`)
+- [x] Bounded popup windows — superseded: the menus are items in the bar window now
+- [x] Two-phase growth — not needed: the card is placed inside the bar's own full-output window
+- [x] Close duration — kept ours; `Motion.fast` already scales with the speed slider
+- [ ] SDF `smin` union shader, `.qsb` built in nix (possible now that the union exists; `Theme.radius` is 1, so it is a style decision)
+- [x] In-shell wallpaper glass (`widgets/Glass.qml`: quarter-res wallpaper + `MultiEffect`, `Theme.glassAlpha` token, screen-aligned so bar and menus continue one image) — Appearance → Material
+- [x] Hover-intent popouts with a grace timer — Appearance → Hover
+- [x] Keep-map the remaining full-screen overlays so nothing remaps (costs ~30–40 MB idle RSS: 195 → 227 at startup, 236 once settings pages are visited; revert the four `LazyLoader active: true` lines if the budget matters more)
+- [ ] Host/content split for the big overlays: always-mapped window, body unloaded while closed (would give keep-mapped without the RSS cost)

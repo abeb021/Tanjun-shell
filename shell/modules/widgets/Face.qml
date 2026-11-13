@@ -11,6 +11,9 @@ Rectangle {
     // it meets the bar, rounded on the free edge, no line across the joint, so
     // the panel reads as the bar opening rather than a card floating over it.
     property bool attach: false
+    // The caller draws frosted material behind this surface, so the surface
+    // itself must stay transparent instead of painting its colour over it.
+    property bool frosted: false
     // Which side the surface is attached to. Popups hang off the bar, so that is
     // the bar's edge; anything else attaches at the top as before.
     readonly property string attachEdge: (attach && job === "pop") ? Theme.barEdge : "top"
@@ -19,7 +22,7 @@ Rectangle {
     readonly property int tickLen: job === "plane" ? Theme.tickPlane : Theme.tickPop
     readonly property int tickPad: job === "plane" ? Theme.tickPad : 8
 
-    color: (attach || job === "plane" || job === "strip") ? Theme.bg : Theme.surface
+    color: (frosted && Theme.glass) ? "transparent" : ((attach || job === "plane" || job === "strip") ? Theme.bg : Theme.surface)
     border.width: (attach || job === "strip") ? 0 : 1
     border.color: danger ? Theme.critical : (lit ? Theme.accent : (job === "plane" ? Theme.planeBorder : Theme.popBorder))
     radius: Theme.radius

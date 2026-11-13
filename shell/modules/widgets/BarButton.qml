@@ -78,8 +78,32 @@ Item {
         onWheel: event => root.wheeled(event.angleDelta.y > 0 ? 1 : -1)
     }
 
+    // Hover-intent: resting on a menu button opens its menu. The pointer has to
+    // stay on the button for a moment, so crossing the bar does nothing, and the
+    // menu closes again once the pointer leaves both the button and the card.
     HoverHandler {
         id: hover
+        onHoveredChanged: {
+            if (!root.popoutName.length || !Config.appearance.hoverMenus)
+                return;
+            if (hovered) {
+                UiMode.hoverButtons++;
+                if (UiMode.popout !== root.popoutName)
+                    openTimer.restart();
+            } else {
+                UiMode.hoverButtons = Math.max(0, UiMode.hoverButtons - 1);
+                openTimer.stop();
+            }
+        }
+    }
+
+    Timer {
+        id: openTimer
+        interval: UiMode.hoverOpenDelay
+        onTriggered: {
+            if (!UiMode.barDragging && UiMode.popout !== root.popoutName)
+                UiMode.hoverPopout(root.popoutName, root);
+        }
     }
 
     signal clicked

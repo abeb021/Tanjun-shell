@@ -98,6 +98,14 @@ Singleton {
     property string wallFile: ""
     property string wallStill: ""
 
+    // The image the shell blurs for its frosted material. The still frame wins:
+    // a video wallpaper would have to be re-read on every frame.
+    readonly property string wallPath: root.wallStill.length ? root.wallStill : root.wallFile
+    readonly property url wallSource: root.wallPath.length ? `file://${root.wallPath}` : ""
+    readonly property bool glass: Config.appearance.glass && root.wallPath.length > 0
+    // How much tint sits over the blur (the elementOpacity token).
+    readonly property real glassAlpha: 0.72
+
     readonly property string wallDir: `${Config.stateDir}/walls`
     readonly property string wallDirLegacy: `${Config.configHome}/hypr/assets/wallpapers`
     readonly property url wallFolder: Qt.url("file://" + wallDir)

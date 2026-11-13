@@ -98,18 +98,15 @@ Item {
         : (root.edge === "bottom" ? root.spanH - root.bar + 1 - root.shownH : root.bar - 1)
 
     onOpenChanged: {
-        if (!open)
+        if (!open) {
+            if (UiMode.hoverCard === root.name)
+                UiMode.hoverCard = "";
             return;
+        }
         adoptSize();
-        reportPop();
         card.forceActiveFocus();
     }
-    onEdgeChanged: reportPop()
-
-    function reportPop() {
-        UiMode.popGrow = root.edge === "top" ? "down" : (root.edge === "bottom" ? "up" : (root.edge === "left" ? "right" : "left"));
-        UiMode.popFromY = root.vertical ? 0 : Motion.popY;
-    }
+ 
 
     Shortcut {
         sequence: "Escape"
@@ -131,8 +128,31 @@ Item {
         y: Math.round(root.cardY)
         width: root.cardW
         height: root.shownH
+        // A closed card is fully laid out but takes no input: while a menu is
+        // open the window covers the whole output, and an invisible card must not
+        // swallow clicks meant for the menu that is actually open.
+        enabled: root.open
         focus: true
         Keys.onEscapePressed: UiMode.closeMenus()
+
+        // Frosted material, aligned to the screen so it continues the bar's.
+        Glass {
+            anchors.fill: parent
+            visible: Theme.glass
+            screen: root.screen
+            regionX: Math.round(root.cardX)
+            regionY: Math.round(root.cardY)
+        }
+
+        // Keeps a hover-opened menu open while the pointer is on the card.
+        HoverHandler {
+            onHoveredChanged: {
+                if (hovered)
+                    UiMode.hoverCard = root.name;
+                else if (UiMode.hoverCard === root.name)
+                    UiMode.hoverCard = "";
+            }
+        }
 
         // Swallow clicks on the card itself so they never reach the bar window's
         // click-away area underneath.

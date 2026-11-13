@@ -6,6 +6,7 @@ Face {
     id: root
     job: "pop"
     attach: true
+    frosted: true
     implicitWidth: Math.max(300, 24 + Time.zones.length * 120)
     implicitHeight: col.implicitHeight + 24
     focus: true

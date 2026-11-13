@@ -19,6 +19,7 @@ Scope {
             screen: modelData
             open: agent.isActive
             layerName: "tanjun-polkit"
+            keepMapped: true
             grabKeys: Compositor.isScreenFocused(modelData)
             holdExclusive: true
             contentOpacity: card.opacity

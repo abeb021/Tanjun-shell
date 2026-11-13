@@ -19,6 +19,7 @@ OverlayHost {
     }
     open: UiMode.sidebarOpen && onThisScreen
     layerName: "tanjun-sidebar"
+    keepMapped: true
     dismissOthers: true
     contentOpacity: body.opacity
     readonly property int barTop: Theme.barEdge === "top" ? Theme.barThickness : 0
@@ -117,9 +118,20 @@ OverlayHost {
                     onClicked: {}
                 }
 
+                // Frosted material, aligned to the screen: the drawer slides over a
+                // backdrop that does not slide with it.
+                Glass {
+                    anchors.fill: parent
+                    visible: Theme.glass
+                    screen: win.screen
+                    regionX: body.x
+                    regionY: body.y
+                }
+
                 Face {
                     job: "plane"
                     attach: true
+                    frosted: true
                     anchors.fill: parent
                 }
 

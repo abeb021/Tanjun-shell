@@ -14,6 +14,7 @@ Scope {
             screen: modelData
             open: UiMode.overviewOpen
             layerName: "tanjun-overview"
+            keepMapped: true
             grabKeys: Compositor.isScreenFocused(modelData)
             contentOpacity: stage.opacity
             dismissOthers: false

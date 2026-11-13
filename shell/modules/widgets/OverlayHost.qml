@@ -13,17 +13,27 @@ PanelWindow {
     property bool holdExclusive: false
     property bool dismissOthers: false
     property real contentOpacity: 0
+    // Stay mapped instead of unmapping when hidden.
+    //
+    // A layer surface that maps and unmaps is animated by the compositor, and
+    // those animations are per-compositor config the shell does not own, so the
+    // shell's own motion would be doubled. Keeping the surface alive means there
+    // is no open/close for the compositor to animate. While hidden it drops its
+    // input region, so it cannot swallow clicks.
+    property bool keepMapped: false
 
     default property alias content: body.data
 
     readonly property bool shown: (open && onThisScreen) || contentOpacity > 0.02
 
-    visible: shown
+    visible: root.keepMapped ? true : root.shown
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: -1
     focusable: true
-    mask: barMask
+    // A kept-mapped overlay is input-opaque only while it is shown; everything
+    // else would sit on top of the desktop with an empty region.
+    mask: root.shown ? barMask : emptyMask
 
     WlrLayershell.namespace: root.layerName
     WlrLayershell.layer: WlrLayer.Overlay
@@ -42,6 +52,11 @@ PanelWindow {
         id: barMask
         item: barHole
         intersection: Intersection.Xor
+    }
+
+    // A zero-sized region: nothing takes input.
+    Region {
+        id: emptyMask
     }
 
     Item {

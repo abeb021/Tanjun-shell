@@ -15,6 +15,7 @@ Scope {
             screen: modelData
             open: UiMode.clipboardOpen
             layerName: "tanjun-clipboard"
+            keepMapped: true
             contentOpacity: card.opacity
             property var thumbs: ({})
             property int thumbGen: 0

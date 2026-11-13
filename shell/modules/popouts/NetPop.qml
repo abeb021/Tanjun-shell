@@ -8,6 +8,7 @@ Face {
     id: root
     job: "pop"
     attach: true
+    frosted: true
     implicitWidth: 290
     // The list is empty until the radio answers, and the panel must not grow after
     // it has rolled out: reserve the tallest size seen this session and let the

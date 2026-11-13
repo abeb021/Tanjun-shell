@@ -12,6 +12,15 @@ Singleton {
     property string popoutScreen: ""
     property string sidebarScreen: ""
     property bool launcherCatchAway: true
+    // Hover-intent menus: hovering a bar button opens its menu after a short
+    // delay, and a menu opened that way closes when the pointer leaves both the
+    // button and the card. A click leaves hoverPop false, so those menus ignore
+    // the pointer and only close on a click away.
+    property bool hoverPop: false
+    property string hoverCard: ""
+    property int hoverButtons: 0
+    readonly property int hoverOpenDelay: 420
+    readonly property int hoverCloseDelay: 340
 
     readonly property string kind: {
         if (settingsOpen)
@@ -59,7 +68,6 @@ Singleton {
     property real sidebarW: 0
     property real sidebarFromX: 0
     property string sidebarEdge: ""
-    property string popGrow: ""
     // bar dragging: a ghost bar follows the pointer, then the bar snaps to the
     // border the pointer is brought to
     property bool barDragging: false
@@ -67,11 +75,36 @@ Singleton {
     property real barDragX: 0
     property real barDragY: 0
     property string barDragEdge: ""
-    // downward travel of a popup reveal: bar popups are uncovered from the bar's
-    // bottom edge and never travel sideways
-    property real popFromY: 0
     property string overviewPick: ""
     property int overviewCount: 0
+
+    // Hover-intent helpers. hoverPopout is what a bar button calls once the
+    // pointer has rested on it long enough; the away timer closes it again when
+    // the pointer is on neither a popout button nor the open card.
+    function hoverPopout(name, anchor) {
+        if (!Config.appearance.hoverMenus || barDragging)
+            return;
+        // A bar menu may take over from another bar menu, but hovering the bar
+        // while a full-screen overlay is up must not close that overlay.
+        if (launcherOpen || clipboardOpen || overviewOpen || settingsOpen || sidebarOpen)
+            return;
+        if (popout === name)
+            return;
+        togglePopout(name, anchor);
+        hoverPop = true;
+        armHoverAway();
+    }
+
+    function armHoverAway() {
+        if (!hoverPop || hoverCard.length || hoverButtons > 0) {
+            hoverAway.stop();
+            return;
+        }
+        hoverAway.restart();
+    }
+
+    onHoverCardChanged: armHoverAway()
+    onHoverButtonsChanged: armHoverAway()
 
     function togglePopout(name, anchor) {
         if (popout === name) {
@@ -129,8 +162,9 @@ Singleton {
         popoutAnchor = null;
         popoutScreen = "";
         trayItem = null;
-        popGrow = "";
-        popFromY = 0;
+        hoverPop = false;
+        hoverCard = "";
+        hoverAway.stop();
     }
 
     function closePopout() {
@@ -287,6 +321,14 @@ Singleton {
     function pickWall(path) {
         wallsOpen = false;
         Theme.setWallpaper(path);
+    }
+
+    Timer {
+        id: hoverAway
+        interval: root.hoverCloseDelay
+        repeat: false
+        onTriggered: if (root.hoverPop)
+            root.closeMenus()
     }
 
     Timer {

@@ -16,6 +16,7 @@ Scope {
             screen: modelData
             open: UiMode.settingsOpen
             layerName: "tanjun-settings"
+            keepMapped: true
             grabKeys: Compositor.isScreenFocused(modelData)
             contentOpacity: card.opacity
 

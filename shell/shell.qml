@@ -22,23 +22,26 @@ ShellRoot {
     SessionLock {}
     PolkitAsk {}
 
+    // Kept loaded on purpose: their surfaces stay mapped for the whole session, so
+    // the compositor never animates them (see OverlayHost.keepMapped). Anything
+    // they run on their own is gated on being open, so this costs memory, not CPU.
     LazyLoader {
-        active: UiMode.launcherReady
+        active: true
         Launcher {}
     }
 
     LazyLoader {
-        active: UiMode.clipboardReady
+        active: true
         Clipboard {}
     }
 
     LazyLoader {
-        active: UiMode.overviewReady
+        active: true
         Overview {}
     }
 
     LazyLoader {
-        active: UiMode.settingsReady
+        active: true
         Settings {}
     }
 

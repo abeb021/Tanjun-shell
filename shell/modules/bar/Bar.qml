@@ -190,6 +190,17 @@ Scope {
                     Rectangle {
                         anchors.fill: parent
                         color: Theme.bg
+                        visible: !Theme.glass
+                    }
+
+                    // Frosted material behind the bar. It is aligned to the screen,
+                    // so a menu hanging off the bar continues the same image.
+                    Glass {
+                        anchors.fill: parent
+                        visible: Theme.glass
+                        screen: barWin.screen
+                        regionX: barStrip.x
+                        regionY: barStrip.y
                     }
 
                     Rectangle {
@@ -446,7 +457,9 @@ Scope {
 
             LazyLoader {
                 id: sideLoad
-                active: UiMode.sidebarReady
+                // kept loaded: the surface stays mapped so the compositor never
+                // animates it
+                active: true
                 Sidebar {
                     barWindow: barWin
                 }

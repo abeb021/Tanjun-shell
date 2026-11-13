@@ -97,9 +97,7 @@ Singleton {
     function popJson() {
         return JSON.stringify({
             open: !!UiMode.popout.length,
-            name: UiMode.popout,
-            grow: UiMode.popGrow,
-            fromY: Math.round(UiMode.popFromY)
+            name: UiMode.popout
         });
     }
 

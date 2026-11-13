@@ -156,6 +156,10 @@ Singleton {
             ap.motionSpeed = appearance.motionSpeed;
         if (appearance.barEdge.length && appearance.barEdge !== defaultBarEdge)
             ap.barEdge = appearance.barEdge;
+        if (appearance.hoverMenus === false)
+            ap.hoverMenus = false;
+        if (appearance.glass === false)
+            ap.glass = false;
         if (Object.keys(ap).length)
             out.appearance = ap;
         if (theme.sampleWall === false)
@@ -269,6 +273,8 @@ Singleton {
                 property string motion: ""
                 property int motionSpeed: 0
                 property string barEdge: ""
+                property bool hoverMenus: true
+                property bool glass: true
             }
 
             property JsonObject screens: JsonObject {
