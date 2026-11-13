@@ -33,7 +33,7 @@ Column {
             Repeater {
                 model: [
                     { k: "󰒋  HOSTNAME", v: Host.hostName || Host.user },
-                    { k: "󰣇  OS", v: Host.distro },
+                    { k: " OS", v: Host.distro },
                     { k: "󰔛  UPTIME", v: Host.uptime }
                 ]
                 Column {
