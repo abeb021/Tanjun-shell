@@ -61,7 +61,7 @@ Singleton {
     property string sidebarEdge: ""
     property string popGrow: ""
     // bar dragging: a ghost bar follows the pointer, then the bar snaps to the
-    // edge the pointer ended nearest to
+    // border the pointer is brought to
     property bool barDragging: false
     property string barDragScreen: ""
     property real barDragX: 0

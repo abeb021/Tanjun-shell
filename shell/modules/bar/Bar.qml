@@ -42,51 +42,77 @@ Scope {
                 implicitHeight: vertical ? 0 : Theme.barHeight
 
                 property bool draggingBar: false
+                property real dragStartX: 0
+                property real dragStartY: 0
 
-                function screenAt(global) {
-                    const all = Quickshell.screens;
-                    if (all) {
-                        for (let i = 0; i < all.length; i++) {
-                            const s = all[i];
-                            if (global.x >= s.x && global.x < s.x + s.width && global.y >= s.y && global.y < s.y + s.height)
-                                return s;
-                        }
-                    }
-                    return barWin.screen;
+                // A layer surface anchored to the right or bottom edge is placed
+                // by the compositor, but Qt keeps the position the window was
+                // mapped with, so mapToGlobal reports the screen's top-left for
+                // those and the drag ends up glued to the wrong wall. The real
+                // origin follows from the edge and the screen size instead.
+                function screenPoint(local) {
+                    const s = barWin.screen;
+                    if (!s || !local)
+                        return null;
+                    const ox = barWin.edge === "right" ? s.width - barWin.width : 0;
+                    const oy = barWin.edge === "bottom" ? s.height - barWin.height : 0;
+                    return {
+                        x: Math.max(0, Math.min(s.width, ox + local.x)),
+                        y: Math.max(0, Math.min(s.height, oy + local.y))
+                    };
                 }
 
+                // The bar lands on the border the pointer is brought to: a third
+                // of the screen at either end of the bar picks that side, the
+                // middle third picks the border opposite the current one as soon
+                // as the pointer is carried off the bar. Comparing distances all
+                // the way to the far border would make the near one unbeatable,
+                // which is why sideways moves used to do nothing at all.
                 function pickEdge(x, y, s) {
-                    let best = "top";
-                    let dist = y;
-                    if (s.height - y < dist) {
-                        best = "bottom";
-                        dist = s.height - y;
-                    }
-                    if (x < dist) {
-                        best = "left";
-                        dist = x;
-                    }
-                    if (s.width - x < dist)
-                        best = "right";
-                    return best;
+                    const bar = Theme.barThickness;
+                    const vertical = barWin.vertical;
+                    const along = vertical ? y : x;
+                    const span = vertical ? s.height : s.width;
+
+                    if (along < span / 3)
+                        return vertical ? "top" : "left";
+                    if (along > span * 2 / 3)
+                        return vertical ? "bottom" : "right";
+
+                    const offBar = vertical
+                        ? (Theme.barEdge === "left" ? x > bar : s.width - x > bar)
+                        : (Theme.barEdge === "top" ? y > bar : s.height - y > bar);
+                    if (!offBar)
+                        return Theme.barEdge;
+                    if (vertical)
+                        return Theme.barEdge === "left" ? "right" : "left";
+                    return Theme.barEdge === "top" ? "bottom" : "top";
                 }
 
-                function dragTo(global) {
-                    const s = screenAt(global);
-                    if (!s)
+                function dragTo(local) {
+                    const point = screenPoint(local);
+                    if (!point)
                         return;
-                    const x = Math.max(0, Math.min(s.width, global.x - s.x));
-                    const y = Math.max(0, Math.min(s.height, global.y - s.y));
-                    UiMode.barDragScreen = `${s.name}`;
-                    UiMode.barDragX = x;
-                    UiMode.barDragY = y;
-                    UiMode.barDragEdge = pickEdge(x, y, s);
+                    UiMode.barDragScreen = `${barWin.screen.name}`;
+                    UiMode.barDragX = point.x;
+                    UiMode.barDragY = point.y;
+                    // a real drag has to happen before the bar switches border,
+                    // so taking hold of it never flips it
+                    const moved = Math.max(Math.abs(point.x - dragStartX), Math.abs(point.y - dragStartY));
+                    if (moved >= 24)
+                        UiMode.barDragEdge = pickEdge(point.x, point.y, barWin.screen);
                 }
 
-                function beginDrag(global) {
+                function beginDrag(local) {
+                    const point = screenPoint(local);
+                    if (!point)
+                        return;
                     draggingBar = true;
+                    dragStartX = point.x;
+                    dragStartY = point.y;
                     UiMode.barDragging = true;
-                    dragTo(global);
+                    UiMode.barDragEdge = Theme.barEdge;
+                    dragTo(local);
                 }
 
                 function endDrag() {
@@ -136,16 +162,16 @@ Scope {
 
                         onActiveChanged: {
                             if (active) {
-                                barWin.beginDrag(hContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                barWin.beginDrag(centroid.position);
                             } else {
                                 if (barWin.draggingBar)
-                                    barWin.dragTo(hContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                    barWin.dragTo(centroid.position);
                                 barWin.endDrag();
                             }
                         }
                         onActiveTranslationChanged: {
                             if (active)
-                                barWin.dragTo(hContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                barWin.dragTo(centroid.position);
                         }
                     }
 
@@ -219,16 +245,16 @@ Scope {
 
                         onActiveChanged: {
                             if (active) {
-                                barWin.beginDrag(vContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                barWin.beginDrag(centroid.position);
                             } else {
                                 if (barWin.draggingBar)
-                                    barWin.dragTo(vContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                    barWin.dragTo(centroid.position);
                                 barWin.endDrag();
                             }
                         }
                         onActiveTranslationChanged: {
                             if (active)
-                                barWin.dragTo(vContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                barWin.dragTo(centroid.position);
                         }
                     }
 
