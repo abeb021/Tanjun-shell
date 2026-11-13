@@ -93,7 +93,10 @@ OverlayHost {
             enabled: Motion.ready
             NumberAnimation {
                 duration: win.open ? Motion.panel : Motion.pop
-                easing.type: win.open ? Motion.enterEase : Motion.easeIn
+                // The drawer travels along x, so an overshoot ease (`enterEase`
+                // is OutBack for snappy/soft) would push it past its resting
+                // place and pull it back. That reads as a jump, not a slide.
+                easing.type: win.open ? Motion.easeOut : Motion.easeIn
             }
         }
         Keys.onEscapePressed: {
