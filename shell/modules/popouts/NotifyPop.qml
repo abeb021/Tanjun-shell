@@ -3,34 +3,47 @@ import "../widgets"
 import "../../services"
 
 Face {
+    id: root
     job: "pop"
     attach: true
-    implicitWidth: 300
-    implicitHeight: 360
+    implicitWidth: 320
+    implicitHeight: 380
     focus: true
     Keys.onEscapePressed: UiMode.closeMenus()
 
-    Row {
-        id: actions
-        anchors.top: parent.top
+    PopHead {
+        id: head
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 8
-        spacing: 6
-        BarButton {
-            implicitWidth: 140
-            onClicked: UiMode.dnd = !UiMode.dnd
-            BarText {
-                text: UiMode.dnd ? "dnd · on" : "dnd · off"
-                px: 11
+        anchors.top: parent.top
+        anchors.margins: 12
+        title: "NOTIFICATIONS"
+        status: `${Notifs.list.length}`
+
+        BarText {
+            anchors.verticalCenter: parent.verticalCenter
+            text: UiMode.dnd ? "DND ON" : "DND"
+            px: 9
+            family: Config.defaultFontUi
+            font.letterSpacing: 1
+            color: UiMode.dnd ? Theme.accent : Theme.fgSub
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: UiMode.dnd = !UiMode.dnd
             }
         }
-        BarButton {
-            implicitWidth: 72
-            onClicked: Notifs.clear()
-            BarText {
-                text: "clear"
-                px: 11
+        BarText {
+            anchors.verticalCenter: parent.verticalCenter
+            text: "CLEAR"
+            px: 9
+            family: Config.defaultFontUi
+            font.letterSpacing: 1
+            color: Theme.accent
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Notifs.clear()
             }
         }
     }
@@ -38,8 +51,8 @@ Face {
     ListView {
         id: list
         anchors.fill: parent
-        anchors.margins: 8
-        anchors.topMargin: 40
+        anchors.margins: 12
+        anchors.topMargin: 46
         clip: true
         spacing: 6
         model: Notifs.list
@@ -68,58 +81,87 @@ Face {
         delegate: Rectangle {
             required property var modelData
             width: list.width
-            implicitHeight: col.implicitHeight + 10
-            color: Theme.bg
+            implicitHeight: card.implicitHeight + 18
             radius: Theme.radius
-            MouseArea {
-                anchors.fill: parent
-                onClicked: modelData.dismiss()
-            }
+            color: Theme.surface
+
             Column {
-                id: col
+                id: card
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: 6
+                anchors.margins: 9
                 spacing: 4
+
                 BarText {
                     text: modelData.summary || modelData.appName
                     px: 12
+                    family: Config.defaultFontUi
                     width: parent.width
+                    elide: Text.ElideRight
                 }
                 BarText {
+                    visible: `${modelData.body || ""}`.length > 0
                     text: modelData.body || ""
-                    sub: true
                     px: 11
+                    family: Config.defaultFontUi
+                    color: Theme.fgSub
                     width: parent.width
                     wrapMode: Text.Wrap
                 }
                 Row {
                     visible: actRep.count > 0
-                    spacing: 4
+                    spacing: 12
                     Repeater {
                         id: actRep
                         model: modelData.actions
-                        BarButton {
+                        BarText {
                             required property var modelData
-                            implicitWidth: Math.max(52, actLabel.implicitWidth + 12)
-                            onClicked: modelData.invoke()
-                            BarText {
-                                id: actLabel
-                                text: modelData.text
-                                px: 10
+                            text: modelData.text
+                            px: 9
+                            family: Config.defaultFontUi
+                            font.letterSpacing: 1
+                            color: Theme.accent
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: modelData.invoke()
                             }
                         }
                     }
                 }
             }
+
+            MouseArea {
+                z: -1
+                anchors.fill: parent
+                onClicked: modelData.dismiss()
+            }
         }
 
-        BarText {
+        Item {
             visible: list.count === 0
-            anchors.centerIn: parent
-            text: UiMode.dnd ? "do not disturb" : "no notifications"
-            sub: true
+            width: list.width
+            height: list.height
+            Column {
+                anchors.centerIn: parent
+                spacing: 6
+                BarText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "󰂜"
+                    icon: true
+                    px: 22
+                    color: Theme.fgSub
+                }
+                BarText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: UiMode.dnd ? "DO NOT DISTURB" : "NO NOTIFICATIONS"
+                    px: 10
+                    family: Config.defaultFontUi
+                    font.letterSpacing: 1
+                    color: Theme.fgSub
+                }
+            }
         }
     }
 }

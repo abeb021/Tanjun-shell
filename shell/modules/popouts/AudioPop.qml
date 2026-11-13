@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import "../widgets"
 import "../../services"
 
@@ -6,8 +7,8 @@ Face {
     id: root
     job: "pop"
     attach: true
-    implicitWidth: 280
-    implicitHeight: Math.min(col.implicitHeight + 16, 420)
+    implicitWidth: 300
+    implicitHeight: Math.min(col.implicitHeight + 24, 440)
     focus: true
 
     readonly property var picks: {
@@ -44,123 +45,131 @@ Face {
         }
 
         Flickable {
-        anchors.fill: parent
-        anchors.margins: 10
-        contentWidth: width
-        contentHeight: col.implicitHeight
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        interactive: true
+            anchors.fill: parent
+            anchors.margins: 12
+            contentWidth: width
+            contentHeight: col.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: true
 
-        Column {
-            id: col
-            width: parent.width
-            spacing: 8
-
-            BarText {
-                text: Audio.muted ? "muted" : `${Math.round(Audio.volume * 100)}%`
-                px: 12
-            }
-
-            Repeater {
-                model: Audio.sinks
-                delegate: BarButton {
-                    required property var modelData
-                    required property int index
-                    implicitWidth: col.width
-                    implicitHeight: 24
-                    active: Audio.isCurrent(modelData, Audio.sink) || catcher.currentIndex === index
-                    onClicked: Audio.setSink(modelData)
-                    BarText {
-                        text: (Audio.isCurrent(modelData, Audio.sink) ? "●  " : "○  ") + Audio.deviceName(modelData)
-                        px: 12
-                        color: Audio.isCurrent(modelData, Audio.sink) ? Theme.accent : Theme.fg
-                        width: col.width - 16
-                        elide: Text.ElideRight
-                    }
-                }
-            }
-
-            VolumeBar {
+            Column {
+                id: col
                 width: parent.width
-                value: Audio.volume
-                fill: Audio.muted ? Theme.critical : Theme.accent
-                onMoved: v => Audio.setVolume(v)
-            }
+                spacing: 10
 
-            BarButton {
-                implicitWidth: 72
-                onClicked: Audio.toggleMute()
-                BarText {
-                    text: Audio.muted ? "unmute" : "mute"
-                    px: 11
-                }
-            }
-
-            BarText {
-                visible: Audio.sources.length > 0
-                text: Audio.micMuted ? "mic muted" : `mic  ${Math.round(Audio.micVolume * 100)}%`
-                px: 12
-            }
-
-            Repeater {
-                model: Audio.sources
-                delegate: BarButton {
-                    required property var modelData
-                    required property int index
-                    implicitWidth: col.width
-                    implicitHeight: 24
-                    active: Audio.isCurrent(modelData, Audio.source) || catcher.currentIndex === (Audio.sinks.length + index)
-                    onClicked: Audio.setSource(modelData)
+                PopHead {
+                    title: "AUDIO"
+                    status: Audio.muted ? "MUTED" : `${Math.round(Audio.volume * 100)}%`
                     BarText {
-                        text: (Audio.isCurrent(modelData, Audio.source) ? "●  " : "○  ") + Audio.deviceName(modelData)
-                        px: 12
-                        color: Audio.isCurrent(modelData, Audio.source) ? Theme.accent : Theme.fg
-                        width: col.width - 16
-                        elide: Text.ElideRight
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Audio.muted ? "UNMUTE" : "MUTE"
+                        px: 9
+                        family: Config.defaultFontUi
+                        font.letterSpacing: 1
+                        color: Theme.accent
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Audio.toggleMute()
+                        }
                     }
                 }
-            }
 
-            VolumeBar {
-                visible: Audio.sources.length > 0
-                width: parent.width
-                value: Audio.micVolume
-                fill: Audio.micMuted ? Theme.critical : Theme.accent
-                onMoved: v => Audio.setMicVolume(v)
-            }
-
-            BarButton {
-                visible: Audio.sources.length > 0
-                implicitWidth: 72
-                onClicked: Audio.toggleMicMute()
-                BarText {
-                    text: Audio.micMuted ? "unmute" : "mute"
-                    px: 11
+                VolumeBar {
+                    width: parent.width
+                    thumb: true
+                    value: Audio.volume
+                    fill: Audio.muted ? Theme.critical : Theme.accent
+                    onMoved: v => Audio.setVolume(v)
                 }
-            }
 
-            Repeater {
-                model: Audio.streams
-                delegate: Column {
-                    required property var modelData
-                    width: col.width
-                    spacing: 4
+                PopHead {
+                    title: "OUTPUT"
+                }
+
+                Repeater {
+                    model: Audio.sinks
+                    PopRow {
+                        required property var modelData
+                        required property int index
+                        active: Audio.isCurrent(modelData, Audio.sink) || catcher.currentIndex === index
+                        clickable: true
+                        icon: Audio.isCurrent(modelData, Audio.sink) ? "●" : "○"
+                        label: Audio.deviceName(modelData)
+                        onClicked: Audio.setSink(modelData)
+                    }
+                }
+
+                PopHead {
+                    visible: Audio.sources.length > 0
+                    title: "MIC"
                     BarText {
-                        text: Audio.streamName(modelData)
-                        px: 11
-                        width: parent.width
-                        elide: Text.ElideRight
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Audio.micMuted ? "UNMUTE" : "MUTE"
+                        px: 9
+                        family: Config.defaultFontUi
+                        font.letterSpacing: 1
+                        color: Theme.accent
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Audio.toggleMicMute()
+                        }
                     }
-                    VolumeBar {
-                        width: parent.width
-                        value: modelData.audio ? modelData.audio.volume : 0
-                        fill: Theme.accent
-                        onMoved: v => Audio.setStreamVolume(modelData, v)
+                }
+
+                Repeater {
+                    model: Audio.sources
+                    PopRow {
+                        required property var modelData
+                        required property int index
+                        active: Audio.isCurrent(modelData, Audio.source) || catcher.currentIndex === (Audio.sinks.length + index)
+                        clickable: true
+                        icon: Audio.isCurrent(modelData, Audio.source) ? "●" : "○"
+                        label: Audio.deviceName(modelData)
+                        onClicked: Audio.setSource(modelData)
+                    }
+                }
+
+                VolumeBar {
+                    visible: Audio.sources.length > 0
+                    width: parent.width
+                    thumb: true
+                    value: Audio.micVolume
+                    fill: Audio.micMuted ? Theme.critical : Theme.accent
+                    onMoved: v => Audio.setMicVolume(v)
+                }
+
+                PopHead {
+                    visible: Audio.streams.length > 0
+                    title: "APPS"
+                    status: `${Audio.streams.length}`
+                }
+
+                Repeater {
+                    model: Audio.streams
+                    Column {
+                        required property var modelData
+                        width: col.width
+                        spacing: 3
+
+                        PopRow {
+                            danger: !!(modelData.audio && modelData.audio.muted)
+                            clickable: true
+                            label: Audio.streamName(modelData)
+                            onClicked: Audio.toggleStreamMute(modelData)
+                        }
+
+                        VolumeBar {
+                            width: parent.width
+                            value: modelData.audio ? modelData.audio.volume : 0
+                            fill: (modelData.audio && modelData.audio.muted) ? Theme.critical : Theme.accent
+                            onMoved: v => Audio.setStreamVolume(modelData, v)
+                        }
                     }
                 }
             }
-        }
         }
     }
 

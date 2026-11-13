@@ -6,8 +6,8 @@ Face {
     id: root
     job: "pop"
     attach: true
-    implicitWidth: Math.max(280, 20 + Time.zones.length * 120)
-    implicitHeight: col.implicitHeight + 16
+    implicitWidth: Math.max(300, 24 + Time.zones.length * 120)
+    implicitHeight: col.implicitHeight + 24
     focus: true
     Keys.onEscapePressed: UiMode.closeMenus()
 
@@ -33,12 +33,12 @@ Face {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 10
-        spacing: 8
+        anchors.margins: 12
+        spacing: 10
 
-        BarText {
-            text: Time.date
-            px: 12
+        PopHead {
+            title: "CLOCK"
+            status: Time.date
         }
 
         Row {
@@ -47,6 +47,7 @@ Face {
                 model: Time.zones
                 Column {
                     required property var modelData
+                    spacing: 1
                     BarText {
                         text: Time.time.length ? Time.formatTime(modelData.id) : ""
                         px: 22
@@ -54,8 +55,10 @@ Face {
                     }
                     BarText {
                         text: modelData.label || Config.prettyZone(modelData.id)
-                        sub: true
-                        px: 11
+                        px: 9
+                        family: Config.defaultFontUi
+                        font.letterSpacing: 1
+                        color: Theme.fgSub
                     }
                 }
             }
@@ -70,7 +73,8 @@ Face {
         Row {
             width: parent.width
             BarButton {
-                implicitWidth: 28
+                implicitWidth: 26
+                implicitHeight: 26
                 onClicked: {
                     if (root.viewMonth === 0) {
                         root.viewMonth = 11;
@@ -85,13 +89,15 @@ Face {
                 }
             }
             BarText {
-                width: parent.width - 56
+                width: parent.width - 52
                 text: Qt.formatDateTime(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy")
                 px: 12
+                family: Config.defaultFontUi
                 horizontalAlignment: Text.AlignHCenter
             }
             BarButton {
-                implicitWidth: 28
+                implicitWidth: 26
+                implicitHeight: 26
                 onClicked: {
                     if (root.viewMonth === 11) {
                         root.viewMonth = 0;
@@ -113,10 +119,12 @@ Face {
                 model: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
                 BarText {
                     required property string modelData
-                    width: 36
+                    width: 38
                     text: modelData
-                    sub: true
-                    px: 10
+                    px: 9
+                    family: Config.defaultFontUi
+                    font.letterSpacing: 1
+                    color: Theme.fgSub
                     horizontalAlignment: Text.AlignHCenter
                 }
             }
@@ -128,8 +136,7 @@ Face {
                 model: root.cells
                 delegate: Item {
                     required property int modelData
-                    required property int index
-                    width: 36
+                    width: 38
                     height: 28
                     readonly property bool today: {
                         const n = Time.now;

@@ -7,8 +7,8 @@ Face {
     id: root
     job: "pop"
     attach: true
-    implicitWidth: 240
-    implicitHeight: Math.min(col.implicitHeight + 16, 420)
+    implicitWidth: 260
+    implicitHeight: Math.min(col.implicitHeight + 24, 440)
     focus: true
 
     property var stack: []
@@ -16,6 +16,12 @@ Face {
         if (stack.length)
             return stack[stack.length - 1];
         return UiMode.trayItem ? UiMode.trayItem.menu : null;
+    }
+    readonly property string title: {
+        if (stack.length)
+            return root.labelOf(stack[stack.length - 1].text);
+        const it = UiMode.trayItem;
+        return it ? root.labelOf(it.tooltipTitle || it.title || "TRAY") : "TRAY";
     }
 
     Keys.onEscapePressed: {
@@ -57,7 +63,7 @@ Face {
 
     Flickable {
         anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: 12
         contentWidth: width
         contentHeight: col.implicitHeight
         clip: true
@@ -68,15 +74,26 @@ Face {
             width: parent.width
             spacing: 2
 
-            BarButton {
-                visible: root.stack.length > 0
-                implicitWidth: parent.width
-                implicitHeight: 24
-                onClicked: root.stack = root.stack.slice(0, -1)
+            PopHead {
+                title: root.title
+                status: root.stack.length > 0 ? "BACK" : ""
                 BarText {
-                    text: "◂  back"
-                    px: 11
+                    visible: root.stack.length > 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "◂"
+                    px: 14
+                    color: Theme.accent
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.stack = root.stack.slice(0, -1)
+                    }
                 }
+            }
+
+            Item {
+                width: parent.width
+                height: 6
             }
 
             Repeater {
@@ -85,7 +102,7 @@ Face {
                 delegate: Item {
                     required property var modelData
                     width: col.width
-                    implicitHeight: modelData.isSeparator ? 9 : rowBtn.implicitHeight
+                    implicitHeight: modelData.isSeparator ? 9 : row.implicitHeight
 
                     Rectangle {
                         visible: modelData.isSeparator
@@ -96,12 +113,14 @@ Face {
                         color: Theme.hairline
                     }
 
-                    BarButton {
-                        id: rowBtn
+                    PopRow {
+                        id: row
                         visible: !modelData.isSeparator
-                        implicitWidth: parent.width
-                        implicitHeight: 24
-                        enabled: modelData.enabled
+                        width: parent.width
+                        label: root.mark(modelData)
+                        active: modelData.checkState === Qt.Checked
+                        dimmed: !modelData.enabled
+                        clickable: modelData.enabled
                         onClicked: {
                             if (modelData.hasChildren) {
                                 root.stack = root.stack.concat([modelData]);
@@ -110,28 +129,24 @@ Face {
                             modelData.triggered();
                             UiMode.closeMenus();
                         }
-                        BarText {
-                            text: root.mark(modelData)
-                            px: 12
-                            color: modelData.enabled ? (modelData.checkState === Qt.Checked ? Theme.accent : Theme.fg) : Theme.fgSub
-                            width: col.width - 16
-                            elide: Text.ElideRight
-                        }
                     }
                 }
             }
 
             BarText {
                 visible: menuRep.count === 0 && root.stack.length === 0
+                width: parent.width
+                topPadding: 6
+                horizontalAlignment: Text.AlignHCenter
                 text: {
                     const it = UiMode.trayItem;
                     if (!it)
                         return "";
                     return root.labelOf(it.tooltipTitle || it.title || "");
                 }
-                sub: true
-                px: 11
-                width: parent.width
+                px: 10
+                family: Config.defaultFontUi
+                color: Theme.fgSub
                 elide: Text.ElideRight
             }
         }

@@ -54,6 +54,7 @@ OverlayHost {
             Qt.callLater(() => {
                 if (!root.open)
                     return;
+                root.adoptSize();
                 root.measure();
                 morph.revealed = true;
                 morph.forceActiveFocus();
@@ -147,17 +148,47 @@ OverlayHost {
             height: root.cardH
 
             Loader {
+                id: pop
                 anchors.fill: parent
                 active: root.everOpen && (root.open || root.contentOpacity > 0.02)
                 source: root.source.length ? Qt.resolvedUrl(root.source) : ""
-                onLoaded: {
-                    if (!item)
-                        return;
-                    root.cardW = item.implicitWidth > 0 ? item.implicitWidth : root.cardW;
-                    root.cardH = item.implicitHeight > 0 ? item.implicitHeight : root.cardH;
-                    root.measure();
-                }
+                onLoaded: root.adoptSize()
             }
+        }
+    }
+
+    // The content's own height is only known after its first layout pass, which
+    // happens after the Loader reports onLoaded. Keep following the item's
+    // implicit size instead of freezing the window at its load-time size.
+    function adoptSize() {
+        if (!root.open)
+            return;
+        const item = pop.item;
+        if (!item)
+            return;
+        let changed = false;
+        const w = Math.ceil(item.implicitWidth);
+        const h = Math.ceil(item.implicitHeight);
+        if (w > 0 && w !== Math.ceil(root.cardW)) {
+            root.cardW = w;
+            changed = true;
+        }
+        if (h > 0 && h !== Math.ceil(root.cardH)) {
+            root.cardH = h;
+            changed = true;
+        }
+        if (changed)
+            root.measure();
+    }
+
+    Connections {
+        target: pop.item
+        ignoreUnknownSignals: true
+        function onImplicitWidthChanged() {
+            root.adoptSize();
+        }
+        function onImplicitHeightChanged() {
+            root.adoptSize();
         }
     }
 }

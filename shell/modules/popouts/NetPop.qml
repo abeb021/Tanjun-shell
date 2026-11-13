@@ -8,8 +8,8 @@ Face {
     id: root
     job: "pop"
     attach: true
-    implicitWidth: 260
-    implicitHeight: col.implicitHeight + 16
+    implicitWidth: 290
+    implicitHeight: Math.min(col.implicitHeight + 24, 440)
     focus: true
 
     KeyCatcher {
@@ -29,60 +29,88 @@ Face {
                 n.connect();
         }
 
-        Column {
-            id: col
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: 10
-            spacing: 8
+        Flickable {
+            anchors.fill: parent
+            anchors.margins: 12
+            contentWidth: width
+            contentHeight: col.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-        Row {
-            spacing: 8
-            BarText {
-                text: Net.connected ? Net.ssid : (Net.wifiOn ? "wifi" : "offline")
-                px: 13
-            }
-        }
+            Column {
+                id: col
+                width: parent.width
+                spacing: 10
 
-        BarText {
-            visible: Net.vpnUp
-            text: "vpn  " + Net.vpn
-            px: 12
-            color: Theme.accent
-        }
-
-        BarButton {
-            implicitWidth: parent.width
-            onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
-            BarText {
-                text: Net.wifiOn ? "wifi · on" : "wifi · off"
-                px: 11
-            }
-        }
-
-        Repeater {
-            model: Net.networks
-            delegate: BarButton {
-                required property var modelData
-                required property int index
-                implicitWidth: col.width
-                active: modelData.connected || catcher.currentIndex === index
-                onClicked: {
-                    if (modelData.connected)
-                        modelData.disconnect();
-                    else
-                        modelData.connect();
+                PopHead {
+                    title: "NETWORK"
+                    status: Net.connected ? Net.ssid : (Net.wifiOn ? "ON" : "OFF")
                 }
+
+                PopRow {
+                    icon: "󰖩"
+                    label: "WI-FI"
+                    clickable: true
+                    onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
+                    BarText {
+                        text: Net.wifiOn ? "ON" : "OFF"
+                        px: 9
+                        family: Config.defaultFontUi
+                        font.letterSpacing: 1
+                        color: Net.wifiOn ? Theme.accent : Theme.fgSub
+                    }
+                }
+
+                PopRow {
+                    visible: Net.vpnUp
+                    icon: "󰖂"
+                    label: "VPN"
+                    sub: Net.vpn
+                    active: true
+                }
+
                 BarText {
-                    text: (modelData.connected ? "● " : "○ ") + (modelData.name || "hidden")
-                    px: 12
-                    color: modelData.connected ? Theme.accent : Theme.fg
-                    width: col.width - 16
-                    elide: Text.ElideRight
+                    visible: !Net.wifiOn
+                    width: parent.width
+                    topPadding: 6
+                    horizontalAlignment: Text.AlignHCenter
+                    text: "WI-FI IS OFF"
+                    px: 10
+                    family: Config.defaultFontUi
+                    font.letterSpacing: 1
+                    color: Theme.fgSub
+                }
+
+                BarText {
+                    visible: Net.wifiOn && Net.networks.length === 0
+                    width: parent.width
+                    topPadding: 6
+                    horizontalAlignment: Text.AlignHCenter
+                    text: "NO NETWORKS"
+                    px: 10
+                    family: Config.defaultFontUi
+                    font.letterSpacing: 1
+                    color: Theme.fgSub
+                }
+
+                Repeater {
+                    model: Net.networks
+                    PopRow {
+                        required property var modelData
+                        required property int index
+                        active: modelData.connected || catcher.currentIndex === index
+                        clickable: true
+                        icon: modelData.connected ? "●" : "○"
+                        label: modelData.name || "hidden"
+                        onClicked: {
+                            if (modelData.connected)
+                                modelData.disconnect();
+                            else
+                                modelData.connect();
+                        }
+                    }
                 }
             }
-        }
         }
     }
 
