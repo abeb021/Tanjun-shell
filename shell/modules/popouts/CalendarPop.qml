@@ -38,7 +38,7 @@ Face {
         spacing: 10
 
         PopHead {
-            title: "CLOCK"
+            title: "CALENDAR"
             status: Time.date
         }
 

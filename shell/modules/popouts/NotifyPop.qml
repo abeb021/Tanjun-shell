@@ -19,33 +19,16 @@ Face {
         anchors.top: parent.top
         anchors.margins: 12
         title: "NOTIFICATIONS"
-        status: `${Notifs.list.length}`
+        status: `${Notifs.count}`
 
-        BarText {
-            anchors.verticalCenter: parent.verticalCenter
-            text: UiMode.dnd ? "DND ON" : "DND"
-            px: 9
-            family: Config.defaultFontUi
-            font.letterSpacing: 1
-            color: UiMode.dnd ? Theme.accent : Theme.fgSub
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: UiMode.dnd = !UiMode.dnd
-            }
+        PopChip {
+            label: "DND"
+            active: UiMode.dnd
+            onClicked: UiMode.dnd = !UiMode.dnd
         }
-        BarText {
-            anchors.verticalCenter: parent.verticalCenter
-            text: "CLEAR"
-            px: 9
-            family: Config.defaultFontUi
-            font.letterSpacing: 1
-            color: Theme.accent
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Notifs.clear()
-            }
+        PopChip {
+            label: "CLEAR"
+            onClicked: Notifs.clear()
         }
     }
 

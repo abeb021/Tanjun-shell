@@ -62,17 +62,10 @@ Face {
                 PopHead {
                     title: "VOLUME"
                     status: Audio.muted ? "MUTED" : `${Math.round(Audio.volume * 100)}%`
-                    BarText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Audio.muted ? "󰝟" : "󰕾"
-                        icon: true
-                        px: 12
-                        color: Theme.accent
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Audio.toggleMute()
-                        }
+                    PopChip {
+                        icon: Audio.muted ? "󰝟" : "󰕾"
+                        danger: Audio.muted
+                        onClicked: Audio.toggleMute()
                     }
                 }
 
@@ -100,17 +93,10 @@ Face {
                 PopHead {
                     visible: Audio.sources.length > 0
                     title: "MIC"
-                    BarText {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Audio.micMuted ? "󰍭" : "󰍬"
-                        icon: true
-                        px: 12
-                        color: Audio.micMuted ? Theme.critical : Theme.accent
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: Audio.toggleMicMute()
-                        }
+                    PopChip {
+                        icon: Audio.micMuted ? "󰍭" : "󰍬"
+                        danger: Audio.micMuted
+                        onClicked: Audio.toggleMicMute()
                     }
                 }
 

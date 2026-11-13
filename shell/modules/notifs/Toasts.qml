@@ -11,7 +11,10 @@ Scope {
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: (!UiMode.dnd && toast.count > 0) || toast.opacity > 0.02
+            // Held back while the notification menu is open: the menu shows the
+            // same list, and the toasts would sit next to it.
+            readonly property bool held: UiMode.popout === "notify"
+            visible: (!UiMode.dnd && !held && toast.count > 0) || toast.opacity > 0.02
             color: "transparent"
             implicitWidth: 320
             implicitHeight: Math.min(320, Math.max(1, toast.contentHeight) + 4)
@@ -29,9 +32,9 @@ Scope {
             ListView {
                 id: toast
                 anchors.fill: parent
-                model: Notifs.list
+                model: Notifs.toasts
                 spacing: 6
-                opacity: !UiMode.dnd && count > 0 ? 1 : 0
+                opacity: !UiMode.dnd && !held && count > 0 ? 1 : 0
                 Behavior on opacity {
                     enabled: Motion.ready
                     NumberAnimation {
