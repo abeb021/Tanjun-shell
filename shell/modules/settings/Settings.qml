@@ -245,6 +245,10 @@ Scope {
                                 }
                             }
                         }
+                        WheelScroll {
+                            anchors.fill: railFlick
+                            flick: railFlick
+                        }
                     }
 
                     Rectangle {
@@ -444,6 +448,11 @@ Scope {
                                 }
                             }
                         }
+                        WheelScroll {
+                            anchors.fill: hitList
+                            flick: hitList
+                            visible: hitList.visible
+                        }
 
                         Item {
                             id: pageBody
@@ -513,6 +522,11 @@ Scope {
                                     when: restFlick.visible
                                     value: (win.page === "network" || win.page === "bluetooth") && restPage.item ? restPage.item.toggleRadius : -1
                                 }
+                            }
+                            WheelScroll {
+                                anchors.fill: restFlick
+                                flick: restFlick
+                                visible: restFlick.visible
                             }
                         }
                     }

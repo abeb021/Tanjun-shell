@@ -169,4 +169,9 @@ Item {
             }
         }
     }
+
+    WheelScroll {
+        anchors.fill: list
+        flick: list
+    }
 }
