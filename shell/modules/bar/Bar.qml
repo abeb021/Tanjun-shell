@@ -107,6 +107,9 @@ Scope {
                     const point = screenPoint(local);
                     if (!point)
                         return;
+                    // a menu hanging off the bar would be pinned to the old edge
+                    // when the bar lands on a new one
+                    UiMode.closeMenus();
                     draggingBar = true;
                     dragStartX = point.x;
                     dragStartY = point.y;

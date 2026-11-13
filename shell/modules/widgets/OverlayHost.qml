@@ -23,29 +23,32 @@ PanelWindow {
     // Keeping the surface alive means the compositor has no open/close to
     // animate, so the motion is entirely the shell's — on any compositor.
     property bool keepMapped: false
-    // Size the surface to a fixed panel and pin it where the bar says it goes.
-    // The size is the *final* one from the first frame: a mapped layer whose size
-    // changes is a rect the WM may re-flow, and on Hyprland a layer that shrinks
-    // and grows back stays at the smaller size.
+    // A panel-sized surface is pinned to the bar's edge once and spans the bar.
+    // Its rect is set up from the bar and then never changes: opening a menu only
+    // moves the card *inside* it, in plain item coordinates. Quickshell only
+    // commits anchors, margins and size on polish, so a pin that moved would
+    // always lag a frame behind the click — a constant pin cannot.
     property bool panelSized: false
-    // Panel-sized surfaces are clickable only while the content is actually shown.
-    property bool panelHot: true
-    property real panelWidth: 0
-    property real panelHeight: 0
-    property real panelX: 0
-    property real panelY: 0
+    property string panelEdge: "" // "top" | "bottom" | "left" | "right"
+    property real panelDepth: 1 // reach of the surface away from the bar
+    property real panelInset: 0 // gap between the bar and the surface
+    // The card is the only part of a panel-sized surface that takes input. It is
+    // zero-sized while the menu is closed, so the surface is transparent to the
+    // pointer everywhere else.
+    property Item panelHotItem: null
+
+    readonly property bool panelVertical: panelEdge === "left" || panelEdge === "right"
 
     default property alias content: body.data
 
     readonly property bool shown: (open && onThisScreen) || contentOpacity > 0.02
-    readonly property bool sized: panelSized && panelWidth > 0 && panelHeight > 0
 
     visible: keepMapped ? true : shown
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: -1
     focusable: true
-    mask: root.panelSized ? panelMask : barMask
+    mask: root.panelSized ? hotMask : barMask
 
     WlrLayershell.namespace: root.layerName
     WlrLayershell.layer: WlrLayer.Overlay
@@ -68,12 +71,12 @@ PanelWindow {
         intersection: Intersection.Xor
     }
 
+    // A panel-sized surface is input-opaque only where the card is drawn. The
+    // region follows the card's animated rect, so the reveal uncovers the input
+    // area together with the pixels and nothing outside ever takes a click.
     Region {
-        id: panelMask
-        x: 0
-        y: 0
-        width: root.open && root.panelHot ? Math.ceil(root.panelWidth) : 0
-        height: root.open && root.panelHot ? Math.ceil(root.panelHeight) : 0
+        id: hotMask
+        item: root.panelHotItem
     }
 
     Item {
@@ -148,21 +151,26 @@ PanelWindow {
     }
 
     // Margins only apply to anchored edges, and a layer surface with no anchors
-    // is centred on the output. So the panel is anchored to the top-left and
-    // offset by its own rect; the surface then sits exactly where the bar put it.
-    // Every other overlay keeps the full-screen surface anchored on four sides.
+    // is centred on the output. A panel-sized surface is anchored to the bar's
+    // edge and stretched along the bar, so its depth is the only axis the shell
+    // chooses. Every other overlay keeps the full-screen surface on four sides.
     anchors {
-        top: true
-        left: true
-        right: !root.keepMapped && !root.panelSized
-        bottom: !root.keepMapped && !root.panelSized
+        top: root.panelSized ? root.panelEdge !== "bottom" : true
+        bottom: root.panelSized ? root.panelEdge !== "top" : (!root.keepMapped && !root.panelSized)
+        left: root.panelSized ? root.panelEdge !== "right" : true
+        right: root.panelSized ? root.panelEdge !== "left" : (!root.keepMapped && !root.panelSized)
     }
 
-    margins.left: root.panelSized ? Math.max(0, Math.round(root.panelX)) : 0
-    margins.top: root.panelSized ? Math.max(0, Math.round(root.panelY)) : 0
+    // Only the edge the bar is on gets a margin: the stretched axis has none, so
+    // coordinates along the bar are screen coordinates and the card can be
+    // placed inside the surface without ever touching the pin.
+    margins.top: root.panelSized && root.panelEdge === "top" ? Math.max(0, Math.round(root.panelInset)) : 0
+    margins.bottom: root.panelSized && root.panelEdge === "bottom" ? Math.max(0, Math.round(root.panelInset)) : 0
+    margins.left: root.panelSized && root.panelEdge === "left" ? Math.max(0, Math.round(root.panelInset)) : 0
+    margins.right: root.panelSized && root.panelEdge === "right" ? Math.max(0, Math.round(root.panelInset)) : 0
 
-    implicitWidth: root.panelSized ? (root.sized ? Math.ceil(root.panelWidth) : 1) : (root.keepMapped ? (root.shown ? (root.screen ? root.screen.width : 1) : 1) : 0)
-    implicitHeight: root.panelSized ? (root.sized ? Math.ceil(root.panelHeight) : 1) : (root.keepMapped ? (root.shown ? (root.screen ? root.screen.height : 1) : 1) : 0)
+    implicitWidth: root.panelSized ? (root.panelVertical ? Math.max(1, Math.ceil(root.panelDepth)) : 1) : (root.keepMapped ? (root.shown ? (root.screen ? root.screen.width : 1) : 1) : 0)
+    implicitHeight: root.panelSized ? (root.panelVertical ? 1 : Math.max(1, Math.ceil(root.panelDepth))) : (root.keepMapped ? (root.shown ? (root.screen ? root.screen.height : 1) : 1) : 0)
 
     signal dismissed
 

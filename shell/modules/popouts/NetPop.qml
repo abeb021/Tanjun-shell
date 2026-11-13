@@ -9,7 +9,13 @@ Face {
     job: "pop"
     attach: true
     implicitWidth: 290
-    implicitHeight: Math.min(col.implicitHeight + 24, 440)
+    // The list is empty until the radio answers, and the panel must not grow after
+    // it has rolled out: reserve the tallest size seen this session and let the
+    // rows fill an already-final panel.
+    readonly property real contentH: col.implicitHeight + 24
+    property real floorH: 0
+    onContentHChanged: if (contentH > floorH) floorH = contentH
+    implicitHeight: Math.min(Math.max(contentH, floorH), 440)
     focus: true
 
     KeyCatcher {

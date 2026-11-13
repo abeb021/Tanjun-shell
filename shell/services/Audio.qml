@@ -12,18 +12,14 @@ Singleton {
 
     readonly property bool mixerOpen: UiMode.popout === "audio" || (UiMode.settingsOpen && SettingsNav.page === "sound")
 
+    // The mixer list is kept warm instead of being built when the menu opens: the
+    // menu's content is always instantiated now, so its size has to be correct
+    // before the click, and it must not grow afterwards.
     readonly property var nodeBag: {
         const tracked = [];
         const sinks = [];
         const sources = [];
         const streams = [];
-        if (!mixerOpen)
-            return {
-                tracked: tracked,
-                sinks: sinks,
-                sources: sources,
-                streams: streams
-            };
         const nodes = Pipewire.nodes.values;
         if (nodes) {
             for (let i = 0; i < nodes.length; i++) {
@@ -60,13 +56,11 @@ Singleton {
             out.push(s);
         if (src && src !== s)
             out.push(src);
-        if (mixerOpen) {
-            const nodes = nodeBag.tracked;
-            for (let i = 0; i < nodes.length; i++) {
-                const n = nodes[i];
-                if (n && n !== s && n !== src)
-                    out.push(n);
-            }
+        const nodes = nodeBag.tracked;
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            if (n && n !== s && n !== src)
+                out.push(n);
         }
         return out;
     }
