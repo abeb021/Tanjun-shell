@@ -2,12 +2,10 @@ import QtQuick
 import "../widgets"
 import "../../services"
 
-// Compact masthead for a bar popover: what this menu is, and its state. An icon
-// usually says what the title would, which keeps the header to one short line.
+// Compact masthead for a bar popover: what this menu is, and its state.
 Item {
     id: root
 
-    property string icon: ""
     property string title: ""
     property string status: ""
     default property alias extra: extraRow.data
@@ -16,24 +14,11 @@ Item {
     implicitHeight: 22
     height: implicitHeight
 
-    Row {
+    BarText {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 6
-
-        BarText {
-            visible: root.icon.length > 0
-            text: root.icon
-            icon: true
-            px: 13
-            color: Theme.caption
-        }
-
-        BarText {
-            visible: root.title.length > 0
-            text: root.title
-            role: "head"
-        }
+        text: root.title
+        role: "head"
     }
 
     Row {

@@ -38,7 +38,7 @@ Face {
         spacing: 10
 
         PopHead {
-            icon: "󰥔"
+            title: "CLOCK"
             status: Time.date
         }
 

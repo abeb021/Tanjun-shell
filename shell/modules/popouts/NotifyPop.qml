@@ -18,8 +18,7 @@ Face {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: 12
-        title: ""
-        icon: "󰂚"
+        title: "NOTIFICATIONS"
         status: `${Notifs.list.length}`
 
         BarText {

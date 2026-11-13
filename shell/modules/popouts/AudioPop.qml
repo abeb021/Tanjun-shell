@@ -60,7 +60,7 @@ Face {
                 spacing: 10
 
                 PopHead {
-                    icon: "󰕾"
+                    title: "VOLUME"
                     status: Audio.muted ? "MUTED" : `${Math.round(Audio.volume * 100)}%`
                     BarText {
                         anchors.verticalCenter: parent.verticalCenter
@@ -99,7 +99,7 @@ Face {
 
                 PopHead {
                     visible: Audio.sources.length > 0
-                    icon: "󰍬"
+                    title: "MIC"
                     BarText {
                         anchors.verticalCenter: parent.verticalCenter
                         text: Audio.micMuted ? "󰍭" : "󰍬"
@@ -138,7 +138,7 @@ Face {
 
                 PopHead {
                     visible: Audio.streams.length > 0
-                    icon: "󰀻"
+                    title: "APPS"
                     status: `${Audio.streams.length}`
                 }
 

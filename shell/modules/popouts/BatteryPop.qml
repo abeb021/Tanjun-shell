@@ -21,7 +21,7 @@ Face {
         spacing: 10
 
         PopHead {
-            icon: "󰁹"
+            title: "BATTERY"
             status: Battery.charging ? "CHARGING" : ""
         }
 
@@ -52,7 +52,7 @@ Face {
         }
 
         PopHead {
-            icon: "󰍹"
+            title: "DISPLAY"
             status: `${Math.max(0, Backlight.percent)}%`
         }
 

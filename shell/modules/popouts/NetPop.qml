@@ -50,20 +50,12 @@ Face {
                 spacing: 10
 
                 PopHead {
-                    icon: "󰖩"
-                    status: Net.connected ? Net.ssid : (Net.wifiOn ? "ON" : "OFF")
-                }
-
-                PopRow {
-                    icon: Net.wifiOn ? "󰖩" : "󰖪"
-                    clickable: true
-                    onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
-                    BarText {
-                        text: Net.wifiOn ? "ON" : "OFF"
-                        px: 9
-                        family: Config.defaultFontUi
-                        font.letterSpacing: 1
-                        color: Net.wifiOn ? Theme.accent : Theme.fgSub
+                    title: "WI-FI"
+                    status: Net.wifiOn ? (Net.connected ? Net.ssid : "") : "OFF"
+                    Switch {
+                        anchors.verticalCenter: parent.verticalCenter
+                        on: Net.wifiOn
+                        onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
                     }
                 }
 
