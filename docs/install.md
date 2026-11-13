@@ -47,6 +47,18 @@ tanjun.inputs.nixpkgs.follows = "nixpkgs";
 }
 ```
 
+If you also import the NixOS module, give it the same compositor so it enables the right session and portals:
+
+```nix
+{
+  imports = [ inputs.tanjun.nixosModules.default ];
+  programs.tanjun = {
+    enable = true;
+    compositor = "hyprland"; # or "niri"
+  };
+}
+```
+
 `checkout` defaults to the pinned flake source (`nix flake update tanjun` to move versions). For live edits against a git clone:
 
 ```nix
@@ -57,8 +69,10 @@ On rebuild, Home Manager:
 
 - symlinks `~/.local/share/tanjun` and `~/.config/quickshell` to that checkout
 - writes the Hyprland or niri compositor stub under `~/.config`
-- installs `tanjun-quickshell` on `PATH` (`QT_QUICK_BACKEND=software`)
+- installs `tanjun-quickshell` (same binary as `quickshell -p ~/.config/quickshell`) plus the plain `quickshell`/`qs` binaries used by the compositor autostart and binds
 
-System packages (quickshell, cliphist, hypr tools) stay in your NixOS modules. Hyprland autostart in the Tanjun rice still starts Quickshell; you can call `tanjun-quickshell` manually instead.
+The other runtime tools (`cliphist`, `wl-clipboard`, `brightnessctl`, `playerctl`, `libqalculate`, `ffmpeg`, compositor helpers) stay in your NixOS modules. Hyprland autostart in the Tanjun rice still starts Quickshell; you can call `tanjun-quickshell` manually instead.
+
+**Do not set `QT_QUICK_BACKEND=software` in Hyprland `env =` or shell `export`.** Quickshell no longer forces it. On Hyprland + systemd/uwsm, session variables are copied into `systemd --user` and D-Bus activation (`dbus-update-activation-environment`, `systemctl --user import-environment`) so apps started from the Tanjun launcher inherit the same Qt env as the compositor. A global or compositor-wide `software` backend then breaks other Qt Quick apps (e.g. AmneziaVPN). Use `VAR=value command` only when you truly need a one-off override for that process.
 
 Compositor integration on NixOS is the same as on Arch: rice lives in the checkout under `compositors/`, not inside the HM module.

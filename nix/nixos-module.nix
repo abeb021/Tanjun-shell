@@ -4,6 +4,7 @@
   config,
   lib,
   pkgs,
+  options,
   ...
 }:
 
@@ -11,20 +12,43 @@ let
   cfg = config.programs.tanjun;
 in
 {
-  options.programs.tanjun.enable = lib.mkEnableOption "system packages commonly used with Tanjun";
+  options.programs.tanjun = {
+    enable = lib.mkEnableOption "system packages commonly used with Tanjun";
 
-  config = lib.mkIf cfg.enable {
-    programs.hyprland.enable = lib.mkDefault true;
-
-    xdg.portal = {
-      enable = lib.mkDefault true;
-      extraPortals = lib.mkDefault [
-        pkgs.xdg-desktop-portal-gtk
-        pkgs.xdg-desktop-portal-hyprland
+    compositor = lib.mkOption {
+      type = lib.types.enum [
+        "hyprland"
+        "niri"
       ];
+      default = "hyprland";
+      description = "Compositor to enable system-side defaults for.";
     };
-
-    security.rtkit.enable = lib.mkDefault true;
-    services.power-profiles-daemon.enable = lib.mkDefault true;
   };
+
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        xdg.portal = {
+          enable = lib.mkDefault true;
+          extraPortals = lib.mkDefault (
+            [ pkgs.xdg-desktop-portal-gtk ]
+            ++ lib.optional (cfg.compositor == "hyprland") pkgs.xdg-desktop-portal-hyprland
+          );
+        };
+
+        security.rtkit.enable = lib.mkDefault true;
+        services.power-profiles-daemon.enable = lib.mkDefault true;
+        services.upower.enable = lib.mkDefault true;
+      }
+
+      # `programs.niri` is not available on every nixpkgs revision.
+      (lib.optionalAttrs (options.programs ? niri) {
+        programs.niri.enable = lib.mkDefault (cfg.compositor == "niri");
+      })
+
+      {
+        programs.hyprland.enable = lib.mkDefault (cfg.compositor == "hyprland");
+      }
+    ]
+  );
 }

@@ -45,12 +45,17 @@ in
       type = lib.types.package;
       default = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
       defaultText = lib.literalExpression "tanjun.packages.<system>.default";
-      description = "Wrapped quickshell launcher (QT_QUICK_BACKEND=software).";
+      description = "Wrapped quickshell launcher (runs quickshell -p ~/.config/quickshell).";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+    # The compositor autostart and the keybinds in compositors/ call the plain
+    # `quickshell`/`qs` binaries. `cfg.package` is only the wrapper.
+    home.packages = [
+      cfg.package
+      pkgs.quickshell
+    ];
 
     home.activation.tanjunAttach = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       checkout=${lib.escapeShellArg (toString cfg.checkout)}
@@ -58,6 +63,12 @@ in
         echo "programs.tanjun: missing shell/ under $checkout" >&2
         exit 1
       fi
+      for dest in ${lib.escapeShellArg dataLink} ${lib.escapeShellArg qsLink}; do
+        if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+          echo "programs.tanjun: $dest exists and is not a symlink; move it aside" >&2
+          exit 1
+        fi
+      done
       run mkdir -p ${lib.escapeShellArg (builtins.dirOf dataLink)} ${lib.escapeShellArg (builtins.dirOf qsLink)}
       run ln -sfn "$checkout" ${lib.escapeShellArg dataLink}
       run ln -sfn "$checkout/shell" ${lib.escapeShellArg qsLink}

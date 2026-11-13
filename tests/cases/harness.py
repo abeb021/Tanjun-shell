@@ -42,7 +42,7 @@ def register(s) -> None:
         r = subprocess.run(["bash", "-n", str(path)], check=False, capture_output=True, text=True)
         s.eq(f"reload syntax {path.name}", r.returncode, 0)
         body = path.read_text(encoding="utf-8")
-        s.ok(f"reload {path.name} software qs", "QT_QUICK_BACKEND=software" in body, path.name)
+        s.ok(f"reload {path.name} no forced software qs", "QT_QUICK_BACKEND" not in body, path.name)
 
     if not QS_BIN or not os.environ.get("WAYLAND_DISPLAY"):
         return
