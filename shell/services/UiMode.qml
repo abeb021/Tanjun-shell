@@ -60,8 +60,8 @@ Singleton {
     property real sidebarFromX: 0
     property string sidebarEdge: ""
     property string popGrow: ""
-    property string popOrigin: ""
-    property real popScaleX: 1
+    // downward travel of a popup reveal: bar popups are uncovered from the bar's
+    // bottom edge and never travel sideways
     property real popFromY: 0
     property string overviewPick: ""
     property int overviewCount: 0
@@ -123,7 +123,6 @@ Singleton {
         popoutScreen = "";
         trayItem = null;
         popGrow = "";
-        popOrigin = "";
         popFromY = 0;
     }
 

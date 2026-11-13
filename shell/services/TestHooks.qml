@@ -99,8 +99,6 @@ Singleton {
             open: !!UiMode.popout.length,
             name: UiMode.popout,
             grow: UiMode.popGrow,
-            origin: UiMode.popOrigin,
-            scaleX: UiMode.popScaleX,
             fromY: Math.round(UiMode.popFromY)
         });
     }

@@ -15,9 +15,14 @@ hl.animation({ leaf = "windows",         enabled = true, speed = 2, bezier = "qu
 hl.animation({ leaf = "windowsIn",       enabled = true, speed = 2, bezier = "quick", style = "popin 95%" })
 hl.animation({ leaf = "windowsOut",      enabled = true, speed = 3, bezier = "quick", style = "popin 85%" })
 hl.animation({ leaf = "windowsMove",     enabled = true, speed = 2, bezier = "quick", style = "slide" })
-hl.animation({ leaf = "layers",          enabled = true, speed = 2, bezier = "quick", style = "popin 95%" })
-hl.animation({ leaf = "layersIn",        enabled = true, speed = 2, bezier = "quick", style = "popin 95%" })
-hl.animation({ leaf = "layersOut",       enabled = true, speed = 3, bezier = "quick", style = "popin 85%" })
+-- Layers fade, nothing more. All layer motion belongs to the shell: it keeps its
+-- surfaces mapped and animates them itself, so the WM has nothing to play on
+-- open or close. A non-fade style (popin, slide) is applied to the whole layer
+-- rect, which is exactly the "menu slides in from the side" artefact, and the
+-- shell cannot suppress that from QML, so the WM must simply not do it.
+hl.animation({ leaf = "layers",          enabled = true, speed = 2, bezier = "quick", style = "fade" })
+hl.animation({ leaf = "layersIn",        enabled = true, speed = 2, bezier = "quick", style = "fade" })
+hl.animation({ leaf = "layersOut",       enabled = true, speed = 3, bezier = "quick", style = "fade" })
 hl.animation({ leaf = "workspaces",      enabled = true, speed = 6, bezier = "cyberEase", style = "slidefade 10%" })
 hl.animation({ leaf = "fade",            enabled = true, speed = 12, bezier = "default" })
 hl.animation({ leaf = "fadeIn",          enabled = true, speed = 8, bezier = "default" })
