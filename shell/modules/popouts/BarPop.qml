@@ -55,7 +55,7 @@ OverlayHost {
     panelEdge: root.edge
     panelInset: root.bar - 1
     panelDepth: root.depth
-    panelHotItem: morph
+    panelHotItem: (root.open || reveal.value > 0.001) ? card : null
 
     screen: barWindow ? barWindow.screen : null
     onThisScreen: {
@@ -111,7 +111,7 @@ OverlayHost {
             return;
         adoptSize();
         reportPop();
-        morph.forceActiveFocus();
+        card.forceActiveFocus();
     }
     onEdgeChanged: reportPop()
 
@@ -132,44 +132,59 @@ OverlayHost {
         open: root.open
     }
 
+    // Where the card sits in the surface. Constant while the menu is open, apart
+    // from its own size: the surface under it never moves.
+    readonly property real cardX: root.vertical
+        ? (root.edge === "right" ? root.depth - root.cardW : 0)
+        : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8))
+    readonly property real cardY: root.vertical
+        ? Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8))
+        : (root.edge === "bottom" ? root.depth - root.shownH : 0)
+
     Item {
-        id: morph
-        // The clip grows out of the bar; the outer edge stays put.
-        width: root.vertical ? Math.round(root.cardW * reveal.value) : root.cardW
-        height: root.vertical ? root.shownH : Math.round(root.shownH * reveal.value)
-        x: root.vertical
-            ? Math.round(root.edge === "right" ? root.depth - width : 0)
-            : Math.round(Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8)))
-        y: root.vertical
-            ? Math.round(Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8)))
-            : Math.round(root.edge === "bottom" ? root.depth - height : 0)
-        clip: true
+        id: card
+        // The final rect of the menu. It is also the input region, so a click made
+        // while the card is still rolling out lands on the menu instead of falling
+        // through to the backdrop and closing it.
+        x: Math.round(root.cardX)
+        y: Math.round(root.cardY)
+        width: root.cardW
+        height: root.shownH
         focus: true
         Keys.onEscapePressed: UiMode.closeMenus()
 
         MouseArea {
             z: -1
-            width: root.cardW
-            height: root.shownH
+            anchors.fill: parent
             onClicked: {}
         }
 
         Item {
-            id: slot
-            // The content never moves: it sits at the outer edge of the card and
-            // the clip uncovers it. Both offsets are in terms of the same
-            // animated size as the clip, so the two stay glued at every frame.
-            x: root.vertical ? (root.edge === "right" ? morph.width - root.cardW : 0) : 0
-            y: root.vertical ? 0 : (root.edge === "bottom" ? morph.height - root.shownH : 0)
-            width: root.cardW
-            height: root.shownH
+            id: morph
+            // The clip grows out of the bar; the edge that meets the bar stays put.
+            width: root.vertical ? Math.round(root.cardW * reveal.value) : root.cardW
+            height: root.vertical ? root.shownH : Math.round(root.shownH * reveal.value)
+            x: root.vertical ? (root.edge === "right" ? root.cardW - width : 0) : 0
+            y: root.vertical ? 0 : (root.edge === "bottom" ? root.shownH - height : 0)
+            clip: true
 
-            Loader {
-                id: pop
-                anchors.fill: parent
-                active: true
-                source: root.source.length ? Qt.resolvedUrl(root.source) : ""
-                onLoaded: root.adoptSize()
+            Item {
+                id: slot
+                // The content never moves: it sits at the outer edge of the card and
+                // the clip uncovers it. Both offsets are in terms of the same
+                // animated size as the clip, so the two stay glued at every frame.
+                x: root.vertical ? (root.edge === "right" ? morph.width - root.cardW : 0) : 0
+                y: root.vertical ? 0 : (root.edge === "bottom" ? morph.height - root.shownH : 0)
+                width: root.cardW
+                height: root.shownH
+
+                Loader {
+                    id: pop
+                    anchors.fill: parent
+                    active: true
+                    source: root.source.length ? Qt.resolvedUrl(root.source) : ""
+                    onLoaded: root.adoptSize()
+                }
             }
         }
     }
