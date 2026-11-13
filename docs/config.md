@@ -11,6 +11,7 @@ Pins live in `~/.config/tanjun/config.json`. Copy [config.example.json](../confi
 | `appearance.fontUi` / `fontMono` | Families from `fc-list` |
 | `appearance.style` | `chrome` (default) or `minimal` |
 | `appearance.motion` | `quiet` (default), `instant`, `snappy`, or `soft` |
+| `appearance.motionSpeed` | Animation speed in percent, 50–200 (default 100) |
 
 Screens live in Settings → screen: `FIRST` is the laptop panel, `SECOND` the external output, `EXTEND` both. If `SECOND` is active and the external output is unplugged, the shell turns the laptop panel back on for the rest of the session; the saved compositor pin is kept, so plugging the external back in restores `SECOND` on the next start.
 

@@ -38,6 +38,9 @@ Rectangle {
         function onKindChanged() {
             root.run();
         }
+        function onSpeedPctChanged() {
+            root.run();
+        }
     }
 
     MouseArea {
@@ -203,7 +206,7 @@ Rectangle {
         anchors.leftMargin: 14
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 8
-        text: `pop ${Motion.pop} · panel ${Motion.panel} · toast ${Motion.slow} ms`
+        text: `pop ${Motion.pop} · panel ${Motion.panel} · toast ${Motion.slow} ms · ${Motion.speedPct}%`
         px: 10
         family: Config.defaultFontUi
         color: Theme.fgSub

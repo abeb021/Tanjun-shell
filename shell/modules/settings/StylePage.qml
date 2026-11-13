@@ -64,6 +64,15 @@ Column {
             }
         }
     }
+    HudSlider {
+        id: speed
+        width: parent.width
+        label: `SPEED  ${Math.round(Motion.speedMin + speed.live * (Motion.speedMax - Motion.speedMin))}%`
+        icon: "󰓅"
+        notches: 16
+        value: (Motion.speedPct - Motion.speedMin) / Math.max(1, Motion.speedMax - Motion.speedMin)
+        onCommitted: v => Motion.setSpeed(Motion.speedMin + v * (Motion.speedMax - Motion.speedMin))
+    }
     BarText {
         text: {
             const rows = Motion.styles;
@@ -81,7 +90,7 @@ Column {
     }
 
     BarText {
-        text: "Click the strip to replay it with the current preset."
+        text: "Click the strip to replay it with the current preset and speed."
         px: 11
         family: Config.defaultFontUi
         color: Theme.fgSub

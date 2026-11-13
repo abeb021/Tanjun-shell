@@ -138,6 +138,7 @@ def register(s) -> None:
             "motionStyles",
             "motionJson",
             "setMotion",
+            "setMotionSpeed",
             "pollJson",
             "hostCaps",
             "settingsCatalog",
@@ -696,11 +697,41 @@ def register(s) -> None:
         time.sleep(0.1)
         after_quiet = json.loads((qs.ipc("call", "tanjun", "motionJson").stdout or "").strip() or "{}")
         s.eq("motion restored quiet", after_quiet.get("key"), "quiet")
+        fast_speed = qs.ipc("call", "tanjun", "setMotionSpeed", "200")
+        s.eq("setMotionSpeed exit", fast_speed.returncode, 0)
+        try:
+            fast_motion = json.loads((fast_speed.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            fast_motion = {}
+        s.eq("motion speed 200", int(fast_motion.get("speed") or 0), 200)
+        s.eq("motion speed halves pop", int(fast_motion.get("pop") or 0), 110)
+        s.eq("motion speed halves panel", int(fast_motion.get("panel") or 0), 140)
+        slow_speed = qs.ipc("call", "tanjun", "setMotionSpeed", "50")
+        s.eq("setMotionSpeed slow exit", slow_speed.returncode, 0)
+        try:
+            slow_motion = json.loads((slow_speed.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            slow_motion = {}
+        s.eq("motion speed 50", int(slow_motion.get("speed") or 0), 50)
+        s.eq("motion speed 50 doubles pop", int(slow_motion.get("pop") or 0), 440)
+        reset_speed = qs.ipc("call", "tanjun", "setMotionSpeed", "100")
+        s.eq("setMotionSpeed reset exit", reset_speed.returncode, 0)
+        try:
+            reset_motion = json.loads((reset_speed.stdout or "").strip() or "{}")
+        except json.JSONDecodeError:
+            reset_motion = {}
+        s.eq("motion speed restored", int(reset_motion.get("speed") or 0), 100)
+        s.eq("motion speed restored pop", int(reset_motion.get("pop") or 0), 220)
         cfg_quiet = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
         ap_quiet = cfg_quiet.get("appearance") if isinstance(cfg_quiet, dict) else None
         s.ok(
             "default motion omitted from config",
             not isinstance(ap_quiet, dict) or ap_quiet.get("motion") in (None, "", "quiet"),
+            str(ap_quiet),
+        )
+        s.ok(
+            "default speed omitted from config",
+            not isinstance(ap_quiet, dict) or ap_quiet.get("motionSpeed") in (None, 0),
             str(ap_quiet),
         )
         user_after = user_cfg.read_bytes() if user_cfg.is_file() else b""

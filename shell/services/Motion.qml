@@ -17,11 +17,32 @@ Singleton {
     readonly property string kind: norm(Config.appearance.motion)
     readonly property var pack: packOf(kind)
 
-    readonly property int peek: pack.peek
-    readonly property int fast: pack.fast
-    readonly property int pop: pack.pop
-    readonly property int panel: pack.panel
-    readonly property int slow: pack.slow
+    // Speed is a percentage of the preset's own durations. The preset picks the
+    // shape of the motion; this scales every duration, so the whole shell can be
+    // made quicker or slower without losing that shape. 0 in the config means
+    // "not set", which is 100%.
+    readonly property int speedMin: 50
+    readonly property int speedMax: 200
+    readonly property int speedPct: {
+        const raw = Math.round(Number(Config.appearance.motionSpeed) || 0);
+        if (raw <= 0)
+            return 100;
+        return Math.max(speedMin, Math.min(speedMax, raw));
+    }
+    readonly property real speed: speedPct / 100
+
+    function time(ms) {
+        const base = Math.max(1, Math.round(ms));
+        if (speedPct === 100)
+            return base;
+        return Math.max(1, Math.round(base * 100 / speedPct));
+    }
+
+    readonly property int peek: time(pack.peek)
+    readonly property int fast: time(pack.fast)
+    readonly property int pop: time(pack.pop)
+    readonly property int panel: time(pack.panel)
+    readonly property int slow: time(pack.slow)
     readonly property int osdHold: pack.osdHold
 
     readonly property int easeOut: pack.easeOut
@@ -114,8 +135,17 @@ Singleton {
             panelY: panelY,
             osdY: osdY,
             toastX: toastX,
-            spring: spring
+            spring: spring,
+            speed: speedPct
         };
+    }
+
+    function setSpeed(pct) {
+        const n = Number(pct);
+        if (!isFinite(n))
+            return;
+        Config.appearance.motionSpeed = Math.max(speedMin, Math.min(speedMax, Math.round(n)));
+        Config.writeSparse();
     }
 
     function setMotion(id) {

@@ -151,6 +151,8 @@ Singleton {
             ap.style = appearance.style;
         if (appearance.motion.length && appearance.motion !== defaultMotion)
             ap.motion = appearance.motion;
+        if (appearance.motionSpeed > 0 && appearance.motionSpeed !== 100)
+            ap.motionSpeed = appearance.motionSpeed;
         if (Object.keys(ap).length)
             out.appearance = ap;
         if (theme.sampleWall === false)
@@ -262,6 +264,7 @@ Singleton {
                 property int fontPx: 0
                 property string style: ""
                 property string motion: ""
+                property int motionSpeed: 0
             }
 
             property JsonObject screens: JsonObject {

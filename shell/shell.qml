@@ -174,6 +174,11 @@ ShellRoot {
             return JSON.stringify(Motion.snapshot());
         }
 
+        function setMotionSpeed(raw: string): string {
+            Motion.setSpeed(Number(raw));
+            return JSON.stringify(Motion.snapshot());
+        }
+
         function setTheme(kind: string, name: string): string {
             Theme.setTheme(kind, name);
             return JSON.stringify(Theme.snapshot());
