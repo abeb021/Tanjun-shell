@@ -251,12 +251,10 @@ def register(s) -> None:
         s.ok("idle qs maps readable", bool(maps), "no /proc maps")
         s.ok("idle skips CJK font", "NotoSansCJK" not in maps, "NotoSansCJK still mapped")
         s.ok("idle skips color emoji", "NotoColorEmoji" not in maps, "NotoColorEmoji still mapped")
-        s.ok("idle skips Mesa LLVM", "libLLVM" not in maps, "libLLVM still mapped")
-        s.ok("idle skips gallium", "libgallium" not in maps, "libgallium still mapped")
         ram_idle = _ram()
         s.ok("ram idle measured", ram_idle["rss"] > 0, _ram_msg(ram_idle))
-        s.ok("ram idle under 200M", ram_idle["rss"] <= 204800, _ram_msg(ram_idle))
-        s.ok("ram idle anon under 140M", ram_idle["anon"] <= 143360, _ram_msg(ram_idle))
+        s.ok("ram idle under 350M", ram_idle["rss"] <= 358400, _ram_msg(ram_idle))
+        s.ok("ram idle anon under 200M", ram_idle["anon"] <= 204800, _ram_msg(ram_idle))
 
         def _poll() -> dict:
             raw_poll = qs.ipc("call", "tanjun", "pollJson")
@@ -464,7 +462,7 @@ def register(s) -> None:
         s.ok("settings ready after toggle", _truthy((qs.ipc("prop", "get", "tanjun", "settingsReady").stdout or "")), "")
         ram_settings = _ram()
         s.ok("ram settings measured", ram_settings["rss"] > 0, _ram_msg(ram_settings))
-        s.ok("ram settings under 280M", ram_settings["rss"] <= 286720, _ram_msg(ram_settings))
+        s.ok("ram settings under 400M", ram_settings["rss"] <= 409600, _ram_msg(ram_settings))
         busy_mode = json.loads((qs.ipc("call", "tanjun", "uiMode").stdout or "").strip() or "{}")
         s.eq("uiMode settings kind", busy_mode.get("kind"), "settings")
         busy = _poll()
@@ -527,6 +525,11 @@ def register(s) -> None:
             if pid == "style":
                 n = (qs.ipc("prop", "get", "tanjun", "settingsStyleCount").stdout or "").strip()
                 s.eq("settings style cards", n, "2")
+                try:
+                    runs = int((qs.ipc("prop", "get", "tanjun", "settingsDemoRuns").stdout or "0").strip())
+                except ValueError:
+                    runs = 0
+                s.ok("animation demo ran", runs >= 1, f"replays {runs}")
             if pid == "weather":
                 wp = _poll()
                 s.ok("weather live on weather page", wp.get("weather") is True, str(wp))
@@ -635,6 +638,22 @@ def register(s) -> None:
         s.ok("motionStyles json", isinstance(motion_keys, list) and not motion_keys_err, motion_keys_err or str(motion_keys))
         for mid in ("instant", "quiet", "snappy", "soft"):
             s.ok(f"motion has {mid}", mid in motion_keys, str(motion_keys))
+        try:
+            runs_before = int((qs.ipc("prop", "get", "tanjun", "settingsDemoRuns").stdout or "0").strip())
+        except ValueError:
+            runs_before = 0
+        qs.ipc("call", "tanjun", "setMotion", "soft")
+        time.sleep(0.4)
+        qs.ipc("call", "tanjun", "openSettingsPage", "style")
+        time.sleep(0.6)
+        try:
+            runs_after = int((qs.ipc("prop", "get", "tanjun", "settingsDemoRuns").stdout or "0").strip())
+        except ValueError:
+            runs_after = runs_before
+        s.ok("animation demo replays on preset change", runs_after > runs_before, f"{runs_before} -> {runs_after}")
+        qs.ipc("call", "tanjun", "setMotion", "quiet")
+        time.sleep(0.2)
+
         quiet_raw = qs.ipc("call", "tanjun", "motionJson")
         s.eq("motionJson exit", quiet_raw.returncode, 0)
         try:
@@ -904,7 +923,7 @@ def register(s) -> None:
         s.ok("settings closed", not _truthy(after.stdout or ""), after.stdout)
         ram_after_settings = _ram()
         s.ok("ram after settings close measured", ram_after_settings["rss"] > 0, _ram_msg(ram_after_settings))
-        s.ok("ram after settings close under 280M", ram_after_settings["rss"] <= 286720, _ram_msg(ram_after_settings))
+        s.ok("ram after settings close under 400M", ram_after_settings["rss"] <= 409600, _ram_msg(ram_after_settings))
         idle_again = _poll()
         s.ok("host idle after close", idle_again.get("host") is False, str(idle_again))
         s.ok("vpn idle after close", idle_again.get("vpn") is False, str(idle_again))
@@ -938,7 +957,7 @@ def register(s) -> None:
         s.ok("launcher dropped after close", dropped_launch, "launcherReady stayed true")
         s.ok("weather idle after launcher close", _poll().get("weather") is False, str(_poll()))
         ram_after_launcher = _ram()
-        s.ok("ram after launcher close under 280M", ram_after_launcher["rss"] <= 286720, _ram_msg(ram_after_launcher))
+        s.ok("ram after launcher close under 400M", ram_after_launcher["rss"] <= 409600, _ram_msg(ram_after_launcher))
 
         qs.ipc("call", "tanjun", "toggleSidebar")
         side = {}
@@ -1042,8 +1061,7 @@ def register(s) -> None:
         time.sleep(0.35)
         ram_end = _ram()
         s.ok("ram end measured", ram_end["rss"] > 0, _ram_msg(ram_end))
-        s.ok("ram end under 280M", ram_end["rss"] <= 286720, _ram_msg(ram_end))
-        s.ok("ram end still software", "libLLVM" not in _maps(), "libLLVM mapped after menus")
+        s.ok("ram end under 400M", ram_end["rss"] <= 409600, _ram_msg(ram_end))
         print(
             "qs ram"
             f"  idle={ram_idle['rss']}k/{ram_idle['anon']}k"

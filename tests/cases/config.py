@@ -92,7 +92,9 @@ def register(s) -> None:
                 if isinstance(appearance, dict) and "style" in appearance:
                     s.ok(
                         "config.appearance.style chrome",
-                        appearance["style"] in ("minimal", "chrome", "tanjun", "panel", ""),
+                        # "silk"/"smooth"/"glass" are retired styles a config may still carry; the shell
+                        # normalises them back to chrome instead of failing.
+                        appearance["style"] in ("minimal", "chrome", "tanjun", "panel", "silk", "smooth", "glass", ""),
                         str(appearance["style"]),
                     )
                 if isinstance(appearance, dict) and "motion" in appearance:
