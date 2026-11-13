@@ -17,7 +17,7 @@ PY
 )
 
 if [[ -z "${DEVICE_MAC:-}" ]]; then
-    notify-send -t 2500 -a "Bluetooth" "No buds MAC" "Set it in Settings → devices." -i dialog-error
+    notify-send -t 2500 -a "Bluetooth" "No buds MAC" "Set services.budsMac in ~/.config/tanjun/config.json." -i dialog-error
     exit 1
 fi
 

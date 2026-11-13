@@ -304,7 +304,7 @@ tour() {
 
   ipc toggleSettings
   beat 1.2
-  for page in system sound screen network bluetooth type clock weather devices style color; do
+  for page in system sound screen network bluetooth font clock weather style color; do
     ipc openSettingsPage "$page"
     beat 1.15
   done

@@ -72,8 +72,6 @@ Scope {
                     return "ClockPage.qml";
                 if (page === "weather")
                     return "WeatherPage.qml";
-                if (page === "devices")
-                    return "DevicesPage.qml";
                 if (page === "style")
                     return "StylePage.qml";
                 if (page === "color")
@@ -83,7 +81,7 @@ Scope {
 
             onPageChanged: {
                 resetRestScroll();
-                if (page !== "type")
+                if (page !== "font")
                     fonts = [];
                 if (open)
                     openWork.restart();
@@ -117,7 +115,7 @@ Scope {
                     Bt.scan(true);
                 else
                     Bt.scan(false);
-                if (page === "type" && !fonts.length) {
+                if (page === "font" && !fonts.length) {
                     fontsProc.running = false;
                     Qt.callLater(() => {
                         fontsProc.running = true;
@@ -464,8 +462,8 @@ Scope {
                             anchors.bottom: parent.bottom
                             clip: true
 
-                            TypePage {
-                                visible: win.page === "type"
+                            FontPage {
+                                visible: win.page === "font"
                                 anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
@@ -474,13 +472,13 @@ Scope {
                                 fonts: win.fonts
                                 onFacePicked: face => win.face = face
                                 onFontPicked: (which, name) => win.setFont(which, name)
-                                onSizeNudge: delta => win.nudgePx(delta)
+                                onSizeSet: px => win.setPx(px)
                                 onResetRequested: win.resetType()
                             }
 
                             Flickable {
                                 id: restFlick
-                                visible: win.page !== "type"
+                                visible: win.page !== "font"
                                 anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
@@ -598,9 +596,8 @@ Scope {
                 Config.writeSparse();
             }
 
-            function nudgePx(delta) {
-                const cur = Theme.fontPx;
-                const n = Math.max(11, Math.min(18, cur + delta));
+            function setPx(px) {
+                const n = Math.max(11, Math.min(18, px));
                 Config.appearance.fontPx = n === Config.defaultFontPx ? 0 : n;
                 Config.writeSparse();
             }
