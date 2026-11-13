@@ -7,6 +7,11 @@ import "../sidebar"
 import "../widgets"
 import "../../services"
 
+// One window per output holds the bar and all of its menus. The bar is a strip
+// item at the window's edge, every menu is a card item beside it, and opening a
+// menu moves nothing but the card. Keeping them in one surface is also what makes
+// the joint between the bar and an open menu seamless: there is no second window
+// whose edge could show through.
 Scope {
     Variants {
         model: Quickshell.screens
@@ -18,18 +23,22 @@ Scope {
             PanelWindow {
                 id: barWin
                 screen: desk.modelData
-                color: Theme.bg
+                color: "transparent"
 
                 readonly property bool vertical: Theme.barVertical
                 readonly property string edge: Theme.barEdge
+                readonly property int bar: Theme.barThickness
+                // A menu is open somewhere: the whole output turns into the bar
+                // surface so a click anywhere dismisses it, on every screen.
+                readonly property bool menuOpen: UiMode.popout.length > 0
 
                 WlrLayershell.namespace: "tanjun-bar"
                 WlrLayershell.layer: WlrLayer.Top
+                WlrLayershell.keyboardFocus: menuKeys.mode
 
-                IdleInhibitor {
-                    enabled: !!(Media.player && Media.player.isPlaying)
-                    window: barWin
-                }
+                // The window is the whole output, so the exclusive zone has to be
+                // stated explicitly: Auto would reserve the entire screen.
+                exclusiveZone: Theme.barThickness
 
                 anchors {
                     top: edge !== "bottom"
@@ -38,27 +47,51 @@ Scope {
                     right: edge !== "left"
                 }
 
-                implicitWidth: vertical ? Theme.barThickness : 0
-                implicitHeight: vertical ? 0 : Theme.barHeight
+                // Three anchors: the bar's edge plus the two along it, so the
+                // compositor knows which edge the exclusive zone belongs to. The
+                // depth axis is the output's own size, which makes the window
+                // cover the output.
+                implicitWidth: vertical ? (screen ? screen.width : 1) : 1
+                implicitHeight: vertical ? 1 : (screen ? screen.height : 1)
+
+                // While nothing is open only the bar strip takes input; while a
+                // menu is open the whole window does, which is what makes the
+                // menu modal without a second surface behind it.
+                mask: Region {
+                    item: barStrip
+                    Region {
+                        x: 0
+                        y: 0
+                        width: barWin.menuOpen && barWin.screen ? barWin.screen.width : 0
+                        height: barWin.menuOpen && barWin.screen ? barWin.screen.height : 0
+                    }
+                }
+
+                KeyPrime {
+                    id: menuKeys
+                    open: barWin.menuOpen
+                }
+
+                IdleInhibitor {
+                    enabled: !!(Media.player && Media.player.isPlaying)
+                    window: barWin
+                }
 
                 property bool draggingBar: false
                 property real dragStartX: 0
                 property real dragStartY: 0
 
-                // A layer surface anchored to the right or bottom edge is placed
-                // by the compositor, but Qt keeps the position the window was
-                // mapped with, so mapToGlobal reports the screen's top-left for
-                // those and the drag ends up glued to the wrong wall. The real
-                // origin follows from the edge and the screen size instead.
+                // The drag handler reports positions relative to the strip, which
+                // equals the screen only where the strip sits at the origin. Add
+                // the strip's own place in the window instead of guessing from the
+                // window geometry.
                 function screenPoint(local) {
                     const s = barWin.screen;
                     if (!s || !local)
                         return null;
-                    const ox = barWin.edge === "right" ? s.width - barWin.width : 0;
-                    const oy = barWin.edge === "bottom" ? s.height - barWin.height : 0;
                     return {
-                        x: Math.max(0, Math.min(s.width, ox + local.x)),
-                        y: Math.max(0, Math.min(s.height, oy + local.y))
+                        x: Math.max(0, Math.min(s.width, barStrip.x + local.x)),
+                        y: Math.max(0, Math.min(s.height, barStrip.y + local.y))
                     };
                 }
 
@@ -135,284 +168,280 @@ Scope {
                     UiMode.barDragEdge = "";
                 }
 
-                Rectangle {
-                    width: barWin.vertical ? Theme.barRule : parent.width
-                    height: barWin.vertical ? parent.height : Theme.barRule
-                    anchors.left: barWin.edge === "right" ? parent.left : undefined
-                    anchors.right: barWin.edge === "left" ? parent.right : undefined
-                    anchors.top: barWin.edge === "bottom" ? parent.top : undefined
-                    anchors.bottom: barWin.edge === "top" ? parent.bottom : undefined
-                    color: Theme.barLine
+                // Click away closes the menu. The window already takes the whole
+                // output's input while a menu is open, so the desktop under the
+                // transparent part of it is not reachable — no backdrop window.
+                MouseArea {
+                    z: -1
+                    anchors.fill: parent
+                    enabled: barWin.menuOpen
+                    onClicked: UiMode.closeMenus()
                 }
 
+                // The bar itself: the only part of the window that is on screen
+                // when nothing is open, and the strip every menu hangs off.
                 Item {
-                    id: hContent
-                    visible: !barWin.vertical
-                    anchors.fill: parent
-                    opacity: barWin.draggingBar ? 0.25 : 1
+                    id: barStrip
+                    x: barWin.edge === "right" ? parent.width - width : 0
+                    y: barWin.edge === "bottom" ? parent.height - height : 0
+                    width: barWin.vertical ? barWin.bar : parent.width
+                    height: barWin.vertical ? parent.height : barWin.bar
 
-                    Behavior on opacity {
-                        enabled: Motion.ready
-                        NumberAnimation {
-                            duration: Motion.fast
-                        }
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Theme.bg
                     }
 
-                    DragHandler {
-                        target: null
-                        acceptedButtons: Qt.LeftButton
-                        grabPermissions: PointerHandler.CanTakeOverFromAnything
+                    Rectangle {
+                        width: barWin.vertical ? Theme.barRule : parent.width
+                        height: barWin.vertical ? parent.height : Theme.barRule
+                        anchors.left: barWin.edge === "right" ? parent.left : undefined
+                        anchors.right: barWin.edge === "left" ? parent.right : undefined
+                        anchors.top: barWin.edge === "bottom" ? parent.top : undefined
+                        anchors.bottom: barWin.edge === "top" ? parent.bottom : undefined
+                        color: Theme.barLine
+                    }
 
-                        onActiveChanged: {
-                            if (active) {
-                                barWin.beginDrag(centroid.position);
-                            } else {
-                                if (barWin.draggingBar)
-                                    barWin.dragTo(centroid.position);
-                                barWin.endDrag();
+                    Item {
+                        id: hContent
+                        visible: !barWin.vertical
+                        anchors.fill: parent
+                        opacity: barWin.draggingBar ? 0.25 : 1
+
+                        Behavior on opacity {
+                            enabled: Motion.ready
+                            NumberAnimation {
+                                duration: Motion.fast
                             }
                         }
-                        onActiveTranslationChanged: {
-                            if (active)
-                                barWin.dragTo(centroid.position);
-                        }
-                    }
 
-                    Row {
-                        id: hLeft
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
+                        DragHandler {
+                            target: null
+                            acceptedButtons: Qt.LeftButton
+                            grabPermissions: PointerHandler.CanTakeOverFromAnything
 
-                        LogoBtn {
-                            id: hLogoBtn
-                        }
-                        Workspaces {
-                            id: hWorkspaces
-                            screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
-                        }
-                    }
-
-                    ClockBtn {
-                        id: hClockBtn
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Row {
-                        id: hRight
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        LayoutBtn {
-                            id: hLayoutBtn
-                        }
-                        AudioBtn {
-                            id: hAudioBtn
-                        }
-                        NetBtn {
-                            id: hNetBtn
-                        }
-                        NotifyBtn {
-                            id: hNotifyBtn
-                        }
-                        BatteryBtn {
-                            id: hBatteryBtn
-                        }
-
-                        Repeater {
-                            model: SystemTray.items
-                            delegate: TrayBtn {}
-                        }
-                    }
-                }
-
-                Item {
-                    id: vContent
-                    visible: barWin.vertical
-                    anchors.fill: parent
-                    opacity: barWin.draggingBar ? 0.25 : 1
-
-                    Behavior on opacity {
-                        enabled: Motion.ready
-                        NumberAnimation {
-                            duration: Motion.fast
-                        }
-                    }
-
-                    DragHandler {
-                        target: null
-                        acceptedButtons: Qt.LeftButton
-                        grabPermissions: PointerHandler.CanTakeOverFromAnything
-
-                        onActiveChanged: {
-                            if (active) {
-                                barWin.beginDrag(centroid.position);
-                            } else {
-                                if (barWin.draggingBar)
+                            onActiveChanged: {
+                                if (active) {
+                                    barWin.beginDrag(centroid.position);
+                                } else {
+                                    if (barWin.draggingBar)
+                                        barWin.dragTo(centroid.position);
+                                    barWin.endDrag();
+                                }
+                            }
+                            onActiveTranslationChanged: {
+                                if (active)
                                     barWin.dragTo(centroid.position);
-                                barWin.endDrag();
                             }
                         }
-                        onActiveTranslationChanged: {
-                            if (active)
-                                barWin.dragTo(centroid.position);
+
+                        Row {
+                            id: hLeft
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+
+                            LogoBtn {
+                                id: hLogoBtn
+                            }
+                            Workspaces {
+                                id: hWorkspaces
+                                screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
+                            }
+                        }
+
+                        ClockBtn {
+                            id: hClockBtn
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Row {
+                            id: hRight
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+
+                            LayoutBtn {
+                                id: hLayoutBtn
+                            }
+                            AudioBtn {
+                                id: hAudioBtn
+                            }
+                            NetBtn {
+                                id: hNetBtn
+                            }
+                            NotifyBtn {
+                                id: hNotifyBtn
+                            }
+                            BatteryBtn {
+                                id: hBatteryBtn
+                            }
+
+                            Repeater {
+                                model: SystemTray.items
+                                delegate: TrayBtn {}
+                            }
                         }
                     }
 
-                    Column {
-                        id: vTop
-                        width: parent.width
-                        anchors.top: parent.top
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 2
+                    Item {
+                        id: vContent
+                        visible: barWin.vertical
+                        anchors.fill: parent
+                        opacity: barWin.draggingBar ? 0.25 : 1
 
-                        LogoBtn {
-                            id: vLogoBtn
-                            width: parent.width
+                        Behavior on opacity {
+                            enabled: Motion.ready
+                            NumberAnimation {
+                                duration: Motion.fast
+                            }
                         }
-                        Workspaces {
-                            id: vWorkspaces
-                            vertical: true
-                            width: parent.width
-                            screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
-                        }
-                    }
 
-                    ClockBtn {
-                        id: vClockBtn
-                        compact: true
-                        width: parent.width
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+                        DragHandler {
+                            target: null
+                            acceptedButtons: Qt.LeftButton
+                            grabPermissions: PointerHandler.CanTakeOverFromAnything
 
-                    Column {
-                        id: vBottom
-                        width: parent.width
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 2
+                            onActiveChanged: {
+                                if (active) {
+                                    barWin.beginDrag(centroid.position);
+                                } else {
+                                    if (barWin.draggingBar)
+                                        barWin.dragTo(centroid.position);
+                                    barWin.endDrag();
+                                }
+                            }
+                            onActiveTranslationChanged: {
+                                if (active)
+                                    barWin.dragTo(centroid.position);
+                            }
+                        }
 
-                        LayoutBtn {
-                            id: vLayoutBtn
+                        Column {
+                            id: vTop
                             width: parent.width
+                            anchors.top: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 2
+
+                            LogoBtn {
+                                id: vLogoBtn
+                                width: parent.width
+                            }
+                            Workspaces {
+                                id: vWorkspaces
+                                vertical: true
+                                width: parent.width
+                                screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
+                            }
                         }
-                        AudioBtn {
-                            id: vAudioBtn
-                            width: parent.width
-                        }
-                        NetBtn {
-                            id: vNetBtn
-                            width: parent.width
-                        }
-                        NotifyBtn {
-                            id: vNotifyBtn
-                            width: parent.width
-                        }
-                        BatteryBtn {
-                            id: vBatteryBtn
-                            width: parent.width
+
+                        ClockBtn {
+                            id: vClockBtn
                             compact: true
+                            width: parent.width
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        Repeater {
-                            model: SystemTray.items
-                            delegate: TrayBtn {
-                                width: Theme.barThickness
+                        Column {
+                            id: vBottom
+                            width: parent.width
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 2
+
+                            LayoutBtn {
+                                id: vLayoutBtn
+                                width: parent.width
+                            }
+                            AudioBtn {
+                                id: vAudioBtn
+                                width: parent.width
+                            }
+                            NetBtn {
+                                id: vNetBtn
+                                width: parent.width
+                            }
+                            NotifyBtn {
+                                id: vNotifyBtn
+                                width: parent.width
+                            }
+                            BatteryBtn {
+                                id: vBatteryBtn
+                                width: parent.width
+                                compact: true
+                            }
+
+                            Repeater {
+                                model: SystemTray.items
+                                delegate: TrayBtn {
+                                    width: Theme.barThickness
+                                }
                             }
                         }
                     }
+                }
+
+                // Menus last, so their cards are drawn over the bar strip.
+                BarPop {
+                    name: "clock"
+                    barWindow: barWin
+                    strip: barStrip
+                    anchorItem: barWin.vertical ? vClockBtn : hClockBtn
+                    align: Item.Top
+                    source: "CalendarPop.qml"
+                }
+
+                BarPop {
+                    name: "audio"
+                    barWindow: barWin
+                    strip: barStrip
+                    anchorItem: barWin.vertical ? vAudioBtn : hAudioBtn
+                    align: Item.TopRight
+                    source: "AudioPop.qml"
+                }
+
+                BarPop {
+                    name: "network"
+                    barWindow: barWin
+                    strip: barStrip
+                    anchorItem: barWin.vertical ? vNetBtn : hNetBtn
+                    align: Item.TopRight
+                    source: "NetPop.qml"
+                }
+
+                BarPop {
+                    name: "notify"
+                    barWindow: barWin
+                    strip: barStrip
+                    anchorItem: barWin.vertical ? vNotifyBtn : hNotifyBtn
+                    align: Item.TopRight
+                    source: "NotifyPop.qml"
+                }
+
+                BarPop {
+                    name: "battery"
+                    barWindow: barWin
+                    strip: barStrip
+                    anchorItem: barWin.vertical ? vBatteryBtn : hBatteryBtn
+                    align: Item.TopRight
+                    source: "BatteryPop.qml"
+                }
+
+                BarPop {
+                    name: "tray"
+                    barWindow: barWin
+                    strip: barStrip
+                    anchorItem: UiMode.popoutAnchor || (barWin.vertical ? vBatteryBtn : hBatteryBtn)
+                    align: Item.TopRight
+                    source: "TrayPop.qml"
                 }
             }
 
             BarDragPreview {
                 screenObj: barWin.screen
-            }
-
-            LazyLoader {
-                id: clockLoad
-                // kept alive: a destroyed popout remaps on the next open, and a
-                // mapping layer surface is animated by the compositor
-                active: true
-                BarPop {
-                    name: "clock"
-                    barWindow: barWin
-                    anchorItem: barWin.vertical ? vClockBtn : hClockBtn
-                    align: Item.Top
-                    source: "CalendarPop.qml"
-                }
-            }
-
-            LazyLoader {
-                id: audioLoad
-                // kept alive: a destroyed popout remaps on the next open, and a
-                // mapping layer surface is animated by the compositor
-                active: true
-                BarPop {
-                    name: "audio"
-                    barWindow: barWin
-                    anchorItem: barWin.vertical ? vAudioBtn : hAudioBtn
-                    align: Item.TopRight
-                    source: "AudioPop.qml"
-                }
-            }
-
-            LazyLoader {
-                id: netLoad
-                // kept alive: a destroyed popout remaps on the next open, and a
-                // mapping layer surface is animated by the compositor
-                active: true
-                BarPop {
-                    name: "network"
-                    barWindow: barWin
-                    anchorItem: barWin.vertical ? vNetBtn : hNetBtn
-                    align: Item.TopRight
-                    source: "NetPop.qml"
-                }
-            }
-
-            LazyLoader {
-                id: notifyLoad
-                // kept alive: a destroyed popout remaps on the next open, and a
-                // mapping layer surface is animated by the compositor
-                active: true
-                BarPop {
-                    name: "notify"
-                    barWindow: barWin
-                    anchorItem: barWin.vertical ? vNotifyBtn : hNotifyBtn
-                    align: Item.TopRight
-                    source: "NotifyPop.qml"
-                }
-            }
-
-            LazyLoader {
-                id: batteryLoad
-                // kept alive: a destroyed popout remaps on the next open, and a
-                // mapping layer surface is animated by the compositor
-                active: true
-                BarPop {
-                    name: "battery"
-                    barWindow: barWin
-                    anchorItem: barWin.vertical ? vBatteryBtn : hBatteryBtn
-                    align: Item.TopRight
-                    source: "BatteryPop.qml"
-                }
-            }
-
-            LazyLoader {
-                id: trayLoad
-                // kept alive: a destroyed popout remaps on the next open, and a
-                // mapping layer surface is animated by the compositor
-                active: true
-                BarPop {
-                    name: "tray"
-                    barWindow: barWin
-                    anchorItem: UiMode.popoutAnchor || (barWin.vertical ? vBatteryBtn : hBatteryBtn)
-                    align: Item.TopRight
-                    source: "TrayPop.qml"
-                }
             }
 
             LazyLoader {

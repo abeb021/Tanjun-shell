@@ -1,24 +1,23 @@
 import QtQuick
-import Quickshell
 import "../widgets"
 import "../../services"
 
 // A bar menu: a card that rolls out of the bar.
 //
-// The surface the card lives in is pinned to the bar's edge once, when it is
-// created, and spans the bar. Its rect never changes afterwards, so opening a
-// menu only moves the card *inside* it, in plain item coordinates: no margins
-// are re-pinned, no configure round-trip happens, and the compositor already
-// knows where the panel is before the first click. That is what keeps the first
-// open from hopping into place.
-//
-// The content is instantiated for the whole session, so the card knows its size
-// before the click and the reveal is the only thing that animates.
-OverlayHost {
+// It is an item inside the bar's own window, so the bar and its menus are one
+// surface. Opening a menu moves the card in item coordinates only — no window is
+// created, moved, resized or re-anchored — and the joint between the bar and the
+// card is not a compositor seam. The content is instantiated for the whole
+// session, so the card knows its size before the click.
+Item {
     id: root
 
     required property string name
     required property Item anchorItem
+    // The bar's strip, the part of the window the bar itself occupies. The card
+    // hangs off it and the button's position is expressed relative to the window
+    // through it.
+    required property Item strip
     required property var barWindow
     // Which point of the anchor the panel hangs from: Top centres it, TopRight
     // aligns its right edge to the anchor (the usual case for a right-hand menu).
@@ -27,9 +26,27 @@ OverlayHost {
     property real cardW: 280
     property real cardH: 200
     // What the content needs (cardH) and what is on screen (shownH). A size
-    // change that arrives while the panel is open is grown into: the surface is
-    // already up, so only the card has to move.
+    // change that arrives while the panel is open is grown into: only the card
+    // moves, and the window around it is not touched.
     property real shownH: cardH
+
+    anchors.fill: parent
+
+    readonly property string edge: Theme.barEdge
+    readonly property bool vertical: edge === "left" || edge === "right"
+    readonly property int bar: Theme.barThickness
+    readonly property var screen: barWindow ? barWindow.screen : null
+    readonly property real spanW: screen ? screen.width : 1
+    readonly property real spanH: screen ? screen.height : 1
+
+    readonly property bool onThisScreen: {
+        const want = UiMode.popoutScreen;
+        const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
+        if (!want.length)
+            return Compositor.isScreenFocused(barWindow ? barWindow.screen : null);
+        return mine === want;
+    }
+    readonly property bool open: UiMode.popout === name && onThisScreen
 
     Behavior on shownH {
         enabled: root.open && Motion.kind !== "instant"
@@ -39,61 +56,25 @@ OverlayHost {
         }
     }
 
-    readonly property string edge: Theme.barEdge
-    readonly property bool vertical: edge === "left" || edge === "right"
-    readonly property int bar: Theme.barThickness
-    readonly property real spanW: root.screen ? root.screen.width : 1
-    readonly property real spanH: root.screen ? root.screen.height : 1
-    // Every menu caps itself at 440 px; the surface reaches past that so a card
-    // can never be clipped by the window it lives in.
-    readonly property real depth: Math.max(1, Math.min(root.vertical ? root.spanW - root.bar : root.spanH - root.bar, 600))
-
-    // Fixed for the session: the panel starts where the bar ends and reaches far
-    // enough for the tallest menu, so no size is ever requested from the
-    // compositor after creation and the closed surfaces stay small.
-    panelSized: true
-    panelEdge: root.edge
-    panelInset: root.bar - 1
-    panelDepth: root.depth
-    panelHotItem: (root.open || reveal.value > 0.001) ? card : null
-
-    screen: barWindow ? barWindow.screen : null
-    onThisScreen: {
-        const want = UiMode.popoutScreen;
-        const mine = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
-        if (!want.length)
-            return Compositor.isScreenFocused(barWindow ? barWindow.screen : null);
-        return mine === want;
-    }
-    open: UiMode.popout === name && onThisScreen
-    layerName: "tanjun-pop-" + name
-    dismissOthers: true
-    // popups own their own motion: keep the surface mapped so the compositor
-    // never animates the open or the close
-    keepMapped: true
-
-    // The button's place in output coordinates. The bar's clusters are direct
-    // children of its content item, so the offset of the cluster plus the offset
-    // of the button inside it is the screen position. Reading both properties
-    // keeps this live when either moves — the right-hand cluster shifts left as
-    // the tray grows.
+    // The button's place in the window. The chain is fixed — button -> cluster
+    // -> bar strip — and every offset is read so the binding follows a re-layout
+    // (the right-hand cluster shifts left as the tray grows).
     readonly property var anchorSpot: {
         const item = root.anchorItem;
-        if (!item || !root.barWindow || !root.screen)
+        if (!item || !root.strip)
             return Qt.point(0, 0);
-        const p = item.parent;
-        const x = item.x + (p ? p.x : 0);
-        const y = item.y + (p ? p.y : 0);
-        const originX = root.edge === "right" ? root.spanW - root.bar : 0;
-        const originY = root.edge === "bottom" ? root.spanH - root.bar : 0;
-        return Qt.point(x + originX, y + originY);
+        const cluster = item.parent;
+        return Qt.point(
+            root.strip.x + (cluster ? cluster.x : 0) + item.x,
+            root.strip.y + (cluster ? cluster.y : 0) + item.y
+        );
     }
     readonly property real anchorLen: root.anchorItem
         ? (root.vertical ? root.anchorItem.height : root.anchorItem.width)
         : 0
 
-    // Where the card sits along the bar. Screen coordinates, because the surface
-    // spans the whole bar on that axis.
+    // Where the card sits along the bar. Window coordinates, which are screen
+    // coordinates: the bar window covers the whole output.
     readonly property real cardAlong: {
         const spot = root.anchorSpot;
         const len = root.anchorLen;
@@ -105,6 +86,16 @@ OverlayHost {
             return spot.x + (len - root.cardW) / 2;
         return spot.x;
     }
+
+    // Across the bar the card is glued to the strip and overlaps its last row by
+    // a pixel, so the two read as one surface instead of a card with a line
+    // across the joint.
+    readonly property real cardX: root.vertical
+        ? (root.edge === "right" ? root.spanW - root.bar + 1 - root.cardW : root.bar - 1)
+        : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8))
+    readonly property real cardY: root.vertical
+        ? Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8))
+        : (root.edge === "bottom" ? root.spanH - root.bar + 1 - root.shownH : root.bar - 1)
 
     onOpenChanged: {
         if (!open)
@@ -132,20 +123,10 @@ OverlayHost {
         open: root.open
     }
 
-    // Where the card sits in the surface. Constant while the menu is open, apart
-    // from its own size: the surface under it never moves.
-    readonly property real cardX: root.vertical
-        ? (root.edge === "right" ? root.depth - root.cardW : 0)
-        : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8))
-    readonly property real cardY: root.vertical
-        ? Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8))
-        : (root.edge === "bottom" ? root.depth - root.shownH : 0)
-
     Item {
         id: card
-        // The final rect of the menu. It is also the input region, so a click made
-        // while the card is still rolling out lands on the menu instead of falling
-        // through to the backdrop and closing it.
+        // The final rect of the menu, and the part of the window that is a menu.
+        // It does not move with the reveal: the clip inside it uncovers the card.
         x: Math.round(root.cardX)
         y: Math.round(root.cardY)
         width: root.cardW
@@ -153,6 +134,8 @@ OverlayHost {
         focus: true
         Keys.onEscapePressed: UiMode.closeMenus()
 
+        // Swallow clicks on the card itself so they never reach the bar window's
+        // click-away area underneath.
         MouseArea {
             z: -1
             anchors.fill: parent
