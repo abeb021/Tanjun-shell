@@ -23,8 +23,8 @@ Scope {
                 top: true
                 right: true
             }
-            margins.top: Theme.barHeight + 8
-            margins.right: 8
+            margins.top: (Theme.barEdge === "top" ? Theme.barThickness : 0) + 8
+            margins.right: (Theme.barEdge === "right" ? Theme.barThickness : 0) + 8
 
             ListView {
                 id: toast

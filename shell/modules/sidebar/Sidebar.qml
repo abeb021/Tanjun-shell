@@ -21,11 +21,14 @@ OverlayHost {
     layerName: "tanjun-sidebar"
     dismissOthers: true
     contentOpacity: body.opacity
+    readonly property int barTop: Theme.barEdge === "top" ? Theme.barThickness : 0
+    readonly property int barBottom: Theme.barEdge === "bottom" ? Theme.barThickness : 0
+    readonly property int barLeft: Theme.barEdge === "left" ? Theme.barThickness : 0
     readonly property int maxH: {
         const s = barWindow && barWindow.screen;
         if (!s)
             return 720;
-        return Math.max(240, s.height - Theme.barHeight - 8);
+        return Math.max(240, s.height - barTop - barBottom - 8);
     }
 
     onOpenChanged: {
@@ -65,8 +68,8 @@ OverlayHost {
         // state first and letting one animation run from 0 -> 1 makes the slide
         // the first thing you see, on every preset.
         property real reveal: win.open ? 1 : 0
-        x: Math.round(-(width * (1 - reveal)))
-        y: Theme.barHeight
+        x: Math.round(win.barLeft - width * (1 - reveal))
+        y: win.barTop
         width: 320
         height: win.maxH
         opacity: reveal
@@ -75,7 +78,7 @@ OverlayHost {
         function reportSlide() {
             UiMode.sidebarX = x;
             UiMode.sidebarW = width;
-            UiMode.sidebarFromX = -width;
+            UiMode.sidebarFromX = win.barLeft - width;
             UiMode.sidebarEdge = "left";
         }
 

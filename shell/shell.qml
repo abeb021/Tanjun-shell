@@ -64,6 +64,7 @@ ShellRoot {
         property int settingsScrollY: SettingsNav.scrollY
         property string style: Theme.style
         property string motion: Motion.kind
+        property string barEdge: Theme.barEdge
         property int settingsStyleCount: SettingsNav.styleCount
         property int settingsDemoRuns: SettingsNav.demoRuns
         property int settingsToggleGap: SettingsNav.toggleGap
@@ -159,6 +160,11 @@ ShellRoot {
         function setStyle(id: string): string {
             Theme.setStyle(id);
             return JSON.stringify(Theme.style);
+        }
+
+        function setBarEdge(edge: string): string {
+            Theme.setBarEdge(edge);
+            return Theme.barEdge;
         }
 
         function motionStyles(): string {

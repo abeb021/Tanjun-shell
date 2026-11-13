@@ -27,6 +27,7 @@ Singleton {
     readonly property int defaultFontPx: 13
     readonly property string defaultStyle: "chrome"
     readonly property string defaultMotion: "quiet"
+    readonly property string defaultBarEdge: "top"
 
     readonly property string localId: {
         try {
@@ -153,6 +154,8 @@ Singleton {
             ap.motion = appearance.motion;
         if (appearance.motionSpeed > 0 && appearance.motionSpeed !== 100)
             ap.motionSpeed = appearance.motionSpeed;
+        if (appearance.barEdge.length && appearance.barEdge !== defaultBarEdge)
+            ap.barEdge = appearance.barEdge;
         if (Object.keys(ap).length)
             out.appearance = ap;
         if (theme.sampleWall === false)
@@ -265,6 +268,7 @@ Singleton {
                 property string style: ""
                 property string motion: ""
                 property int motionSpeed: 0
+                property string barEdge: ""
             }
 
             property JsonObject screens: JsonObject {

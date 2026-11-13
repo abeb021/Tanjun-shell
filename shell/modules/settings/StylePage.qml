@@ -8,6 +8,30 @@ Column {
     spacing: 16
 
     SetHead {
+        title: "BAR"
+        desc: "Which screen edge holds the shell bar."
+    }
+    Row {
+        width: parent.width
+        spacing: 10
+        Repeater {
+            model: [
+                { id: "top", label: "TOP" },
+                { id: "bottom", label: "BOTTOM" },
+                { id: "left", label: "LEFT" },
+                { id: "right", label: "RIGHT" }
+            ]
+            HudPick {
+                required property var modelData
+                width: (parent.width - parent.spacing * 3) / 4
+                label: modelData.label
+                current: Theme.barEdge === modelData.id
+                onClicked: Theme.setBarEdge(modelData.id)
+            }
+        }
+    }
+
+    SetHead {
         title: "CHROME"
         desc: "Whole shell chrome. Palettes stay on Color."
     }

@@ -139,6 +139,7 @@ def register(s) -> None:
             "motionJson",
             "setMotion",
             "setMotionSpeed",
+            "setBarEdge",
             "pollJson",
             "hostCaps",
             "settingsCatalog",
@@ -626,6 +627,25 @@ def register(s) -> None:
             "style restored",
             (qs.ipc("prop", "get", "tanjun", "style").stdout or "").strip(),
             prior_style or "chrome",
+        )
+
+        edge_set = qs.ipc("call", "tanjun", "setBarEdge", "bottom")
+        s.eq("setBarEdge exit", edge_set.returncode, 0)
+        s.eq("setBarEdge bottom", (edge_set.stdout or "").strip(), "bottom")
+        time.sleep(0.1)
+        s.eq("bar edge prop", (qs.ipc("prop", "get", "tanjun", "barEdge").stdout or "").strip(), "bottom")
+        cfg_edge = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
+        ap_edge = cfg_edge.get("appearance") if isinstance(cfg_edge, dict) else None
+        s.eq("config appearance.barEdge", (ap_edge or {}).get("barEdge"), "bottom")
+        edge_top = qs.ipc("call", "tanjun", "setBarEdge", "top")
+        s.eq("setBarEdge top", (edge_top.stdout or "").strip(), "top")
+        time.sleep(0.1)
+        cfg_edge = json.loads((qs.ipc("call", "tanjun", "configJson").stdout or "").strip() or "{}")
+        ap_edge = cfg_edge.get("appearance") if isinstance(cfg_edge, dict) else None
+        s.ok(
+            "default bar edge omitted from config",
+            not isinstance(ap_edge, dict) or ap_edge.get("barEdge") in (None, "", "top"),
+            str(ap_edge),
         )
 
         motion_keys_raw = qs.ipc("call", "tanjun", "motionStyles")

@@ -19,7 +19,9 @@ Scope {
                 id: barWin
                 screen: desk.modelData
                 color: Theme.bg
-                implicitHeight: Theme.barHeight
+
+                readonly property bool vertical: Theme.barVertical
+                readonly property string edge: Theme.barEdge
 
                 WlrLayershell.namespace: "tanjun-bar"
                 WlrLayershell.layer: WlrLayer.Top
@@ -30,64 +32,274 @@ Scope {
                 }
 
                 anchors {
-                    top: true
-                    left: true
-                    right: true
+                    top: edge !== "bottom"
+                    bottom: edge !== "top"
+                    left: edge !== "right"
+                    right: edge !== "left"
+                }
+
+                implicitWidth: vertical ? Theme.barThickness : 0
+                implicitHeight: vertical ? 0 : Theme.barHeight
+
+                property bool draggingBar: false
+
+                function screenAt(global) {
+                    const all = Quickshell.screens;
+                    if (all) {
+                        for (let i = 0; i < all.length; i++) {
+                            const s = all[i];
+                            if (global.x >= s.x && global.x < s.x + s.width && global.y >= s.y && global.y < s.y + s.height)
+                                return s;
+                        }
+                    }
+                    return barWin.screen;
+                }
+
+                function pickEdge(x, y, s) {
+                    let best = "top";
+                    let dist = y;
+                    if (s.height - y < dist) {
+                        best = "bottom";
+                        dist = s.height - y;
+                    }
+                    if (x < dist) {
+                        best = "left";
+                        dist = x;
+                    }
+                    if (s.width - x < dist)
+                        best = "right";
+                    return best;
+                }
+
+                function dragTo(global) {
+                    const s = screenAt(global);
+                    if (!s)
+                        return;
+                    const x = Math.max(0, Math.min(s.width, global.x - s.x));
+                    const y = Math.max(0, Math.min(s.height, global.y - s.y));
+                    UiMode.barDragScreen = `${s.name}`;
+                    UiMode.barDragX = x;
+                    UiMode.barDragY = y;
+                    UiMode.barDragEdge = pickEdge(x, y, s);
+                }
+
+                function beginDrag(global) {
+                    draggingBar = true;
+                    UiMode.barDragging = true;
+                    dragTo(global);
+                }
+
+                function endDrag() {
+                    if (!draggingBar)
+                        return;
+                    const edge = UiMode.barDragEdge;
+                    draggingBar = false;
+                    UiMode.barDragging = false;
+                    UiMode.barDragEdge = "";
+                    UiMode.barDragScreen = "";
+                    if (edge.length)
+                        Theme.setBarEdge(edge);
+                }
+
+                Component.onDestruction: {
+                    UiMode.barDragging = false;
+                    UiMode.barDragEdge = "";
                 }
 
                 Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    height: Theme.barRule
+                    width: barWin.vertical ? Theme.barRule : parent.width
+                    height: barWin.vertical ? parent.height : Theme.barRule
+                    anchors.left: barWin.edge === "right" ? parent.left : undefined
+                    anchors.right: barWin.edge === "left" ? parent.right : undefined
+                    anchors.top: barWin.edge === "bottom" ? parent.top : undefined
+                    anchors.bottom: barWin.edge === "top" ? parent.bottom : undefined
                     color: Theme.barLine
                 }
 
-                Row {
-                    id: left
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                Item {
+                    id: hContent
+                    visible: !barWin.vertical
+                    anchors.fill: parent
+                    opacity: barWin.draggingBar ? 0.25 : 1
 
-                    LogoBtn {
-                        id: logoBtn
+                    Behavior on opacity {
+                        enabled: Motion.ready
+                        NumberAnimation {
+                            duration: Motion.fast
+                        }
                     }
-                    Workspaces {
-                        screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
+
+                    DragHandler {
+                        target: null
+                        acceptedButtons: Qt.LeftButton
+                        grabPermissions: PointerHandler.CanTakeOverFromAnything
+
+                        onActiveChanged: {
+                            if (active) {
+                                barWin.beginDrag(hContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                            } else {
+                                if (barWin.draggingBar)
+                                    barWin.dragTo(hContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                barWin.endDrag();
+                            }
+                        }
+                        onActiveTranslationChanged: {
+                            if (active)
+                                barWin.dragTo(hContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                        }
+                    }
+
+                    Row {
+                        id: hLeft
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+
+                        LogoBtn {
+                            id: hLogoBtn
+                        }
+                        Workspaces {
+                            id: hWorkspaces
+                            screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
+                        }
+                    }
+
+                    ClockBtn {
+                        id: hClockBtn
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Row {
+                        id: hRight
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+
+                        LayoutBtn {
+                            id: hLayoutBtn
+                        }
+                        AudioBtn {
+                            id: hAudioBtn
+                        }
+                        NetBtn {
+                            id: hNetBtn
+                        }
+                        NotifyBtn {
+                            id: hNotifyBtn
+                        }
+                        BatteryBtn {
+                            id: hBatteryBtn
+                        }
+
+                        Repeater {
+                            model: SystemTray.items
+                            delegate: TrayBtn {}
+                        }
                     }
                 }
 
-                ClockBtn {
-                    id: clockBtn
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenter: parent.verticalCenter
+                Item {
+                    id: vContent
+                    visible: barWin.vertical
+                    anchors.fill: parent
+                    opacity: barWin.draggingBar ? 0.25 : 1
+
+                    Behavior on opacity {
+                        enabled: Motion.ready
+                        NumberAnimation {
+                            duration: Motion.fast
+                        }
+                    }
+
+                    DragHandler {
+                        target: null
+                        acceptedButtons: Qt.LeftButton
+                        grabPermissions: PointerHandler.CanTakeOverFromAnything
+
+                        onActiveChanged: {
+                            if (active) {
+                                barWin.beginDrag(vContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                            } else {
+                                if (barWin.draggingBar)
+                                    barWin.dragTo(vContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                                barWin.endDrag();
+                            }
+                        }
+                        onActiveTranslationChanged: {
+                            if (active)
+                                barWin.dragTo(vContent.mapToGlobal(centroid.position.x, centroid.position.y));
+                        }
+                    }
+
+                    Column {
+                        id: vTop
+                        width: parent.width
+                        anchors.top: parent.top
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 2
+
+                        LogoBtn {
+                            id: vLogoBtn
+                            width: parent.width
+                        }
+                        Workspaces {
+                            id: vWorkspaces
+                            vertical: true
+                            width: parent.width
+                            screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
+                        }
+                    }
+
+                    ClockBtn {
+                        id: vClockBtn
+                        compact: true
+                        width: parent.width
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Column {
+                        id: vBottom
+                        width: parent.width
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 2
+
+                        LayoutBtn {
+                            id: vLayoutBtn
+                            width: parent.width
+                        }
+                        AudioBtn {
+                            id: vAudioBtn
+                            width: parent.width
+                        }
+                        NetBtn {
+                            id: vNetBtn
+                            width: parent.width
+                        }
+                        NotifyBtn {
+                            id: vNotifyBtn
+                            width: parent.width
+                        }
+                        BatteryBtn {
+                            id: vBatteryBtn
+                            width: parent.width
+                            compact: true
+                        }
+
+                        Repeater {
+                            model: SystemTray.items
+                            delegate: TrayBtn {
+                                width: Theme.barThickness
+                            }
+                        }
+                    }
                 }
+            }
 
-                Row {
-                    id: right
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-
-                    LayoutBtn {}
-                    AudioBtn {
-                        id: audioBtn
-                    }
-                    NetBtn {
-                        id: netBtn
-                    }
-                    NotifyBtn {
-                        id: notifyBtn
-                    }
-                    BatteryBtn {
-                        id: batteryBtn
-                    }
-
-                    Repeater {
-                        model: SystemTray.items
-                        delegate: TrayBtn {}
-                    }
-                }
+            BarDragPreview {
+                screenObj: barWin.screen
             }
 
             LazyLoader {
@@ -98,7 +310,7 @@ Scope {
                 BarPop {
                     name: "clock"
                     barWindow: barWin
-                    anchorItem: clockBtn
+                    anchorItem: barWin.vertical ? vClockBtn : hClockBtn
                     align: Item.Top
                     source: "CalendarPop.qml"
                 }
@@ -112,7 +324,7 @@ Scope {
                 BarPop {
                     name: "audio"
                     barWindow: barWin
-                    anchorItem: audioBtn
+                    anchorItem: barWin.vertical ? vAudioBtn : hAudioBtn
                     align: Item.TopRight
                     source: "AudioPop.qml"
                 }
@@ -126,7 +338,7 @@ Scope {
                 BarPop {
                     name: "network"
                     barWindow: barWin
-                    anchorItem: netBtn
+                    anchorItem: barWin.vertical ? vNetBtn : hNetBtn
                     align: Item.TopRight
                     source: "NetPop.qml"
                 }
@@ -140,7 +352,7 @@ Scope {
                 BarPop {
                     name: "notify"
                     barWindow: barWin
-                    anchorItem: notifyBtn
+                    anchorItem: barWin.vertical ? vNotifyBtn : hNotifyBtn
                     align: Item.TopRight
                     source: "NotifyPop.qml"
                 }
@@ -154,7 +366,7 @@ Scope {
                 BarPop {
                     name: "battery"
                     barWindow: barWin
-                    anchorItem: batteryBtn
+                    anchorItem: barWin.vertical ? vBatteryBtn : hBatteryBtn
                     align: Item.TopRight
                     source: "BatteryPop.qml"
                 }
@@ -168,7 +380,7 @@ Scope {
                 BarPop {
                     name: "tray"
                     barWindow: barWin
-                    anchorItem: UiMode.popoutAnchor || batteryBtn
+                    anchorItem: UiMode.popoutAnchor || (barWin.vertical ? vBatteryBtn : hBatteryBtn)
                     align: Item.TopRight
                     source: "TrayPop.qml"
                 }

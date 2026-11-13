@@ -24,6 +24,14 @@ Singleton {
 
     readonly property int radius: 1
     readonly property int barHeight: 28
+    readonly property string barEdge: {
+        const e = `${Config.appearance.barEdge || ""}`.toLowerCase();
+        if (e === "bottom" || e === "left" || e === "right")
+            return e;
+        return "top";
+    }
+    readonly property bool barVertical: barEdge === "left" || barEdge === "right"
+    readonly property int barThickness: barVertical ? 40 : barHeight
     readonly property int fontPx: Config.appearance.fontPx > 0 ? Config.appearance.fontPx : Config.defaultFontPx
     readonly property string fontUi: Config.appearance.fontUi.length ? Config.appearance.fontUi : Config.defaultFontUi
     readonly property string fontJp: Config.appearance.fontJp.length ? Config.appearance.fontJp : Config.defaultFontJp
@@ -242,8 +250,15 @@ Singleton {
     }
 
     function setStyle(id) {
-        const k = normStyle(id);
-        Config.appearance.style = k === defaultStyle ? "" : k;
+        const next = normStyle(id);
+        Config.appearance.style = next === defaultStyle ? "" : next;
+        Config.writeSparse();
+    }
+
+    function setBarEdge(id) {
+        const e = `${id || ""}`.toLowerCase();
+        const next = (e === "bottom" || e === "left" || e === "right") ? e : "top";
+        Config.appearance.barEdge = next === "top" ? "" : next;
         Config.writeSparse();
     }
 

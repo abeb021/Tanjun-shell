@@ -59,7 +59,7 @@ Singleton {
             { title: "Screen off", sub: "battery", page: "battery", hay: "screen off dpms idle 10 min rest" },
             { title: "Sleep", sub: "battery", page: "battery", hay: "sleep suspend idle 15 min rest" },
             { title: "Hibernate", sub: "battery", page: "battery", hay: "hibernate idle 30 min rest later" },
-            { title: "style", sub: "page", page: "style", hay: "style chrome panel tanjun minimal look shell rail ticks animation motion speed" },
+            { title: "style", sub: "page", page: "style", hay: "style chrome panel tanjun minimal look shell rail ticks animation motion speed bar edge position" },
             { title: "Minimal", sub: "style", page: "style", hay: "minimal quiet plane rice tanjun" },
             { title: "Chrome", sub: "style", page: "style", hay: "chrome ticks chips marked rail panel" },
             { title: "Instant", sub: "style", page: "style", hay: "instant off none animation motion" },
@@ -67,6 +67,7 @@ Singleton {
             { title: "Snappy", sub: "style", page: "style", hay: "snappy fast animation motion" },
             { title: "Soft", sub: "style", page: "style", hay: "soft slow animation motion" },
             { title: "Animation speed", sub: "style", page: "style", hay: "animation speed motion duration fast slow slider" },
+            { title: "Bar position", sub: "style", page: "style", hay: "bar position edge top bottom left right" },
             { title: "color", sub: "page", page: "color", hay: "color theme palette preset" },
             { title: "From wall", sub: "color", page: "color", kind: "wall", name: "wall", hay: "from wall wallpaper accent sample" },
             { title: "keep palette", sub: "color", page: "color", hay: "keep palette wallpaper colors pull sample" }

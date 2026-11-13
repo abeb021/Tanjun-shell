@@ -28,6 +28,8 @@ PanelWindow {
     // changes is a rect the WM may re-flow, and on Hyprland a layer that shrinks
     // and grows back stays at the smaller size.
     property bool panelSized: false
+    // Panel-sized surfaces are clickable only while the content is actually shown.
+    property bool panelHot: true
     property real panelWidth: 0
     property real panelHeight: 0
     property real panelX: 0
@@ -70,16 +72,18 @@ PanelWindow {
         id: panelMask
         x: 0
         y: 0
-        width: root.open ? Math.ceil(root.panelWidth) : 0
-        height: root.open ? Math.ceil(root.panelHeight) : 0
+        width: root.open && root.panelHot ? Math.ceil(root.panelWidth) : 0
+        height: root.open && root.panelHot ? Math.ceil(root.panelHeight) : 0
     }
 
     Item {
         id: barHole
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: Theme.barHeight
+        anchors.left: (!Theme.barVertical || Theme.barEdge === "left") ? parent.left : undefined
+        anchors.right: (!Theme.barVertical || Theme.barEdge === "right") ? parent.right : undefined
+        anchors.top: (Theme.barVertical || Theme.barEdge === "top") ? parent.top : undefined
+        anchors.bottom: (Theme.barVertical || Theme.barEdge === "bottom") ? parent.bottom : undefined
+        width: Theme.barVertical ? Theme.barThickness : parent.width
+        height: Theme.barVertical ? parent.height : Theme.barThickness
     }
 
     readonly property var otherScreens: {
@@ -129,10 +133,12 @@ PanelWindow {
             }
             Item {
                 id: awayHole
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                height: Theme.barHeight
+                anchors.left: (!Theme.barVertical || Theme.barEdge === "left") ? parent.left : undefined
+                anchors.right: (!Theme.barVertical || Theme.barEdge === "right") ? parent.right : undefined
+                anchors.top: (Theme.barVertical || Theme.barEdge === "top") ? parent.top : undefined
+                anchors.bottom: (Theme.barVertical || Theme.barEdge === "bottom") ? parent.bottom : undefined
+                width: Theme.barVertical ? Theme.barThickness : parent.width
+                height: Theme.barVertical ? parent.height : Theme.barThickness
             }
             MouseArea {
                 anchors.fill: parent

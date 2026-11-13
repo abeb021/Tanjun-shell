@@ -60,6 +60,13 @@ Singleton {
     property real sidebarFromX: 0
     property string sidebarEdge: ""
     property string popGrow: ""
+    // bar dragging: a ghost bar follows the pointer, then the bar snaps to the
+    // edge the pointer ended nearest to
+    property bool barDragging: false
+    property string barDragScreen: ""
+    property real barDragX: 0
+    property real barDragY: 0
+    property string barDragEdge: ""
     // downward travel of a popup reveal: bar popups are uncovered from the bar's
     // bottom edge and never travel sideways
     property real popFromY: 0
