@@ -7,10 +7,13 @@ Rectangle {
     property string job: "pop"
     property bool lit: false
     property bool danger: false
-    // A surface that hangs off the bar: same material as the bar, square top edge,
-    // no line across the joint, so the panel reads as the bar opening rather than
-    // a card floating over it.
+    // A surface that hangs off the bar: same material as the bar, square where
+    // it meets the bar, rounded on the free edge, no line across the joint, so
+    // the panel reads as the bar opening rather than a card floating over it.
     property bool attach: false
+    // Which side the surface is attached to. Popups hang off the bar, so that is
+    // the bar's edge; anything else attaches at the top as before.
+    readonly property string attachEdge: (attach && job === "pop") ? Theme.barEdge : "top"
     property bool ticks: (job === "plane" && Theme.tick) || (job === "pop" && Theme.tickPops)
 
     readonly property int tickLen: job === "plane" ? Theme.tickPlane : Theme.tickPop
@@ -22,10 +25,10 @@ Rectangle {
     radius: Theme.radius
 
     // square where it meets the bar, rounded on the free edge
-    topLeftRadius: attach ? 0 : radius
-    topRightRadius: attach ? 0 : radius
-    bottomLeftRadius: radius
-    bottomRightRadius: radius
+    topLeftRadius: attach && (attachEdge === "top" || attachEdge === "left") ? 0 : radius
+    topRightRadius: attach && (attachEdge === "top" || attachEdge === "right") ? 0 : radius
+    bottomLeftRadius: attach && (attachEdge === "bottom" || attachEdge === "left") ? 0 : radius
+    bottomRightRadius: attach && (attachEdge === "bottom" || attachEdge === "right") ? 0 : radius
 
     Repeater {
         model: root.ticks ? 4 : 0
