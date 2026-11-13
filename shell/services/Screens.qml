@@ -12,6 +12,8 @@ Singleton {
     property bool hold: false
     property string _sunsetBody: ""
     property bool _sunsetRestart: false
+    property var _intentInternal: null
+    property int _fallbackTries: 0
 
     readonly property string sunsetPath: `${Config.configHome}/hypr/hyprsunset.conf`
     readonly property string nightAt: Config.screens.nightAt.length ? Config.screens.nightAt : "21:00"
@@ -128,7 +130,69 @@ Singleton {
             if (!hit && out.length)
                 pick = out[0].name;
         }
+        rememberInternal(out);
         syncScale();
+        fallbackDelay.restart();
+    }
+
+    function litCount(rows) {
+        let n = 0;
+        for (let i = 0; i < rows.length; i++) {
+            if (!rows[i].disabled)
+                n++;
+        }
+        return n;
+    }
+
+    function rememberInternal(rows) {
+        const internal = internalOf(rows);
+        if (internal && !internal.disabled)
+            _intentInternal = cloneRow(internal);
+    }
+
+    // "second" turns the laptop panel off. If the external output disappears,
+    // nothing is left lit. Turn the internal panel back on for this session;
+    // the persisted pin is left alone so replugging the external keeps working.
+    function ensureLit() {
+        const rows = list || [];
+        if (!rows.length) {
+            _fallbackTries = 0;
+            return;
+        }
+        if (litCount(rows) > 0) {
+            _fallbackTries = 0;
+            return;
+        }
+        if (_fallbackTries >= 3)
+            return;
+        const internal = internalOf(rows);
+        if (!internal)
+            return;
+        const keep = _intentInternal;
+        const next = [];
+        let row = null;
+        for (let i = 0; i < rows.length; i++) {
+            const r = cloneRow(rows[i]);
+            if (r.name === internal.name) {
+                r.disabled = false;
+                r.x = 0;
+                r.y = 0;
+                if (keep && keep.name === r.name) {
+                    const modes = r.modes || [];
+                    if (keep.mode && (!modes.length || modes.indexOf(keep.mode) >= 0))
+                        r.mode = keep.mode;
+                    if (keep.scale > 0)
+                        r.scale = keep.scale;
+                }
+                row = r;
+            }
+            next.push(r);
+        }
+        if (!row)
+            return;
+        _fallbackTries++;
+        list = next;
+        Compositor.applyMonitor(row);
     }
 
     function parse(text) {
@@ -168,6 +232,7 @@ Singleton {
         if (!row || !row.name)
             return;
         patch(row);
+        rememberInternal(list);
         Compositor.persistMonitors(list);
         Compositor.applyMonitor(row);
     }
@@ -373,9 +438,24 @@ Singleton {
         }
     }
 
+    Timer {
+        id: fallbackDelay
+        interval: 350
+        repeat: false
+        onTriggered: root.ensureLit()
+    }
+
     Connections {
         target: Compositor
         function onMonitorsDirty() {
+            root.refresh();
+        }
+    }
+
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
+            root._fallbackTries = 0;
             root.refresh();
         }
     }
