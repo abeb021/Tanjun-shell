@@ -87,15 +87,18 @@ Item {
         return spot.x;
     }
 
-    // Across the bar the card is glued to the strip and overlaps its last row by
-    // a pixel, so the two read as one surface instead of a card with a line
-    // across the joint.
+    // The card meets the bar flush: two translucent layers overlapping by a
+    // pixel would show a seam of doubled tint. Only styles whose bar has a rule
+    // line need the overlap, to stop that line at the menu.
+    readonly property int attachOverlap: Theme.barRule > 0 ? 1 : 0
+
+    // Across the bar the card is glued to the strip.
     readonly property real cardX: root.vertical
-        ? (root.edge === "right" ? root.spanW - root.bar + 1 - root.cardW : root.bar - 1)
+        ? (root.edge === "right" ? root.spanW - root.bar + root.attachOverlap - root.cardW : root.bar - root.attachOverlap)
         : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8))
     readonly property real cardY: root.vertical
         ? Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8))
-        : (root.edge === "bottom" ? root.spanH - root.bar + 1 - root.shownH : root.bar - 1)
+        : (root.edge === "bottom" ? root.spanH - root.bar + root.attachOverlap - root.shownH : root.bar - root.attachOverlap)
 
     onOpenChanged: {
         if (!open) {
@@ -161,17 +164,6 @@ Item {
             x: root.vertical ? (root.edge === "right" ? root.cardW - width : 0) : 0
             y: root.vertical ? 0 : (root.edge === "bottom" ? root.shownH - height : 0)
             clip: true
-
-            // Frosted material, inside the clip so it is only there where the
-            // card is, and aligned to the screen so it continues the bar's. The
-            // clip moves while the card reveals, so the offset follows it.
-            Glass {
-                anchors.fill: parent
-                visible: Theme.glass
-                screen: root.screen
-                regionX: Math.round(root.cardX) + morph.x
-                regionY: Math.round(root.cardY) + morph.y
-            }
 
             Item {
                 id: slot

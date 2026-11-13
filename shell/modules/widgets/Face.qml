@@ -22,7 +22,7 @@ Rectangle {
     readonly property int tickLen: job === "plane" ? Theme.tickPlane : Theme.tickPop
     readonly property int tickPad: job === "plane" ? Theme.tickPad : 8
 
-    color: (frosted && Theme.glass) ? "transparent" : ((attach || job === "plane" || job === "strip") ? Theme.bg : Theme.surface)
+    color: (frosted && Theme.glass) ? Theme.glassSurface : ((attach || job === "plane" || job === "strip") ? Theme.bg : Theme.surface)
     border.width: (attach || job === "strip") ? 0 : 1
     border.color: danger ? Theme.critical : (lit ? Theme.accent : (job === "plane" ? Theme.planeBorder : Theme.popBorder))
     radius: Theme.radius

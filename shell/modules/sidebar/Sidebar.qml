@@ -118,16 +118,6 @@ OverlayHost {
                     onClicked: {}
                 }
 
-                // Frosted material, aligned to the screen: the drawer slides over a
-                // backdrop that does not slide with it.
-                Glass {
-                    anchors.fill: parent
-                    visible: Theme.glass
-                    screen: win.screen
-                    regionX: body.x
-                    regionY: body.y
-                }
-
                 Face {
                     job: "plane"
                     attach: true

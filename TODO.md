@@ -182,7 +182,7 @@ From the Serpantinum source read (see `.cursor/research.md`). All shell-side: no
 - [x] Two-phase growth — not needed: the card is placed inside the bar's own full-output window
 - [x] Close duration — kept ours; `Motion.fast` already scales with the speed slider
 - [ ] SDF `smin` union shader, `.qsb` built in nix (possible now that the union exists; `Theme.radius` is 1, so it is a style decision)
-- [x] In-shell wallpaper glass (`widgets/Glass.qml`: quarter-res wallpaper + `MultiEffect`, `Theme.glassAlpha` token, screen-aligned so bar and menus continue one image) — Appearance → Material
+- [x] Frosted surfaces: translucent tint (`Theme.glassSurface` / `glassAlpha`) + compositor layer `blur`/`ignore_alpha` for `tanjun-bar` and `tanjun-sidebar` in the repo's Hyprland rules — Appearance → Material
 - [x] Hover-intent popouts with a grace timer — Appearance → Hover
 - [x] Keep-map the remaining full-screen overlays so nothing remaps (costs ~30–40 MB idle RSS: 195 → 227 at startup, 236 once settings pages are visited; revert the four `LazyLoader active: true` lines if the budget matters more)
 - [ ] Host/content split for the big overlays: always-mapped window, body unloaded while closed (would give keep-mapped without the RSS cost)

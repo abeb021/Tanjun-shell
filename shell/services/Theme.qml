@@ -98,13 +98,14 @@ Singleton {
     property string wallFile: ""
     property string wallStill: ""
 
-    // The image the shell blurs for its frosted material. The still frame wins:
-    // a video wallpaper would have to be re-read on every frame.
-    readonly property string wallPath: root.wallStill.length ? root.wallStill : root.wallFile
-    readonly property url wallSource: root.wallPath.length ? `file://${root.wallPath}` : ""
-    readonly property bool glass: Config.appearance.glass && root.wallPath.length > 0
-    // How much tint sits over the blur (the elementOpacity token).
-    readonly property real glassAlpha: 0.72
+    // Frosted material. The blur is the compositor's: it blurs whatever is
+    // actually behind the surface (see compositors/hyprland/modules/rules.lua),
+    // so the shell only supplies a translucent tint over it. On a compositor
+    // without layer blur the same tint still reads as glass, just unblurred.
+    readonly property bool glass: Config.appearance.glass
+    // How much of the backdrop the material hides (the elementOpacity token).
+    readonly property real glassAlpha: 0.6
+    readonly property color glassSurface: Qt.rgba(bg.r, bg.g, bg.b, root.glassAlpha)
 
     readonly property string wallDir: `${Config.stateDir}/walls`
     readonly property string wallDirLegacy: `${Config.configHome}/hypr/assets/wallpapers`

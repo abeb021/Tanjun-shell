@@ -74,3 +74,15 @@ for _, ns in ipairs({
         no_anim = true,
     })
 end
+
+-- The bar, its menus and the drawer are frosted: blur what is actually behind
+-- them instead of what is behind the window. ignore_alpha keeps the fully
+-- transparent parts of those full-screen surfaces sharp, so only the material
+-- itself gets the backdrop blur.
+for _, ns in ipairs({ "tanjun-bar", "tanjun-sidebar" }) do
+    hl.layer_rule({
+        match = { namespace = ns },
+        blur = true,
+        ignore_alpha = 0.05,
+    })
+end

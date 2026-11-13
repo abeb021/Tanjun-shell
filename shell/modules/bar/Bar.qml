@@ -189,18 +189,10 @@ Scope {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: Theme.bg
-                        visible: !Theme.glass
-                    }
-
-                    // Frosted material behind the bar. It is aligned to the screen,
-                    // so a menu hanging off the bar continues the same image.
-                    Glass {
-                        anchors.fill: parent
-                        visible: Theme.glass
-                        screen: barWin.screen
-                        regionX: barStrip.x
-                        regionY: barStrip.y
+                        // A translucent tint: the compositor blurs what is behind
+                        // the surface (layer rule `blur`), so the material is
+                        // whatever actually lies under the bar.
+                        color: Theme.glass ? Theme.glassSurface : Theme.bg
                     }
 
                     Rectangle {
