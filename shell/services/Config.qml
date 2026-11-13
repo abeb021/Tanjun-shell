@@ -44,6 +44,7 @@ Singleton {
     }
 
     property bool _rewriting: false
+    property bool _loaded: false
     property string _pendingText: ""
 
     function prettyZone(id) {
@@ -184,6 +185,10 @@ Singleton {
     }
 
     function writeSparse() {
+        // Never write before the file has been read at least once: writing from
+        // half-initialised defaults clobbers every pin the user has set.
+        if (!_loaded)
+            return;
         _rewriting = true;
         _pendingText = `${JSON.stringify(sparseObject(), null, 2)}\n`;
         if (mkDirs.running)
@@ -223,7 +228,9 @@ Singleton {
             if (!root._rewriting)
                 reload();
         }
+        onLoadFailed: root._loaded = true
         onLoaded: {
+            root._loaded = true;
             try {
                 const raw = JSON.parse(text());
                 if (root.isFlat(raw)) {
