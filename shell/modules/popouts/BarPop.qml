@@ -12,8 +12,12 @@ OverlayHost {
     property int align: Item.TopLeft
     property real cardW: 280
     property real cardH: 200
-
-    default property alias popChildren: slot.data
+    // Content is loaded on first open and unloaded after close, while the window
+    // itself stays mapped: the compositor never sees a map/unmap, so it never
+    // animates the popup. Keeping the surface costs a pixel, keeping the QML
+    // tree costs tens of megabytes.
+    property string source: ""
+    property bool everOpen: false
 
     screen: barWindow ? barWindow.screen : null
     onThisScreen: {
@@ -26,11 +30,15 @@ OverlayHost {
     open: UiMode.popout === name && onThisScreen
     layerName: "tanjun-pop-" + name
     dismissOthers: true
+    // popups own their own motion: keep the surface mapped so the compositor
+    // never animates the open or the close
+    keepMapped: true
     // opacity is constant now, so keep the surface up while the spring retracts
     contentOpacity: (root.open || morph.height > 1) ? 1 : 0
 
     onOpenChanged: {
         if (open) {
+            everOpen = true;
             root.place();
             Qt.callLater(() => {
                 if (!root.open)
@@ -131,6 +139,20 @@ OverlayHost {
             id: slot
             width: root.cardW
             height: root.cardH
+
+            Loader {
+                id: pop
+                anchors.fill: parent
+                active: root.everOpen && (root.open || root.contentOpacity > 0.02)
+                source: root.source.length ? Qt.resolvedUrl(root.source) : ""
+                onLoaded: {
+                    if (!item)
+                        return;
+                    root.cardW = item.implicitWidth > 0 ? item.implicitWidth : root.cardW;
+                    root.cardH = item.implicitHeight > 0 ? item.implicitHeight : root.cardH;
+                    root.place();
+                }
+            }
         }
 
 

@@ -13,12 +13,20 @@ PanelWindow {
     property bool holdExclusive: false
     property bool dismissOthers: false
     property real contentOpacity: 0
+    // Stay mapped instead of unmapping when hidden, collapsed to a 1x1 surface.
+    //
+    // A layer surface that maps and unmaps is animated by the compositor, and
+    // those animations are per-compositor config the shell does not own: on
+    // Hyprland a popup would pick up `layersOut popin` and close like a window.
+    // Keeping the surface alive means the compositor has no open/close to
+    // animate, so the motion is entirely the shell's — on any compositor.
+    property bool keepMapped: false
 
     default property alias content: body.data
 
     readonly property bool shown: (open && onThisScreen) || contentOpacity > 0.02
 
-    visible: shown
+    visible: keepMapped ? true : shown
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     exclusiveZone: -1
@@ -89,9 +97,14 @@ PanelWindow {
     anchors {
         top: true
         left: true
-        right: true
-        bottom: true
+        right: !root.keepMapped
+        bottom: !root.keepMapped
     }
+
+    // A collapsed surface still answers the compositor, but costs a pixel instead
+    // of a screen-sized buffer while the popup is closed.
+    implicitWidth: root.keepMapped ? (root.shown ? (root.screen ? root.screen.width : 1) : 1) : 0
+    implicitHeight: root.keepMapped ? (root.shown ? (root.screen ? root.screen.height : 1) : 1) : 0
 
     signal dismissed
 

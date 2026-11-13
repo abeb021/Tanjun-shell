@@ -92,97 +92,85 @@ Scope {
 
             LazyLoader {
                 id: clockLoad
-                active: UiMode.popout === "clock" || UiMode.popoutKeep === "clock"
+                // kept alive: a destroyed popout remaps on the next open, and a
+                // mapping layer surface is animated by the compositor
+                active: true
                 BarPop {
                     name: "clock"
                     barWindow: barWin
                     anchorItem: clockBtn
                     align: Item.Top
-                    cardW: cal.implicitWidth
-                    cardH: cal.implicitHeight
-                    CalendarPop {
-                        id: cal
-                    }
+                    source: "CalendarPop.qml"
                 }
             }
 
             LazyLoader {
                 id: audioLoad
-                active: UiMode.popout === "audio" || UiMode.popoutKeep === "audio"
+                // kept alive: a destroyed popout remaps on the next open, and a
+                // mapping layer surface is animated by the compositor
+                active: true
                 BarPop {
                     name: "audio"
                     barWindow: barWin
                     anchorItem: audioBtn
                     align: Item.TopRight
-                    cardW: ap.implicitWidth
-                    cardH: ap.implicitHeight
-                    AudioPop {
-                        id: ap
-                    }
+                    source: "AudioPop.qml"
                 }
             }
 
             LazyLoader {
                 id: netLoad
-                active: UiMode.popout === "network" || UiMode.popoutKeep === "network"
+                // kept alive: a destroyed popout remaps on the next open, and a
+                // mapping layer surface is animated by the compositor
+                active: true
                 BarPop {
                     name: "network"
                     barWindow: barWin
                     anchorItem: netBtn
                     align: Item.TopRight
-                    cardW: np.implicitWidth
-                    cardH: np.implicitHeight
-                    NetPop {
-                        id: np
-                    }
+                    source: "NetPop.qml"
                 }
             }
 
             LazyLoader {
                 id: notifyLoad
-                active: UiMode.popout === "notify" || UiMode.popoutKeep === "notify"
+                // kept alive: a destroyed popout remaps on the next open, and a
+                // mapping layer surface is animated by the compositor
+                active: true
                 BarPop {
                     name: "notify"
                     barWindow: barWin
                     anchorItem: notifyBtn
                     align: Item.TopRight
-                    cardW: ntp.implicitWidth
-                    cardH: ntp.implicitHeight
-                    NotifyPop {
-                        id: ntp
-                    }
+                    source: "NotifyPop.qml"
                 }
             }
 
             LazyLoader {
                 id: batteryLoad
-                active: UiMode.popout === "battery" || UiMode.popoutKeep === "battery"
+                // kept alive: a destroyed popout remaps on the next open, and a
+                // mapping layer surface is animated by the compositor
+                active: true
                 BarPop {
                     name: "battery"
                     barWindow: barWin
                     anchorItem: batteryBtn
                     align: Item.TopRight
-                    cardW: bp.implicitWidth
-                    cardH: bp.implicitHeight
-                    BatteryPop {
-                        id: bp
-                    }
+                    source: "BatteryPop.qml"
                 }
             }
 
             LazyLoader {
                 id: trayLoad
-                active: UiMode.popout === "tray" || UiMode.popoutKeep === "tray"
+                // kept alive: a destroyed popout remaps on the next open, and a
+                // mapping layer surface is animated by the compositor
+                active: true
                 BarPop {
                     name: "tray"
                     barWindow: barWin
                     anchorItem: UiMode.popoutAnchor || batteryBtn
                     align: Item.TopRight
-                    cardW: tp.implicitWidth
-                    cardH: tp.implicitHeight
-                    TrayPop {
-                        id: tp
-                    }
+                    source: "TrayPop.qml"
                 }
             }
 
