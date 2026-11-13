@@ -10,8 +10,8 @@ Item {
 
     property string face: "ui"
     property var fonts: []
-    readonly property int minPx: 11
-    readonly property int maxPx: 18
+    readonly property int minPx: 6
+    readonly property int maxPx: 64
 
     signal facePicked(string face)
     signal fontPicked(string which, string name)
@@ -82,7 +82,7 @@ Item {
 
         Row {
             width: parent.width
-            spacing: 12
+            spacing: 10
 
             BarText {
                 anchors.verticalCenter: parent.verticalCenter
@@ -90,21 +90,90 @@ Item {
                 role: "head"
             }
 
-            HudSlider {
+            // A stepper and a field, not a slider: the size is a number you
+            // can type exactly, and +/- are just the fast path.
+            Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.max(80, parent.width - 196)
-                notches: root.maxPx - root.minPx + 1
-                value: (Theme.fontPx - root.minPx) / (root.maxPx - root.minPx)
-                onCommitted: v => root.sizeSet(root.minPx + Math.round(v * (root.maxPx - root.minPx)))
+                width: 124
+                height: 32
+                radius: Theme.radius
+                color: Theme.surface
+                border.width: 1
+                border.color: sizeEdit.activeFocus ? Theme.accent : Theme.hairline
+
+                Row {
+                    anchors.fill: parent
+                    anchors.margins: 2
+
+                    Item {
+                        width: 34
+                        height: parent.height
+
+                        BarText {
+                            anchors.centerIn: parent
+                            text: "−"
+                            px: 15
+                            family: Config.defaultFontUi
+                            color: minusHover.hovered ? Theme.accent : Theme.fg
+                        }
+                        MouseArea {
+                            id: minusHover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.sizeSet(Theme.fontPx - 1)
+                        }
+                    }
+
+                    TextInput {
+                        id: sizeEdit
+                        width: 52
+                        height: parent.height
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.family: Config.defaultFontUi
+                        font.pixelSize: 13
+                        color: Theme.fg
+                        inputMethodHints: Qt.ImhDigitsOnly
+                        validator: IntValidator {
+                            bottom: root.minPx
+                            top: root.maxPx
+                        }
+                        onEditingFinished: root.commitSize()
+                        onActiveFocusChanged: if (!activeFocus)
+                            root.commitSize()
+                        Keys.onReturnPressed: root.commitSize()
+                        Keys.onEnterPressed: root.commitSize()
+                        Keys.onUpPressed: root.sizeSet(Theme.fontPx + 1)
+                        Keys.onDownPressed: root.sizeSet(Theme.fontPx - 1)
+                    }
+
+                    Item {
+                        width: 34
+                        height: parent.height
+
+                        BarText {
+                            anchors.centerIn: parent
+                            text: "+"
+                            px: 15
+                            family: Config.defaultFontUi
+                            color: plusHover.hovered ? Theme.accent : Theme.fg
+                        }
+                        MouseArea {
+                            id: plusHover
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.sizeSet(Theme.fontPx + 1)
+                        }
+                    }
+                }
             }
 
             BarText {
                 anchors.verticalCenter: parent.verticalCenter
-                width: 26
-                horizontalAlignment: Text.AlignRight
-                text: `${Theme.fontPx}`
-                px: 12
-                family: Config.defaultFontUi
+                text: "PX"
+                role: "head"
             }
 
             HudPick {
@@ -116,6 +185,24 @@ Item {
                 onClicked: root.resetRequested()
             }
         }
+    }
+
+    Connections {
+        target: Theme
+        function onFontPxChanged() {
+            if (!sizeEdit.activeFocus)
+                sizeEdit.text = `${Theme.fontPx}`;
+        }
+    }
+
+    Component.onCompleted: sizeEdit.text = `${Theme.fontPx}`
+
+    function commitSize() {
+        const n = parseInt(sizeEdit.text, 10);
+        if (!isNaN(n))
+            root.sizeSet(n);
+        if (!sizeEdit.activeFocus)
+            sizeEdit.text = `${Theme.fontPx}`;
     }
 
     FontPick {

@@ -7,7 +7,7 @@ Singleton {
     id: root
 
     property string text: ""
-    readonly property bool wanted: UiMode.launcherOpen || (UiMode.settingsOpen && SettingsNav.page === "weather")
+    readonly property bool wanted: UiMode.launcherOpen
     readonly property bool live: wanted
 
     readonly property string query: Config.services.weatherCity.length ? encodeURIComponent(Config.services.weatherCity) : ""

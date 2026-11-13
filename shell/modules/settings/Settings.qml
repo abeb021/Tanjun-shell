@@ -70,8 +70,6 @@ Scope {
                     return "BatteryPage.qml";
                 if (page === "clock")
                     return "ClockPage.qml";
-                if (page === "weather")
-                    return "WeatherPage.qml";
                 if (page === "style")
                     return "StylePage.qml";
                 if (page === "color")
@@ -597,7 +595,7 @@ Scope {
             }
 
             function setPx(px) {
-                const n = Math.max(11, Math.min(18, px));
+                const n = Math.max(6, Math.min(64, px));
                 Config.appearance.fontPx = n === Config.defaultFontPx ? 0 : n;
                 Config.writeSparse();
             }

@@ -14,7 +14,6 @@ Singleton {
         { key: "bluetooth", label: "Bluetooth", icon: "󰂯", group: "NETWORK", about: "Adapter, devices, and pairing" },
         { key: "font", label: "Font", icon: "󰛖", group: "DESKTOP", about: "Families, icons, and UI size" },
         { key: "clock", label: "Clock", icon: "󰥔", group: "DESKTOP", about: "Clock format and time zones" },
-        { key: "weather", label: "Weather", icon: "󰖕", group: "DESKTOP", about: "City and forecast" },
         { key: "style", label: "Style", icon: "󰀼", group: "APPEARANCE", about: "Chrome, motion, and speed" },
         { key: "color", label: "Color", icon: "󰏘", group: "APPEARANCE", about: "Palettes and wallpaper" }
     ]
@@ -43,7 +42,6 @@ Singleton {
             { title: "Melbourne", sub: "clock", page: "clock", hay: "melbourne australia/melbourne timezone clock" },
             { title: "12 hour", sub: "clock", page: "clock", hay: "12 hour am pm clock" },
             { title: "24 hour", sub: "clock", page: "clock", hay: "24 hour clock" },
-            { title: "weather", sub: "page", page: "weather", hay: "weather city wttr moscow" },
             { title: "screen", sub: "page", page: "screen", hay: "screen monitor display scale gamma output edp brightness layout first second extend" },
             { title: "scale", sub: "screen", page: "screen", hay: "scale 1.2 fractional scaling monitor" },
             { title: "gamma", sub: "screen", page: "screen", hay: "gamma hyprsunset night identity" },

@@ -484,7 +484,7 @@ def register(s) -> None:
             pages = []
             pages_err = str(e)
         s.ok("settingsPages json", isinstance(pages, list) and not pages_err, pages_err or str(pages))
-        for pid in ("system", "sound", "screen", "battery", "network", "bluetooth", "font", "clock", "weather", "style", "color"):
+        for pid in ("system", "sound", "screen", "battery", "network", "bluetooth", "font", "clock", "style", "color"):
             s.ok(f"settings has {pid}", pid in pages, str(pages))
         s.ok("settings has no session", "session" not in pages, str(pages))
         s.ok("battery after screen", pages.index("battery") == pages.index("screen") + 1 if "battery" in pages and "screen" in pages else False, str(pages))
@@ -503,13 +503,13 @@ def register(s) -> None:
         qs.ipc("call", "tanjun", "openSettingsPage", "system")
         time.sleep(0.2)
         rail_n = (qs.ipc("prop", "get", "tanjun", "settingsRailCount").stdout or "").strip()
-        s.eq("settings rail count", rail_n, "11")
+        s.eq("settings rail count", rail_n, "10")
         try:
             rail_h = int((qs.ipc("prop", "get", "tanjun", "settingsRailH").stdout or "0").strip())
         except ValueError:
             rail_h = 0
         s.ok("settings rail visible", rail_h >= 200, f"height {rail_h}")
-        for pid in ("network", "bluetooth", "screen", "battery", "font", "clock", "weather", "style", "color"):
+        for pid in ("network", "bluetooth", "screen", "battery", "font", "clock", "style", "color"):
             qs.ipc("call", "tanjun", "openSettingsPage", pid)
             page_now = ""
             deadline = time.time() + 1.5
@@ -532,10 +532,6 @@ def register(s) -> None:
                 except ValueError:
                     runs = 0
                 s.ok("animation demo ran", runs >= 1, f"replays {runs}")
-            if pid == "weather":
-                wp = _poll()
-                s.ok("weather live on weather page", wp.get("weather") is True, str(wp))
-                s.ok("host idle on weather page", wp.get("host") is False, str(wp))
             if pid in ("network", "bluetooth"):
                 try:
                     gap = int((qs.ipc("prop", "get", "tanjun", "settingsToggleGap").stdout or "-1").strip())
