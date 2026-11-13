@@ -15,9 +15,9 @@ Item {
         id: typeHead
         width: parent.width
         spacing: 12
-        BarText {
-            text: "FACE"
-            role: "head"
+        SetHead {
+            title: "FACE"
+            desc: "Empty = default."
         }
         Row {
             width: parent.width
@@ -36,14 +36,6 @@ Item {
                     onClicked: root.facePicked(modelData.id)
                 }
             }
-        }
-        BarText {
-            text: "Empty = default"
-            px: 11
-            family: Config.defaultFontUi
-            color: Theme.fgSub
-            width: parent.width
-            wrapMode: Text.Wrap
         }
     }
 

@@ -9,11 +9,9 @@ Rectangle {
     property bool current: false
 
     width: parent.width
-    height: 38
+    height: 34
     radius: Theme.radius
     color: current ? Theme.hot : (hover.containsMouse ? Theme.hotSoft : "transparent")
-    border.width: Theme.railMark && current ? 1 : 0
-    border.color: Theme.accent
     Behavior on color {
         enabled: Motion.ready
         ColorAnimation {
@@ -25,8 +23,8 @@ Rectangle {
 
     Rectangle {
         visible: Theme.railMark && root.current
-        width: 3
-        height: parent.height - 10
+        width: 2
+        height: parent.height - 8
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         color: Theme.accent
@@ -35,8 +33,8 @@ Rectangle {
     Row {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: 16
-        spacing: 12
+        anchors.leftMargin: 14
+        spacing: 10
 
         BarText {
             text: modelData.icon
@@ -46,7 +44,7 @@ Rectangle {
         }
         BarText {
             text: modelData.label
-            px: 13
+            px: 12
             family: Config.defaultFontUi
             color: root.current ? Theme.fg : Theme.fgSub
         }

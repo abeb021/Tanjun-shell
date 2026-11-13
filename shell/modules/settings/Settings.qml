@@ -41,6 +41,19 @@ Scope {
             }
 
             readonly property string pageTitle: page.toUpperCase()
+            readonly property int pageIndex: {
+                const rows = SettingsNav.pages;
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].key === page)
+                        return i;
+                }
+                return 0;
+            }
+            readonly property string pageAbout: {
+                const rows = SettingsNav.pages;
+                return pageIndex < rows.length ? `${rows[pageIndex].about || ""}` : "";
+            }
+            property int hitIndex: 0
             readonly property string restSrc: {
                 if (page === "system")
                     return "SystemPage.qml";
@@ -138,76 +151,60 @@ Scope {
             SettingsCard {
                 id: card
                 open: win.open
-                width: Math.min(980, parent.width - 80)
-                height: Math.min(640, parent.height - 80)
+                width: Math.min(1040, parent.width - 80)
+                height: Math.min(680, parent.height - 80)
                 anchors.centerIn: parent
 
                 Item {
                     anchors.fill: parent
 
-                    Column {
+                    Item {
                         id: sidebar
-                        width: 220
+                        width: 212
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        spacing: 22
 
-                        Text {
-                            text: "SETTINGS"
-                            color: Theme.fg
-                            font.family: Config.defaultFontUi
-                            font.pixelSize: 20
-                            font.letterSpacing: Theme.brandTracking
-                            font.weight: Font.DemiBold
+                        Row {
+                            id: brand
+                            width: parent.width
+                            height: 38
+                            spacing: 10
+
+                            BarText {
+                                visible: Theme.tan.length > 0
+                                width: visible ? 26 : 0
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Theme.tan
+                                role: "seal"
+                                px: 22
+                            }
+                            BarText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "TANJUN"
+                                px: 12
+                                font.letterSpacing: Theme.brandTracking
+                                font.weight: Font.DemiBold
+                                color: Theme.fg
+                            }
                         }
 
                         Rectangle {
+                            id: brandRule
                             width: parent.width
                             height: 1
+                            anchors.top: brand.bottom
+                            anchors.topMargin: 10
                             color: Theme.hairline
                         }
 
-                        Rectangle {
-                            width: parent.width
-                            height: 28
-                            color: Theme.surface
-                            border.width: 1
-                            border.color: find.activeFocus || win.looking ? Theme.accent : Theme.hairline
-                            radius: Theme.radius
-                            BarText {
-                                visible: !find.text.length
-                                anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.leftMargin: 8
-                                text: "Search…"
-                                sub: true
-                                px: 12
-                                family: Config.defaultFontUi
-                            }
-                            TextInput {
-                                id: find
-                                anchors.fill: parent
-                                anchors.margins: 6
-                                font.family: Config.defaultFontUi
-                                font.pixelSize: 12
-                                color: Theme.fg
-                                clip: true
-                                onTextChanged: win.query = text
-                                Keys.onEscapePressed: {
-                                    if (text.length)
-                                        win.clearLookup();
-                                    else
-                                        UiMode.closeMenus();
-                                }
-                                Keys.onReturnPressed: win.takeHit(0)
-                                Keys.onEnterPressed: win.takeHit(0)
-                            }
-                        }
-
                         Flickable {
-                            width: parent.width
-                            height: Math.max(0, sidebar.height - y)
+                            id: railFlick
+                            anchors.top: brandRule.bottom
+                            anchors.topMargin: 10
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
                             clip: true
                             contentWidth: width
                             contentHeight: railCol.implicitHeight
@@ -217,20 +214,26 @@ Scope {
                             Column {
                                 id: railCol
                                 width: parent.width
-                                spacing: 4
+                                spacing: 2
                                 Repeater {
                                     id: railRep
                                     model: SettingsNav.pages.length
                                     onCountChanged: SettingsNav.railCount = count
                                     Item {
+                                        id: railRow
                                         required property int index
+                                        readonly property var entry: SettingsNav.pages[index]
                                         width: sidebar.width
-                                        height: 38
+                                        height: 34
+
                                         RailBtn {
-                                            width: parent.width
-                                            modelData: SettingsNav.pages[index]
-                                            current: win.page === SettingsNav.pages[index].key
-                                            onClicked: SettingsNav.openPage(SettingsNav.pages[index].key)
+                                            anchors.fill: parent
+                                            modelData: railRow.entry
+                                            current: win.page === railRow.entry.key
+                                            onClicked: {
+                                                win.clearLookup();
+                                                SettingsNav.openPage(railRow.entry.key);
+                                            }
                                         }
                                     }
                                 }
@@ -247,94 +250,213 @@ Scope {
                         id: railLine
                         width: 1
                         anchors.left: sidebar.right
-                        anchors.leftMargin: 28
+                        anchors.leftMargin: 24
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         color: Theme.hairline
                     }
 
                     Item {
+                        id: main
                         anchors.left: railLine.right
-                        anchors.leftMargin: 28
+                        anchors.leftMargin: 24
                         anchors.right: parent.right
                         anchors.rightMargin: 12
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         clip: true
 
-                        ListView {
-                                visible: win.looking
-                                anchors.fill: parent
-                                clip: true
-                                boundsBehavior: Flickable.StopAtBounds
-                                flickDeceleration: 8000
-                                model: win.hits
-                                delegate: Rectangle {
-                                    required property int index
-                                    required property var modelData
-                                    width: ListView.view.width
-                                    height: 32
-                                    color: hitHover.containsMouse ? Theme.surfaceHover : "transparent"
-                                    border.width: 0
-                                    radius: Theme.radius
-                                    BarText {
-                                        anchors.left: parent.left
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        anchors.leftMargin: 8
-                                        text: modelData.title
-                                        px: 13
-                                        family: Config.defaultFontUi
-                                    }
-                                    BarText {
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        anchors.rightMargin: 8
-                                        text: modelData.sub || ""
-                                        sub: true
-                                        px: 11
-                                        family: Config.defaultFontUi
-                                    }
-                                    MouseArea {
-                                        id: hitHover
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: win.goHit(modelData)
-                                    }
-                                }
-                            }
+                        Column {
+                            id: pageHead
+                            width: parent.width
+                            spacing: 0
 
-                        Item {
-                            id: pageBody
-                            visible: !win.looking
-                            anchors.fill: parent
-                            clip: true
-
-                            Column {
-                                id: pageHead
+                            Item {
                                 width: parent.width
-                                spacing: 12
+                                height: 42
 
                                 Text {
-                                    text: win.pageTitle
+                                    id: pageTitleText
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: win.looking ? "RESULTS" : win.pageTitle
                                     color: Theme.fg
                                     font.family: Config.defaultFontUi
-                                    font.pixelSize: 18
+                                    font.pixelSize: Math.min(30, Math.round(Theme.fontPx * 1.85))
                                     font.letterSpacing: Theme.titleTracking
                                     font.weight: Font.DemiBold
                                 }
 
                                 Rectangle {
-                                    width: parent.width
-                                    height: 1
-                                    color: Theme.hairline
+                                    id: searchBox
+                                    width: Math.max(180, Math.min(260, parent.width * 0.38))
+                                    height: 34
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    radius: Theme.radius
+                                    color: Theme.surface
+                                    border.width: 1
+                                    border.color: find.activeFocus || win.looking ? Theme.accent : Theme.hairline
+
+                                    BarText {
+                                        visible: !find.text.length
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 30
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "SEARCH"
+                                        px: 11
+                                        color: Theme.fgSub
+                                    }
+
+                                    Row {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 8
+                                        spacing: 7
+
+                                        BarText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "󰍉"
+                                            icon: true
+                                            px: 13
+                                            color: find.activeFocus || win.looking ? Theme.accent : Theme.fgSub
+                                        }
+
+                                        TextInput {
+                                            id: find
+                                            width: parent.width - 20 - 14 - (clear.visible ? clear.width + 6 : 0)
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            font.family: Config.defaultFontUi
+                                            font.pixelSize: 12
+                                            color: Theme.fg
+                                            clip: true
+                                            onTextChanged: {
+                                                win.query = text;
+                                                win.hitIndex = 0;
+                                            }
+                                            Keys.onEscapePressed: {
+                                                if (text.length)
+                                                    win.clearLookup();
+                                                else
+                                                    UiMode.closeMenus();
+                                            }
+                                            Keys.onDownPressed: win.moveHit(1)
+                                            Keys.onUpPressed: win.moveHit(-1)
+                                            Keys.onReturnPressed: win.takeHit(win.hitIndex)
+                                            Keys.onEnterPressed: win.takeHit(win.hitIndex)
+                                        }
+
+                                        BarText {
+                                            id: clear
+                                            visible: win.looking
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: "✕"
+                                            icon: true
+                                            px: 9
+                                            color: clearHover.containsMouse ? Theme.accent : Theme.fgSub
+                                            MouseArea {
+                                                id: clearHover
+                                                anchors.fill: parent
+                                                anchors.margins: -4
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: win.clearLookup()
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
+                            BarText {
+                                width: parent.width
+                                height: 18
+                                text: win.looking
+                                    ? (win.hits.length ? `${win.hits.length} MATCH${win.hits.length === 1 ? "" : "ES"}  ·  “${win.query.toUpperCase()}”` : `NO MATCHES  ·  “${win.query.toUpperCase()}”`)
+                                    : win.pageAbout
+                                px: Theme.typeCaption
+                                family: Config.defaultFontUi
+                                color: Theme.fgSub
+                                elide: Text.ElideRight
+                            }
+
+                            Rectangle {
+                                width: parent.width
+                                height: 1
+                                color: Theme.hairline
+                            }
+                        }
+
+                        ListView {
+                            id: hitList
+                            visible: win.looking
+                            anchors.top: pageHead.bottom
+                            anchors.topMargin: 10
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+                            flickDeceleration: 8000
+                            model: win.hits
+                            delegate: Rectangle {
+                                id: hitRow
+                                required property int index
+                                required property var modelData
+                                width: hitList.width
+                                height: 38
+                                radius: Theme.radius
+                                color: index === win.hitIndex ? Theme.hot : (hitHover.containsMouse ? Theme.hotSoft : "transparent")
+
+                                Rectangle {
+                                    visible: hitRow.index === win.hitIndex
+                                    width: 2
+                                    height: 16
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: Theme.accent
+                                }
+                                BarText {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: hitRow.modelData.title
+                                    px: 12
+                                    family: Config.defaultFontUi
+                                }
+                                BarText {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: win.hitLabel(hitRow.modelData)
+                                    px: 9
+                                    family: Config.defaultFontUi
+                                    font.letterSpacing: 1
+                                    color: Theme.fgSub
+                                }
+                                MouseArea {
+                                    id: hitHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onEntered: win.hitIndex = hitRow.index
+                                    onClicked: win.goHit(hitRow.modelData)
+                                }
+                            }
+                        }
+
+                        Item {
+                            id: pageBody
+                            visible: !win.looking
+                            anchors.top: pageHead.bottom
+                            anchors.topMargin: 18
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            clip: true
+
                             TypePage {
                                 visible: win.page === "type"
-                                anchors.top: pageHead.bottom
-                                anchors.topMargin: 16
+                                anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.bottom: parent.bottom
@@ -349,8 +471,7 @@ Scope {
                             Flickable {
                                 id: restFlick
                                 visible: win.page !== "type"
-                                anchors.top: pageHead.bottom
-                                anchors.topMargin: 16
+                                anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.bottom: parent.bottom
@@ -409,6 +530,7 @@ Scope {
             function clearLookup() {
                 query = "";
                 find.text = "";
+                hitIndex = 0;
             }
 
             function goHit(row) {
@@ -430,6 +552,25 @@ Scope {
                 if (!h || !h.length || i < 0 || i >= h.length)
                     return;
                 goHit(h[i]);
+            }
+
+            function moveHit(delta) {
+                const n = hits ? hits.length : 0;
+                if (!n)
+                    return;
+                hitIndex = (hitIndex + delta + n) % n;
+                hitList.positionViewAtIndex(hitIndex, ListView.Contain);
+            }
+
+            function hitLabel(row) {
+                if (!row || !row.page)
+                    return `${row && row.sub ? row.sub : ""}`.toUpperCase();
+                const rows = SettingsNav.pages;
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].key === row.page)
+                        return rows[i].label.toUpperCase();
+                }
+                return `${row.sub || ""}`.toUpperCase();
             }
 
             function setFont(which, name) {

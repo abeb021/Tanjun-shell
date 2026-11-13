@@ -4,31 +4,27 @@ import "../../services"
 
 Column {
     width: parent.width
-    spacing: 20
+    spacing: 16
 
-    Column {
+    SetHead {
+        title: "MONITOR MODE"
+        desc: "Which output the bar and desk follow."
+    }
+    Row {
         width: parent.width
         spacing: 10
-        BarText {
-            text: "MONITOR MODE"
-            role: "head"
-        }
-        Row {
-            width: parent.width
-            spacing: 10
-            Repeater {
-                model: [
-                    { id: "first", label: "FIRST" },
-                    { id: "second", label: "SECOND" },
-                    { id: "extend", label: "EXTEND" }
-                ]
-                HudPick {
-                    required property var modelData
-                    width: (parent.width - parent.spacing * 2) / 3
-                    label: modelData.label
-                    current: Screens.deskKind === modelData.id
-                    onClicked: Screens.setDesk(modelData.id)
-                }
+        Repeater {
+            model: [
+                { id: "first", label: "FIRST" },
+                { id: "second", label: "SECOND" },
+                { id: "extend", label: "EXTEND" }
+            ]
+            HudPick {
+                required property var modelData
+                width: (parent.width - parent.spacing * 2) / 3
+                label: modelData.label
+                current: Screens.deskKind === modelData.id
+                onClicked: Screens.setDesk(modelData.id)
             }
         }
     }
@@ -42,170 +38,121 @@ Column {
         onCommitted: v => Backlight.setPercent(v * 100)
     }
 
-    Column {
+    SetHead {
+        visible: Compositor.hasGamma
+        title: "NIGHT LIGHT"
+        desc: Screens.nightKelvin + "K · " + (Screens.nightOn ? "on" : "off")
+
+        HudToggle {
+            anchors.verticalCenter: parent.verticalCenter
+            on: Screens.nightOn
+            onToggled: Screens.setNightOn(!Screens.nightOn)
+        }
+    }
+
+    HudSlider {
         visible: Compositor.hasGamma
         width: parent.width
-        spacing: 10
+        label: "TEMPERATURE"
+        icon: ""
+        value: (6500 - Screens.nightKelvin) / 3500
+        onMoved: v => Screens.previewNight(6500 - v * 3500)
+        onCommitted: v => Screens.setNightTemp(6500 - v * 3500)
+    }
+
+    SetRow {
+        visible: Compositor.hasGamma
+        label: "NIGHT AT"
+        sub: "warm from this time"
+        HudPick {
+            width: 32
+            height: 30
+            implicitHeight: 30
+            label: "−"
+            onClicked: Screens.bumpNight(-15)
+        }
         BarText {
-            text: "NIGHT LIGHT"
-            role: "head"
+            width: 56
+            horizontalAlignment: Text.AlignHCenter
+            text: Screens.nightAt
+            px: 12
+            family: Config.defaultFontUi
         }
-        Row {
-            width: parent.width
-            spacing: 25
-            HudSlider {
-                width: parent.width - 70 - parent.spacing
-                label: Screens.nightKelvin + "K"
-                icon: ""
-                value: (6500 - Screens.nightKelvin) / 3500
-                onMoved: v => Screens.previewNight(6500 - v * 3500)
-                onCommitted: v => Screens.setNightTemp(6500 - v * 3500)
-            }
-            Rectangle {
-                width: 70
-                height: 36
-                radius: Theme.radius
-                anchors.verticalCenter: parent.verticalCenter
-                color: Screens.nightOn ? Theme.wash(Theme.accent, 0.1) : Theme.wash(Theme.fgSub, 0.15)
-                border.width: 1
-                border.color: Screens.nightOn ? Theme.accent : Theme.fgSub
-                BarText {
-                    anchors.centerIn: parent
-                    text: Screens.nightOn ? "ON" : "OFF"
-                    px: 10
-                    family: Config.defaultFontUi
-                    color: Screens.nightOn ? Theme.accent : Theme.fgSub
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Screens.setNightOn(!Screens.nightOn)
-                }
-            }
+        HudPick {
+            width: 32
+            height: 30
+            implicitHeight: 30
+            label: "+"
+            onClicked: Screens.bumpNight(15)
         }
-        Row {
-            width: parent.width
-            spacing: 10
-            BarText {
-                width: 90
-                anchors.verticalCenter: parent.verticalCenter
-                text: "NIGHT AT"
-                px: 12
-                family: Config.defaultFontUi
-                font.letterSpacing: 1
-            }
-            HudPick {
-                width: 42
-                label: "−"
-                onClicked: Screens.bumpNight(-15)
-            }
-            Rectangle {
-                width: 72
-                height: 42
-                radius: Theme.radius
-                color: Theme.surface
-                border.width: 1
-                border.color: Theme.hairline
-                BarText {
-                    anchors.centerIn: parent
-                    text: Screens.nightAt
-                    px: 13
-                    family: Config.defaultFontUi
-                }
-            }
-            HudPick {
-                width: 42
-                label: "+"
-                onClicked: Screens.bumpNight(15)
-            }
+    }
+
+    SetRow {
+        visible: Compositor.hasGamma
+        label: "DAY AT"
+        sub: "identity from this time"
+        HudPick {
+            width: 32
+            height: 30
+            implicitHeight: 30
+            label: "−"
+            onClicked: Screens.bumpDay(-15)
         }
-        Row {
-            width: parent.width
-            spacing: 10
-            BarText {
-                width: 90
-                anchors.verticalCenter: parent.verticalCenter
-                text: "DAY AT"
-                px: 12
-                family: Config.defaultFontUi
-                font.letterSpacing: 1
-            }
-            HudPick {
-                width: 42
-                label: "−"
-                onClicked: Screens.bumpDay(-15)
-            }
-            Rectangle {
-                width: 72
-                height: 42
-                radius: Theme.radius
-                color: Theme.surface
-                border.width: 1
-                border.color: Theme.hairline
-                BarText {
-                    anchors.centerIn: parent
-                    text: Screens.dayAt
-                    px: 13
-                    family: Config.defaultFontUi
-                }
-            }
-            HudPick {
-                width: 42
-                label: "+"
-                onClicked: Screens.bumpDay(15)
-            }
+        BarText {
+            width: 56
+            horizontalAlignment: Text.AlignHCenter
+            text: Screens.dayAt
+            px: 12
+            family: Config.defaultFontUi
         }
+        HudPick {
+            width: 32
+            height: 30
+            implicitHeight: 30
+            label: "+"
+            onClicked: Screens.bumpDay(15)
+        }
+    }
+
+    SetHead {
+        title: "OUTPUTS"
+        desc: "Scale is saved per output."
     }
 
     Repeater {
         model: Screens.list
-        HudCard {
+        Column {
+            id: mon
             required property var modelData
-            width: parent.width
-            implicitHeight: 108
-            height: implicitHeight
-            active: Screens.pick === modelData.name
-            Column {
-                anchors.fill: parent
-                anchors.margins: 14
-                spacing: 8
-                Row {
-                    spacing: 10
-                    BarText {
-                        text: modelData.name
-                        px: 14
-                        family: Config.defaultFontUi
-                    }
-                    BarText {
-                        text: `${modelData.width}x${modelData.height}` + (modelData.mode ? `  ${Screens.compactMode(modelData.mode)}` : "")
-                        px: 12
-                        family: Config.defaultFontUi
-                        color: Theme.fgSub
-                    }
-                    BarText {
-                        visible: Screens.pick === modelData.name
-                        text: "ACTIVE"
-                        px: 10
-                        family: Config.defaultFontUi
-                        color: Theme.accent
-                    }
-                }
-                HudSlider {
-                    width: parent.width
-                    label: "SCALE (" + Screens.fmtScale(modelData.scale) + "x)"
-                    icon: ""
-                    notches: Screens.scales.length
-                    value: Screens.scaleSlider(modelData.scale)
-                    onCommitted: v => {
-                        Screens.pick = modelData.name;
-                        Screens.setScale(Screens.scaleAt(v));
-                    }
+            width: page.width
+            spacing: 4
+
+            SetRow {
+                active: Screens.pick === modelData.name
+                clickable: true
+                label: modelData.name
+                sub: `${modelData.width}x${modelData.height}` + (modelData.mode ? `  ·  ${Screens.compactMode(modelData.mode)}` : "")
+                onClicked: Screens.pick = modelData.name
+                BarText {
+                    visible: Screens.pick === modelData.name
+                    text: "ACTIVE"
+                    px: 9
+                    family: Config.defaultFontUi
+                    font.letterSpacing: 1
+                    color: Theme.accent
                 }
             }
-            MouseArea {
-                z: -1
-                anchors.fill: parent
-                onClicked: Screens.pick = modelData.name
+
+            HudSlider {
+                width: parent.width
+                label: "SCALE (" + Screens.fmtScale(modelData.scale) + "x)"
+                icon: ""
+                notches: Screens.scales.length
+                value: Screens.scaleSlider(modelData.scale)
+                onCommitted: v => {
+                    Screens.pick = modelData.name;
+                    Screens.setScale(Screens.scaleAt(v));
+                }
             }
         }
     }

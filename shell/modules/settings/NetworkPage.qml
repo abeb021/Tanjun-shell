@@ -5,179 +5,121 @@ import "../../services"
 Column {
     id: page
     width: parent.width
-    spacing: 12
+    spacing: 16
     property string pending: ""
     property string pw: ""
+
     readonly property int toggleRightGap: {
-        const row = wifiSwitch.parent;
-        if (!row)
+        if (!wifiSwitch.parent)
             return -1;
-        return Math.round(page.width - row.x - row.width);
+        const p = wifiSwitch.parent.mapToItem(page, wifiSwitch.parent.width, 0);
+        return Math.round(page.width - p.x);
     }
     readonly property int toggleRadius: Math.round(wifiSwitch.radius)
 
-    Item {
-        width: parent.width
-        height: 28
+    SetHead {
+        title: "WI-FI"
+        desc: !Net.wifiOn
+            ? "Disabled."
+            : (Net.networks.length > 0 ? "Click a network to connect." : "Scanning nearby networks…")
 
-        Row {
-            anchors.right: parent.right
-            anchors.rightMargin: 8
-            height: parent.height
-            spacing: 16
-
-            BarText {
-                text: "󰑐"
-                px: 22
-                family: Config.defaultFontUi
-                color: Theme.accent
-                opacity: Net.wifiOn ? 1 : 0.4
-                anchors.verticalCenter: parent.verticalCenter
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: Net.wifiOn
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Net.setScanning(true)
-                }
+        BarText {
+            anchors.verticalCenter: parent.verticalCenter
+            text: "󰑐"
+            px: 20
+            family: Config.defaultFontUi
+            color: Net.wifiOn ? Theme.accent : Theme.fgSub
+            opacity: Net.wifiOn ? 1 : 0.4
+            MouseArea {
+                anchors.fill: parent
+                enabled: Net.wifiOn
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Net.setScanning(true)
             }
+        }
 
-            HudToggle {
-                id: wifiSwitch
-                anchors.verticalCenter: parent.verticalCenter
-                on: Net.wifiOn
-                onToggled: Net.toggleWifi()
-            }
+        HudToggle {
+            id: wifiSwitch
+            anchors.verticalCenter: parent.verticalCenter
+            on: Net.wifiOn
+            onToggled: Net.toggleWifi()
         }
     }
 
-    BarText {
+    SetRow {
         visible: Net.vpnUp
-        text: "VPN  " + Net.vpn
-        px: 12
-        color: Theme.accent
-        family: Config.defaultFontUi
-        font.letterSpacing: 1
+        icon: "󰖂"
+        label: "VPN"
+        sub: Net.vpn
+        active: true
     }
 
-    BarText {
+    SetEmpty {
         visible: !Net.wifiOn
-        width: parent.width
-        text: "Wi-Fi is disabled"
-        px: 12
-        family: Config.defaultFontUi
-        color: Theme.fgSub
-        horizontalAlignment: Text.AlignHCenter
+        icon: ""
+        title: "WI-FI IS OFF"
+        hint: "Turn it on to see networks."
     }
 
-    BarText {
+    SetEmpty {
         visible: Net.wifiOn && Net.networks.length === 0
-        width: parent.width
-        text: "No Wi-Fi networks found"
-        px: 12
-        family: Config.defaultFontUi
-        color: Theme.fgSub
-        horizontalAlignment: Text.AlignHCenter
+        icon: "󰑐"
+        title: "NO NETWORKS"
+        hint: "Scanning nearby."
     }
 
     Repeater {
         model: Net.networks
         Column {
+            id: netRow
             required property var modelData
+            readonly property string netKey: modelData.name || ""
             width: page.width
             spacing: 6
 
-            HudCard {
-                width: parent.width
-                height: 46
+            SetRow {
                 active: modelData.connected
-                Row {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 9
-                    BarText {
-                        text: ""
-                        icon: true
-                        px: 14
-                        color: modelData.connected ? Theme.accent : Theme.fgSub
+                clickable: true
+                icon: ""
+                label: modelData.name || "hidden"
+                onClicked: {
+                    if (modelData.connected) {
+                        page.pending = "";
+                        Net.connectNet(modelData, "");
+                        return;
                     }
-                    BarText {
-                        text: modelData.name || "hidden"
-                        px: 12
-                        family: Config.defaultFontUi
-                        elide: Text.ElideRight
-                        width: Math.min(implicitWidth, page.width - 170)
-                    }
+                    page.pending = page.pending === netRow.netKey ? "" : netRow.netKey;
+                    page.pw = "";
                 }
                 BarText {
-                    anchors.right: parent.right
-                    anchors.rightMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter
                     text: modelData.connected ? "DISCONNECT" : "CONNECT"
-                    px: 10
+                    px: 9
                     family: Config.defaultFontUi
+                    font.letterSpacing: 1
                     color: modelData.connected ? Theme.critical : Theme.accent
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (modelData.connected) {
-                                page.pending = "";
-                                Net.connectNet(modelData, "");
-                                return;
-                            }
-                            page.pending = page.pending === modelData.name ? "" : (modelData.name || "");
-                            page.pw = "";
-                        }
-                    }
                 }
             }
 
-            Row {
-                visible: page.pending === modelData.name && !modelData.connected
-                spacing: 10
-                Rectangle {
-                    width: 220
-                    height: 32
-                    color: Theme.surface
-                    border.width: 1
-                    border.color: Theme.accent
-                    radius: Theme.radius
-                    TextInput {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        echoMode: TextInput.Password
-                        font.family: Config.defaultFontUi
-                        font.pixelSize: 12
-                        color: Theme.fg
-                        onTextChanged: page.pw = text
-        Keys.onReturnPressed: {
-            Net.connectNet(modelData, page.pw);
-            page.pw = "";
-            page.pending = "";
-        }
-        Keys.onEnterPressed: {
-            Net.connectNet(modelData, page.pw);
-            page.pw = "";
-            page.pending = "";
-        }
-                    }
+            SetField {
+                id: pwField
+                visible: page.pending === netRow.netKey && !modelData.connected
+                echoMode: TextInput.Password
+                placeholder: "Password"
+                action: "CONNECT"
+                onVisibleChanged: if (!visible) {
+                    clear();
+                    page.pw = "";
                 }
-                BarText {
-                    text: "CONNECT"
-                    px: 11
-                    family: Config.defaultFontUi
-                    color: Theme.accent
-                    anchors.verticalCenter: parent.verticalCenter
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            Net.connectNet(modelData, page.pw);
-                            page.pw = "";
-                            page.pending = "";
-                        }
-                    }
+                onEdited: v => page.pw = v
+                onAccepted: {
+                    Net.connectNet(modelData, page.pw);
+                    page.pw = "";
+                    page.pending = "";
+                }
+                onTriggered: {
+                    Net.connectNet(modelData, page.pw);
+                    page.pw = "";
+                    page.pending = "";
                 }
             }
         }

@@ -5,129 +5,72 @@ import "../../services"
 Column {
     id: page
     width: parent.width
-    spacing: 20
+    spacing: 18
     property string blDraft: Config.services.backlight
     property string kbDraft: Config.services.keyboard
     property string macDraft: Config.services.budsMac
     property string nameDraft: Config.services.budsName
 
-    BarText {
-        text: "BACKLIGHT"
-        role: "head"
+    SetHead {
+        title: "BACKLIGHT"
+        desc: "Device name for brightness. Empty = auto."
     }
-    BarText {
-        text: "Empty = auto"
-        px: 11
-        family: Config.defaultFontUi
-        color: Theme.fgSub
+    SetField {
+        label: "DEVICE"
+        placeholder: "auto"
+        action: "SAVE"
+        text: page.blDraft
+        onEdited: v => page.blDraft = v
+        onAccepted: page.save()
+        onTriggered: page.save()
     }
-    Rectangle {
+    Row {
         width: parent.width
-        height: 32
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.hairline
-        radius: Theme.radius
-        TextInput {
-            anchors.fill: parent
-            anchors.margins: 8
-            font.family: Config.defaultFontUi
-            font.pixelSize: 13
-            color: Theme.fg
-            text: page.blDraft
-            onTextChanged: page.blDraft = text
-            Keys.onReturnPressed: page.save()
-            Keys.onEnterPressed: page.save()
-        }
-    }
-    HudPick {
-        width: parent.width
-        label: "INTEL_BACKLIGHT"
-        current: page.blDraft.trim() === "intel_backlight"
-        onClicked: {
-            page.blDraft = "intel_backlight";
-            page.save();
+        spacing: 10
+        HudPick {
+            width: 180
+            label: "INTEL_BACKLIGHT"
+            current: page.blDraft.trim() === "intel_backlight"
+            onClicked: {
+                page.blDraft = "intel_backlight";
+                page.save();
+            }
         }
     }
 
-    BarText {
-        text: "KEYBOARD"
-        role: "head"
+    SetHead {
+        title: "KEYBOARD"
+        desc: "Layout name shown on the bar. Empty = compositor default."
     }
-    Rectangle {
-        width: parent.width
-        height: 32
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.hairline
-        radius: Theme.radius
-        TextInput {
-            anchors.fill: parent
-            anchors.margins: 8
-            font.family: Config.defaultFontUi
-            font.pixelSize: 13
-            color: Theme.fg
-            text: page.kbDraft
-            onTextChanged: page.kbDraft = text
-            Keys.onReturnPressed: page.save()
-            Keys.onEnterPressed: page.save()
-        }
-    }
-    HudPick {
-        width: 120
-        label: "SAVE"
-        onClicked: page.save()
+    SetField {
+        label: "LAYOUT"
+        placeholder: "us"
+        action: "SAVE"
+        text: page.kbDraft
+        onEdited: v => page.kbDraft = v
+        onAccepted: page.save()
+        onTriggered: page.save()
     }
 
-    BarText {
-        text: "BUDS"
-        role: "head"
+    SetHead {
+        title: "BUDS"
+        desc: "Super+B target. Empty = off."
     }
-    BarText {
-        text: "Super+B. Empty = off. MAC like AA:BB:CC:DD:EE:FF"
-        px: 11
-        family: Config.defaultFontUi
-        color: Theme.fgSub
-        width: parent.width
-        wrapMode: Text.Wrap
+    SetField {
+        label: "MAC"
+        placeholder: "AA:BB:CC:DD:EE:FF"
+        text: page.macDraft
+        onEdited: v => page.macDraft = v
+        onAccepted: page.save()
     }
-    Rectangle {
-        width: parent.width
-        height: 32
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.hairline
-        radius: Theme.radius
-        TextInput {
-            anchors.fill: parent
-            anchors.margins: 8
-            font.family: Config.defaultFontUi
-            font.pixelSize: 13
-            color: Theme.fg
-            text: page.macDraft
-            onTextChanged: page.macDraft = text
-            Keys.onReturnPressed: page.save()
-            Keys.onEnterPressed: page.save()
-        }
-    }
-    Rectangle {
-        width: parent.width
-        height: 32
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.hairline
-        radius: Theme.radius
-        TextInput {
-            anchors.fill: parent
-            anchors.margins: 8
-            font.family: Config.defaultFontUi
-            font.pixelSize: 13
-            color: Theme.fg
-            text: page.nameDraft
-            onTextChanged: page.nameDraft = text
-            Keys.onReturnPressed: page.save()
-            Keys.onEnterPressed: page.save()
-        }
+    SetField {
+        label: "NAME"
+        placeholder: "optional"
+        action: "SAVE"
+        text: page.nameDraft
+        onEdited: v => page.nameDraft = v
+        onAccepted: page.save()
+        onTriggered: page.save()
     }
 
     function save() {

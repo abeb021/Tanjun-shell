@@ -4,11 +4,11 @@ import "../../services"
 
 Column {
     width: parent.width
-    spacing: 20
+    spacing: 18
 
-    BarText {
-        text: "WALL"
-        role: "head"
+    SetHead {
+        title: "WALL"
+        desc: "Whether a new wallpaper also repaints the palette."
     }
     Row {
         width: parent.width
@@ -41,17 +41,9 @@ Column {
         wrapMode: Text.Wrap
     }
 
-    BarText {
-        text: "PALETTES"
-        role: "head"
-    }
-    BarText {
-        text: "Named colors. Shell chrome is on Style."
-        px: 11
-        family: Config.defaultFontUi
-        color: Theme.fgSub
-        width: parent.width
-        wrapMode: Text.Wrap
+    SetHead {
+        title: "PALETTES"
+        desc: "Named colors. Shell chrome is on Style."
     }
     SkinChip {
         pal: ({

@@ -7,17 +7,9 @@ Column {
     width: parent.width
     spacing: 16
 
-    BarText {
-        text: "CHROME"
-        role: "head"
-    }
-    BarText {
-        text: "Whole shell chrome. Palettes stay on Color."
-        px: 11
-        family: Config.defaultFontUi
-        color: Theme.fgSub
-        width: parent.width
-        wrapMode: Text.Wrap
+    SetHead {
+        title: "CHROME"
+        desc: "Whole shell chrome. Palettes stay on Color."
     }
 
     Repeater {
@@ -34,17 +26,9 @@ Column {
         Component.onCompleted: SettingsNav.styleCount = count
     }
 
-    BarText {
-        text: "ANIMATION"
-        role: "head"
-    }
-    BarText {
-        text: "Pops drop from the bar. Panels, lock, and toasts travel."
-        px: 11
-        family: Config.defaultFontUi
-        color: Theme.fgSub
-        width: parent.width
-        wrapMode: Text.Wrap
+    SetHead {
+        title: "ANIMATION"
+        desc: "Pops drop from the bar. Panels, lock, and toasts travel."
     }
     MotionDemo {
         width: parent.width

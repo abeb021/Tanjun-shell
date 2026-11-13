@@ -6,18 +6,18 @@ Singleton {
     id: root
 
     readonly property var pages: [
-        { key: "system", label: "System", icon: "󰒓" },
-        { key: "sound", label: "Sound", icon: "" },
-        { key: "screen", label: "Screen", icon: "󰍹" },
-        { key: "battery", label: "Battery", icon: "󰁹" },
-        { key: "network", label: "Network", icon: "󰖩" },
-        { key: "bluetooth", label: "Bluetooth", icon: "󰂯" },
-        { key: "type", label: "Type", icon: "󰛖" },
-        { key: "clock", label: "Clock", icon: "󰥔" },
-        { key: "weather", label: "Weather", icon: "󰖕" },
-        { key: "devices", label: "Devices", icon: "󰃠" },
-        { key: "style", label: "Style", icon: "󰀼" },
-        { key: "color", label: "Color", icon: "󰏘" }
+        { key: "system", label: "System", icon: "󰒓", group: "SYSTEM", about: "Host, kernel, and session" },
+        { key: "sound", label: "Sound", icon: "", group: "SYSTEM", about: "Volume, outputs, microphones" },
+        { key: "screen", label: "Screen", icon: "󰍹", group: "SYSTEM", about: "Outputs, scale, and night light" },
+        { key: "battery", label: "Battery", icon: "󰁹", group: "SYSTEM", about: "Idle, dim, lock, and sleep" },
+        { key: "network", label: "Network", icon: "󰖩", group: "NETWORK", about: "Wi-Fi, VPN, and scanning" },
+        { key: "bluetooth", label: "Bluetooth", icon: "󰂯", group: "NETWORK", about: "Adapter, devices, and pairing" },
+        { key: "type", label: "Type", icon: "󰛖", group: "DESKTOP", about: "Fonts and UI size" },
+        { key: "clock", label: "Clock", icon: "󰥔", group: "DESKTOP", about: "Clock format and time zones" },
+        { key: "weather", label: "Weather", icon: "󰖕", group: "DESKTOP", about: "City and forecast" },
+        { key: "devices", label: "Devices", icon: "󰃠", group: "DESKTOP", about: "Backlight and keyboard" },
+        { key: "style", label: "Style", icon: "󰀼", group: "APPEARANCE", about: "Chrome, motion, and speed" },
+        { key: "color", label: "Color", icon: "󰏘", group: "APPEARANCE", about: "Palettes and wallpaper" }
     ]
 
     property string page: "system"
