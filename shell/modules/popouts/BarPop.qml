@@ -135,15 +135,6 @@ Item {
         focus: true
         Keys.onEscapePressed: UiMode.closeMenus()
 
-        // Frosted material, aligned to the screen so it continues the bar's.
-        Glass {
-            anchors.fill: parent
-            visible: Theme.glass
-            screen: root.screen
-            regionX: Math.round(root.cardX)
-            regionY: Math.round(root.cardY)
-        }
-
         // Keeps a hover-opened menu open while the pointer is on the card.
         HoverHandler {
             onHoveredChanged: {
@@ -170,6 +161,17 @@ Item {
             x: root.vertical ? (root.edge === "right" ? root.cardW - width : 0) : 0
             y: root.vertical ? 0 : (root.edge === "bottom" ? root.shownH - height : 0)
             clip: true
+
+            // Frosted material, inside the clip so it is only there where the
+            // card is, and aligned to the screen so it continues the bar's. The
+            // clip moves while the card reveals, so the offset follows it.
+            Glass {
+                anchors.fill: parent
+                visible: Theme.glass
+                screen: root.screen
+                regionX: Math.round(root.cardX) + morph.x
+                regionY: Math.round(root.cardY) + morph.y
+            }
 
             Item {
                 id: slot
