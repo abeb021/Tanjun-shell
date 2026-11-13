@@ -171,5 +171,16 @@ Current: **v3.5**
 - [x] Host: one `--watch` helper while System/settings are open; delta CPU; no Repeater rewrite if the top list is unchanged
 - [x] Overview cards keyed by window id; desk ListView; unload Settings/Overview/Clipboard/Launcher after close
 - [x] Niri capture + debounce; weather/backlight/clip/audio/launcher/paint/wait-qs cheap paths
-- [x] Idle RSS: software scene graph (no Mesa LLVM); seal font; unload launcher; cap notifications
+- [x] Idle RSS: GPU Qt Quick (removed QT_QUICK_BACKEND=software — it leaked into launcher apps via Hyprland/systemd env import); seal font; unload launcher; cap notifications
 
+## later — shell-owned motion and glass
+
+From the Serpantinum source read (see `.cursor/research.md`). All shell-side: no compositor requirement.
+
+- [ ] Bounded popup windows (sized to the panel, not a full-screen overlay)
+- [ ] Bar + open popup in one window, one path, per-region input masks — a real joint
+- [ ] SDF `smin` union shader, `.qsb` built in nix (only after the one-window change)
+- [ ] In-shell wallpaper blur (`ScreencopyView` + `MultiEffect`) and an `elementOpacity` token — budget against the 200 MB RSS ceiling
+- [ ] Two-phase growth: clear the bar, then expand along it (calendar-sized panels)
+- [ ] Hover-intent popouts with a grace timer (decide the UX first)
+- [ ] Close duration 140 → ~180 ms `InQuad` to match their cadence
