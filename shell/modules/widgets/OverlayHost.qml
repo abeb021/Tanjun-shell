@@ -43,6 +43,12 @@ PanelWindow {
         id: keys
         open: root.open && root.onThisScreen && root.grabKeys
         holdExclusive: root.holdExclusive
+        // A click into an open overlay must reach its own controls, not only
+        // become the focus assignment. A timer (not a call, and not a click
+        // handler) re-asserts it, because the shortcut context is only right
+        // once the surface is actually up.
+        focusDelay: 125
+        focusTarget: root.grabTarget
     }
 
     // A full-screen overlay punches the bar out of its input mask so the bar
@@ -152,9 +158,32 @@ PanelWindow {
         anchors.fill: parent
         enabled: root.open && root.onThisScreen
         onClicked: {
+            // A press on the panel is not a press away from it. That matters
+            // because with OnDemand keyboard focus the press itself is the focus
+            // assignment, so the panel never sees it — and the first click used
+            // to close the menu it landed on.
+            const delegate = body.children.length > 0 ? body.children[0] : null;
+            const inside = delegate && delegate.visible
+                && delegate.contains(mapToItem(delegate, Qt.point(mouse.x, mouse.y)));
+            if (inside) {
+                keys.hold();
+                return;
+            }
             root.dismissed();
             UiMode.closeMenus();
         }
+    }
+
+    // Focus hand-over for this panel. `focusField` is the item that should hold
+    // the keys (a search box, the drawer); by default it is the item that fills
+    // this host (the card), falling back to the panel scope.
+    property Item focusField: null
+    readonly property Item grabTarget: focusField || contentItem || focusScope
+
+    Item {
+        id: focusScope
+        anchors.fill: parent
+        focus: root.open && root.onThisScreen
     }
 
     Item {

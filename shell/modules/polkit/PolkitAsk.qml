@@ -22,13 +22,11 @@ Scope {
             keepMapped: true
             grabKeys: Compositor.isScreenFocused(modelData)
             holdExclusive: true
+            focusField: reply
             contentOpacity: card.opacity
             dismissOthers: false
 
             readonly property var flow: agent.flow
-
-            onOpenChanged: if (open)
-                reply.forceActiveFocus()
 
             onDismissed: {
                 if (win.flow)

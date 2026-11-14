@@ -34,9 +34,7 @@ OverlayHost {
 
     onOpenChanged: {
         body.revealed = open;
-        if (open)
-            body.forceActiveFocus();
-        else {
+        if (!open) {
             body.cpuOpen = false;
             body.presetsOpen = false;
             UiMode.wallsOpen = false;

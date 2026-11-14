@@ -20,6 +20,8 @@ Scope {
             contentOpacity: card.opacity
             grabKeys: Compositor.isScreenFocused(modelData)
             dismissOthers: false
+            // The launcher is a search field; the card only holds the layout.
+            focusField: query
 
             readonly property bool isFocused: Compositor.isScreenFocused(modelData)
 
@@ -44,13 +46,14 @@ Scope {
             property bool browse: false
             property string rowsBody: ""
 
+            // See `grabTarget` in OverlayHost.
+            readonly property Item contentItem: card
+
             onOpenChanged: {
                 browse = false;
                 if (open) {
                     query.text = "";
                     rowsBody = "";
-                    if (isFocused)
-                        query.forceActiveFocus();
                 }
             }
 
