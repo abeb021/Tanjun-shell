@@ -22,6 +22,10 @@ OverlayHost {
     keepMapped: true
     dismissOthers: true
     contentOpacity: body.opacity
+    // The drawer is the panel for the away-click test in OverlayHost, so a press
+    // on it is never treated as a press away from it. It is also the item that
+    // takes the keys.
+    focusField: body
     readonly property int barTop: Theme.barEdge === "top" ? Theme.barThickness : 0
     readonly property int barBottom: Theme.barEdge === "bottom" ? Theme.barThickness : 0
     readonly property int barLeft: Theme.barEdge === "left" ? Theme.barThickness : 0
@@ -58,6 +62,12 @@ OverlayHost {
         onClicked: UiMode.closeMenus()
     }
 
+    // `OverlayHost` reads its panel delegate from `body.children[0]`, so the
+    // drawer has to be the first child: a full-size click-catcher ahead of it
+    // would claim that slot and every press on the drawer itself would count as
+    // a press away. A press that lands on the sidebar is not a press away —
+    // it has already been routed to whichever control sits under it, and the
+    // rest is the drawer's own background.
     Item {
         id: body
         property bool revealed: false
@@ -111,9 +121,13 @@ OverlayHost {
                 property bool netOpen: true
                 property bool presetsOpen: false
 
+                // The drawer's background. It only ever sees presses that missed
+                // a control, and it has to consume them: an unaccepted click
+                // travels on to the overlay's catch-away area, which closes the
+                // sidebar.
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {}
+                    onClicked: event => event.accepted = true
                 }
 
                 Face {
