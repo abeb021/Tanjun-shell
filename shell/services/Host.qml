@@ -7,8 +7,9 @@ Singleton {
     id: root
 
     property real cpu: 0
+    property real temp: -1
     property int ramUsed: 0
-    property int ramTotal: 1
+    property int ramTotal: 0
     property int down: 0
     property int up: 0
     property var procs: []
@@ -24,11 +25,19 @@ Singleton {
     property string disk: ""
     property var corePct: []
     property bool facts: false
+    // Set by whatever is showing live numbers. The sidebar, the system page and
+    // the load menu each want the full sampler without the others being open.
+    property bool menuOpen: false
     readonly property bool ticking: proc.running
+    readonly property bool wanted: UiMode.sidebarOpen || menuOpen || (UiMode.settingsOpen && SettingsNav.page === "system")
 
     readonly property real ramRatio: ramTotal > 0 ? ramUsed / ramTotal : 0
-    readonly property string ramText: `${fmtGiB(ramUsed)} / ${fmtGiB(ramTotal)}`
+    readonly property string ramText: ramTotal > 0 ? `${fmtGiB(ramUsed)} / ${fmtGiB(ramTotal)}` : "—"
+    // The vertical bar has no room for the pair, so it shows what is in use.
+    readonly property string ramShortText: ramTotal > 0 ? fmtGiB(ramUsed) : "—"
     readonly property string cpuText: `${cpu.toFixed(0)}%`
+    readonly property bool hasTemp: temp > 0
+    readonly property string tempText: hasTemp ? `${Math.round(temp)}°` : ""
     readonly property int downKb: Math.round(down / 1024)
     readonly property int upKb: Math.round(up / 1024)
     readonly property string downText: `${downKb} KB/s`
@@ -96,6 +105,8 @@ Singleton {
     function apply(d) {
         if (d.cpu !== undefined && d.cpu !== root.cpu)
             root.cpu = d.cpu;
+        if (d.temp !== undefined)
+            root.temp = d.temp;
         if (d.ramUsed !== undefined)
             root.ramUsed = d.ramUsed;
         if (d.ramTotal)
@@ -142,7 +153,7 @@ Singleton {
     Process {
         id: proc
         command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`, "--watch"]
-        running: UiMode.sidebarOpen || (UiMode.settingsOpen && SettingsNav.page === "system")
+        running: root.wanted
         stdout: SplitParser {
             onRead: line => {
                 const s = `${line || ""}`.trim();
@@ -153,5 +164,53 @@ Singleton {
                 } catch (e) {}
             }
         }
+    }
+
+    // The bar shows memory, so it needs a reading before any menu is opened.
+    // /proc/meminfo is read directly rather than through the sampler: the whole
+    // sweep of /proc/<pid> costs milliseconds, while this costs tens of
+    // microseconds, so the bar can afford it on a timer. watchChanges would not
+    // work here — /proc has no inotify support, so the watch would never fire.
+    FileView {
+        id: memInfo
+        path: "/proc/meminfo"
+        preload: true
+        printErrors: false
+        onLoaded: root.readMem()
+    }
+
+    // A memory reading that is a couple of seconds old reads the same as a live
+    // one; the bar only needs to notice that the number moved.
+    Timer {
+        interval: 2000
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: memInfo.reload()
+    }
+
+    function readMem() {
+        const body = `${memInfo.text() || ""}`;
+        if (!body.length)
+            return;
+        let total = 0;
+        let avail = 0;
+        let free = 0;
+        const rows = body.split("\n");
+        for (let i = 0; i < rows.length; i++) {
+            const bits = rows[i].split(/\s+/);
+            const key = bits[0];
+            if (key === "MemTotal:")
+                total = Number(bits[1]) || 0;
+            else if (key === "MemAvailable:")
+                avail = Number(bits[1]) || 0;
+            else if (key === "MemFree:" && !avail)
+                free = Number(bits[1]) || 0;
+        }
+        if (total <= 0)
+            return;
+        // Same definition the sampler uses: used is whatever is not available.
+        root.ramTotal = total;
+        root.ramUsed = total - (avail || free);
     }
 }

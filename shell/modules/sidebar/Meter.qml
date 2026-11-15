@@ -16,7 +16,10 @@ Column {
     signal iconClicked
     signal moved(real v)
 
-    width: parent ? parent.width : 280
+    // Half-width callers set their own width (the host row puts two meters side
+    // by side), so the parent width is only a fallback. A binding here would
+    // override the caller's width and each meter would take the whole row.
+    width: 280
     spacing: 4
 
     Row {

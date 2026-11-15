@@ -112,18 +112,15 @@ Singleton {
         return out;
     }
 
-    function localeTwelve() {
-        return Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("a") >= 0;
-    }
-
     function sparseObject() {
         const out = {};
         const z = plainZones(clock.zones);
         const clk = {};
         if (z.length)
             clk.zones = z;
-        if (clock.twelveHour !== localeTwelve())
-            clk.twelveHour = !!clock.twelveHour;
+        // 24-hour is the default, so only a 12-hour choice is worth pinning.
+        if (clock.twelveHour)
+            clk.twelveHour = true;
         if (Object.keys(clk).length)
             out.clock = clk;
         const svc = {};
@@ -253,7 +250,7 @@ Singleton {
 
             property JsonObject clock: JsonObject {
                 property var zones: []
-                property bool twelveHour: Qt.locale().timeFormat(Locale.ShortFormat).toLowerCase().indexOf("a") >= 0
+                property bool twelveHour: false
             }
 
             property JsonObject services: JsonObject {

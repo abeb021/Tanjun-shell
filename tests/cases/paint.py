@@ -31,15 +31,6 @@ def _load_pam():
     return mod
 
 
-def _load_idle():
-    path = SHELL / "scripts" / "tanjun-idle.py"
-    spec = importlib.util.spec_from_file_location("tanjun_idle", path)
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
 def _load_host():
     path = SHELL / "scripts" / "tanjun-host.py"
     spec = importlib.util.spec_from_file_location("tanjun_host", path)
@@ -53,7 +44,6 @@ def register(s) -> None:
     paint = _load_paint()
     host = _load_host()
     pam_mod = _load_pam()
-    idle_mod = _load_idle()
 
     s.eq("slug kind", paint.slug("Dark", "dark"), "dark")
     s.eq("slug drops path", paint.slug("../etc/passwd", "monochrome"), "monochrome")
@@ -198,17 +188,11 @@ def register(s) -> None:
     if isinstance(svc, dict) and "budsMac" in svc:
         s.ok("example budsMac empty", not svc.get("budsMac"), str(svc.get("budsMac")))
 
-    s.ok(
-        "idle block sleep",
-        idle_mod.blocked("firefox\t1000\tabeb\t1\tfirefox\tsleep:idle\tvideo\tblock\n"),
-        "sleep+idle block",
-    )
-    s.ok(
-        "idle delay not block",
-        not idle_mod.blocked("firefox\t1000\tabeb\t1\tfirefox\tsleep\tvideo\tdelay\n"),
-        "delay",
-    )
-    s.ok("idle empty not block", not idle_mod.blocked(""), "empty")
+    # Inhibitor parsing lives in Idle.qml: the shell reads systemd-inhibit's own
+    # table, so there is no helper script to unit-test here.
+    idle_src = (SHELL / "services" / "Idle.qml").read_text(encoding="utf-8")
+    s.ok("idle reads systemd-inhibit", '"systemd-inhibit", "--list"' in idle_src, "command")
+    s.ok("idle has no helper script", not (SHELL / "scripts" / "tanjun-idle.py").exists(), "script")
 
     src_pam = SHELL / "pam"
     dest_pam = tmp / "pam-ok"

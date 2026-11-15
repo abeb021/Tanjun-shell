@@ -241,6 +241,10 @@ ShellRoot {
             UiMode.togglePopout("battery");
         }
 
+        function toggleStats(): void {
+            UiMode.togglePopout("stats");
+        }
+
         function toggleNotify(): void {
             UiMode.togglePopout("notify");
         }

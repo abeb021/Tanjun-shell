@@ -143,15 +143,74 @@ Singleton {
 
     Process {
         id: inhibitProc
-        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-idle.py`]
+        // systemd-inhibit prints the table of holders. This used to go through a
+        // Python helper that called `loginctl list-inhibitors` — a verb loginctl
+        // does not have — so the check silently never saw a single inhibitor.
+        command: ["systemd-inhibit", "--list", "--no-pager"]
         running: false
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
-                root.logindBlock = text.trim() === "true";
+                root.logindBlock = root.inhibited(text);
                 root.runPending();
             }
         }
+    }
+
+    // True when any listed inhibitor blocks idle or sleep.
+    //
+    // Columns are located from the header row rather than by splitting on
+    // spaces: WHY is free text, so a reason with spaces in it shifts every
+    // column after it when the row is split naively.
+    function inhibited(body) {
+        const lines = `${body || ""}`.trim().split("\n");
+        let whatAt = -1;
+        let modeAt = -1;
+        let verboseWhat = "";
+        for (let i = 0; i < lines.length; i++) {
+            const raw = lines[i];
+            if (!raw.trim().length)
+                continue;
+            // Keys and headers are compared on the trimmed line; the table's
+            // column offsets are then taken from that same trimmed header so a
+            // `line.slice(whatAt, modeAt)` lands on the right characters.
+            const line = raw.replace(/\s+$/, "");
+            const low = line.trim().toLowerCase();
+            const trimAt = line.length - line.trimStart().length;
+            // A verbose block (`What:` / `Mode: block`) keeps its own shape, and
+            // its keys are indented, so the check runs on the trimmed line.
+            if (low.indexOf("what:") === 0) {
+                verboseWhat = low.slice(low.indexOf(":") + 1).trim();
+                continue;
+            }
+            if (low.indexOf("mode:") === 0) {
+                if (low.slice(low.indexOf(":") + 1).trim().indexOf("block") === 0 && (verboseWhat.indexOf("idle") >= 0 || verboseWhat.indexOf("sleep") >= 0))
+                    return true;
+                verboseWhat = "";
+                continue;
+            }
+            if (whatAt < 0 && low.indexOf("who") === 0) {
+                whatAt = trimAt + low.indexOf("what");
+                modeAt = trimAt + low.indexOf("mode");
+                continue;
+            }
+            if (whatAt >= 0 && modeAt >= 0) {
+                const what = line.slice(whatAt, modeAt).trim().toLowerCase();
+                const mode = line.slice(modeAt).trim().toLowerCase();
+                if (mode.indexOf("block") === 0 && (what.indexOf("idle") >= 0 || what.indexOf("sleep") >= 0))
+                    return true;
+                continue;
+            }
+            // No header at all (a custom loginctl): fall back to the old shape.
+            const parts = line.split(/[\t|]+/).map(s => s.trim()).filter(s => s.length);
+            if (parts.length >= 3) {
+                const what = parts[parts.length - 3].toLowerCase();
+                const mode = parts[parts.length - 1].toLowerCase();
+                if (mode === "block" && (what.indexOf("idle") >= 0 || what.indexOf("sleep") >= 0))
+                    return true;
+            }
+        }
+        return false;
     }
 
     IdleMonitor {

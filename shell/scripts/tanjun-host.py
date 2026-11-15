@@ -56,7 +56,27 @@ def net():
     return rx, tx
 
 
+def comm_of(pid):
+    """Full process name, or "" if the process is gone.
+
+    /proc/<pid>/stat truncates the comm to 15 characters, so names come from
+    comm instead — but only for the handful of rows that are shown.
+    """
+    try:
+        with open(f"/proc/{pid}/comm", encoding="utf-8") as f:
+            return f.read().strip()
+    except (OSError, UnicodeDecodeError):
+        return ""
+
+
 def scan_procs(limit=LIMIT, prev=None, span=1.0):
+    """Rank the busiest pids by cpu ticks.
+
+    The sweep itself opens one file per process and nothing more: the tick
+    counters and the kernel-thread test both come out of the stat line it has to
+    read anyway. Comm is read afterwards, for the ranked rows only, because the
+    sampler loop is the process that has to keep ticking.
+    """
     me = os.getpid()
     hz = os.sysconf("SC_CLK_TCK") or 100
     now = {}
@@ -74,8 +94,8 @@ def scan_procs(limit=LIMIT, prev=None, span=1.0):
                 close = stat.rfind(")")
                 if close < 0:
                     continue
-                name = stat[stat.find("(") + 1 : close]
-                if name.startswith("["):
+                # Kernel threads are named in brackets, e.g. (kworker/0:1).
+                if stat.startswith("[", stat.find("(") + 1):
                     continue
                 rest = stat[close + 2 :].split()
                 ticks = int(rest[11]) + int(rest[12])
@@ -83,11 +103,11 @@ def scan_procs(limit=LIMIT, prev=None, span=1.0):
                 continue
             now[pid] = ticks
             if prev is None:
-                ranked.append((ticks, pid, name))
+                ranked.append((ticks, pid, ""))
             elif pid in prev:
                 dt = ticks - prev[pid]
                 if dt > 0:
-                    ranked.append((dt, pid, name))
+                    ranked.append((dt, pid, ""))
     except OSError:
         return [], now
     if prev is None:
@@ -98,10 +118,13 @@ def scan_procs(limit=LIMIT, prev=None, span=1.0):
         denom = max(1.0, hz * max(up, 0.05))
     else:
         denom = max(1.0, hz * max(span, 0.05))
-    out = [
-        {"pid": pid, "name": name, "cpu": round(100.0 * dt / denom, 1)}
-        for dt, pid, name in heapq.nlargest(limit, ranked)
-    ]
+    out = []
+    for dt, pid, _ in heapq.nlargest(limit, ranked):
+        name = comm_of(pid)
+        if not name:
+            # The process can exit between the stat read and the comm read.
+            continue
+        out.append({"pid": pid, "name": name, "cpu": round(100.0 * dt / denom, 1)})
     return out, now
 
 
@@ -137,6 +160,53 @@ def cpu_desc():
         "threads": logical or os.cpu_count() or 0,
         "model": model,
     }
+
+
+def cpu_temp():
+    """Hottest package/soc sensor, in Celsius.
+
+    hwmon is tried first because the x86 coretemp driver labels packages with a
+    fixed name; the thermal zones are the fallback for anything else. A machine
+    with neither simply reports no temperature.
+    """
+    found = []
+    try:
+        for ent in os.scandir("/sys/class/hwmon"):
+            try:
+                with open(f"{ent.path}/name", encoding="utf-8") as f:
+                    chip = f.read().strip()
+            except OSError:
+                continue
+            if chip not in ("coretemp", "k10temp", "zenpower", "cpu_thermal", "soc_thermal"):
+                continue
+            try:
+                for tz in os.scandir(ent.path):
+                    if not (tz.name.startswith("temp") and tz.name.endswith("_input")):
+                        continue
+                    try:
+                        with open(tz.path, encoding="utf-8") as f:
+                            found.append(int(f.read().strip()) / 1000.0)
+                    except (OSError, ValueError):
+                        continue
+            except OSError:
+                continue
+        if found:
+            return round(max(found), 1)
+        for ent in os.scandir("/sys/class/thermal"):
+            if not ent.name.startswith("thermal_zone"):
+                continue
+            try:
+                with open(f"{ent.path}/type", encoding="utf-8") as f:
+                    kind = f.read().strip().lower()
+                if "cpu" not in kind and "soc" not in kind and "x86" not in kind:
+                    continue
+                with open(f"{ent.path}/temp", encoding="utf-8") as f:
+                    found.append(int(f.read().strip()) / 1000.0)
+            except (OSError, ValueError):
+                continue
+    except OSError:
+        return None
+    return round(max(found), 1) if found else None
 
 
 def gpu_name():
@@ -194,7 +264,7 @@ def pct(a, b):
     return max(0.0, min(100.0, 100.0 * (1.0 - (idle2 - idle1) / dt)))
 
 
-def sample(prev, facts):
+def sample(prev, facts, want=0):
     a2 = cpu_rows()
     r2, u2 = net()
     t2 = time.monotonic()
@@ -203,7 +273,7 @@ def sample(prev, facts):
         core_pct = []
         down = up = 0
         span = INTERVAL
-        proc_rows, proc_map = scan_procs(LIMIT, None, span)
+        proc_rows, proc_map = scan_procs(want or LIMIT, None, span)
     else:
         span = max(0.05, t2 - prev["t"])
         cpu = pct(prev["cpu"][0], a2[0]) if prev["cpu"] and a2 else 0.0
@@ -213,8 +283,9 @@ def sample(prev, facts):
         ]
         down = round(max(0.0, (r2 - prev["rx"]) / span))
         up = round(max(0.0, (u2 - prev["tx"]) / span))
-        proc_rows, proc_map = scan_procs(LIMIT, prev["procs"], span)
+        proc_rows, proc_map = scan_procs(want or LIMIT, prev["procs"], span)
     used, total = mem()
+    temp = cpu_temp()
     out = {
         "cpu": round(cpu, 1),
         "corePct": core_pct,
@@ -226,6 +297,8 @@ def sample(prev, facts):
         "uptime": uptime_text(),
         "disk": disk_text(),
     }
+    if temp is not None:
+        out["temp"] = temp
     if facts:
         desc = cpu_desc()
         out.update(

@@ -26,9 +26,10 @@ Singleton {
     readonly property int barHeight: 28
     readonly property string barEdge: {
         const e = `${Config.appearance.barEdge || ""}`.toLowerCase();
-        if (e === "bottom" || e === "left" || e === "right")
+        if (e === "top" || e === "bottom" || e === "left" || e === "right")
             return e;
-        return "top";
+        // An unset pin means the default, so the fallback is read from one place.
+        return Config.defaultBarEdge;
     }
     readonly property bool barVertical: barEdge === "left" || barEdge === "right"
     readonly property int barThickness: barVertical ? 40 : barHeight
@@ -266,8 +267,10 @@ Singleton {
 
     function setBarEdge(id) {
         const e = `${id || ""}`.toLowerCase();
-        const next = (e === "bottom" || e === "left" || e === "right") ? e : "top";
-        Config.appearance.barEdge = next === "top" ? "" : next;
+        const next = (e === "top" || e === "bottom" || e === "left" || e === "right") ? e : Config.defaultBarEdge;
+        // The default edge is stored as an empty pin, so a config that never
+        // names an edge keeps following the default.
+        Config.appearance.barEdge = next === Config.defaultBarEdge ? "" : next;
         Config.writeSparse();
     }
 

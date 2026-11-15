@@ -251,6 +251,15 @@ Scope {
                                 id: hWorkspaces
                                 screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
                             }
+
+                            // Tray items sit first on the bar, right after the
+                            // desks: they are the apps' own windows into the
+                            // session, so they lead the numbers instead of
+                            // trailing them.
+                            Repeater {
+                                model: SystemTray.items
+                                delegate: TrayBtn {}
+                            }
                         }
 
                         ClockBtn {
@@ -268,6 +277,9 @@ Scope {
                             LayoutBtn {
                                 id: hLayoutBtn
                             }
+                            StatsBtn {
+                                id: hStatsBtn
+                            }
                             AudioBtn {
                                 id: hAudioBtn
                             }
@@ -279,11 +291,6 @@ Scope {
                             }
                             BatteryBtn {
                                 id: hBatteryBtn
-                            }
-
-                            Repeater {
-                                model: SystemTray.items
-                                delegate: TrayBtn {}
                             }
                         }
                     }
@@ -338,6 +345,15 @@ Scope {
                                 width: parent.width
                                 screenName: barWin.screen && barWin.screen.name ? `${barWin.screen.name}` : ""
                             }
+
+                            // Same order as the horizontal strip: tray items
+                            // follow the desks.
+                            Repeater {
+                                model: SystemTray.items
+                                delegate: TrayBtn {
+                                    width: Theme.barThickness
+                                }
+                            }
                         }
 
                         ClockBtn {
@@ -359,6 +375,11 @@ Scope {
                                 id: vLayoutBtn
                                 width: parent.width
                             }
+                            StatsBtn {
+                                id: vStatsBtn
+                                width: parent.width
+                                compact: true
+                            }
                             AudioBtn {
                                 id: vAudioBtn
                                 width: parent.width
@@ -375,13 +396,6 @@ Scope {
                                 id: vBatteryBtn
                                 width: parent.width
                                 compact: true
-                            }
-
-                            Repeater {
-                                model: SystemTray.items
-                                delegate: TrayBtn {
-                                    width: Theme.barThickness
-                                }
                             }
                         }
                     }
@@ -440,6 +454,15 @@ Scope {
                     anchorItem: UiMode.popoutAnchor || (barWin.vertical ? vBatteryBtn : hBatteryBtn)
                     align: Item.TopRight
                     source: "TrayPop.qml"
+                }
+
+                BarPop {
+                    name: "stats"
+                    barWindow: barWin
+                    strip: barStrip
+                    anchorItem: barWin.vertical ? vStatsBtn : hStatsBtn
+                    align: Item.TopRight
+                    source: "StatsPop.qml"
                 }
             }
 

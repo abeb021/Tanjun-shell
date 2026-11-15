@@ -426,6 +426,7 @@ OverlayHost {
                             title: "desk"
                             Meter {
                                 icon: ""
+                                width: parent.width
                                 label: "audio"
                                 value: Audio.label
                                 ratio: Audio.volume
@@ -435,6 +436,7 @@ OverlayHost {
                             }
                             Meter {
                                 visible: Audio.source
+                                width: parent.width
                                 icon: ""
                                 label: "mic"
                                 value: Audio.micLabel
@@ -445,6 +447,7 @@ OverlayHost {
                             }
                             Meter {
                                 icon: "󰃠"
+                                width: parent.width
                                 label: "light"
                                 value: Backlight.percent + "%"
                                 ratio: Backlight.percent / 100
@@ -452,6 +455,7 @@ OverlayHost {
                             }
                             Meter {
                                 visible: Battery.ready
+                                width: parent.width
                                 icon: ""
                                 label: Battery.charging ? "charging" : "battery"
                                 value: Battery.percent + "%"
