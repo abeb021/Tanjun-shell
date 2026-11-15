@@ -200,6 +200,11 @@ Scope {
                     // reads as the bar opening rather than sitting over a line.
                     // Two segments rather than a clipped one: a clip would also
                     // cut the card's own edges where they meet the bar.
+                    //
+                    // Placed with x/y rather than anchors for the same reason the
+                    // overlay punch-out is: an anchor binding that yields
+                    // `undefined` does not clear the previous anchor, so moving
+                    // the bar would leave the line pinned to the old edge.
                     readonly property bool cutting: !barWin.vertical
                         && UiMode.menuSpanFrom >= 0
                         && UiMode.menuSpanTo > UiMode.menuSpanFrom
@@ -208,10 +213,8 @@ Scope {
                     Rectangle {
                         width: barWin.vertical ? Theme.barRule : (barStrip.cutting ? Math.max(0, UiMode.menuSpanFrom) : parent.width)
                         height: barWin.vertical ? parent.height : Theme.barRule
-                        anchors.left: barWin.edge === "right" ? parent.left : undefined
-                        anchors.right: barWin.edge === "left" ? parent.right : undefined
-                        anchors.top: barWin.edge === "bottom" ? parent.top : undefined
-                        anchors.bottom: barWin.edge === "top" ? parent.bottom : undefined
+                        x: barWin.edge === "right" ? 0 : (barWin.vertical ? parent.width - width : 0)
+                        y: barWin.edge === "bottom" ? 0 : (barWin.vertical ? 0 : parent.height - height)
                         color: Theme.barLine
                     }
 

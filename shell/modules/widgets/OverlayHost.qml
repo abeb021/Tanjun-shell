@@ -65,14 +65,26 @@ PanelWindow {
         id: emptyMask
     }
 
+    // The bar's rect in this surface, as one explicit geometry.
+    //
+    // Anchors cannot express this: they are only assignable, so a binding that
+    // resolves to `undefined` for the current edge leaves the *previous* anchor
+    // in place, and after the bar moves the item keeps a mix of edges (left and
+    // top and bottom at once). That rectangle belongs to no bar, the XOR below
+    // stops excluding the drawer, and the sidebar goes dead to clicks until a
+    // reload rebuilds it. Explicit x/y/width/height is always the current edge.
+    readonly property int barHoleThickness: Theme.barThickness
+    readonly property real barHoleX: Theme.barEdge === "right" ? Math.max(0, root.width - barHoleThickness) : 0
+    readonly property real barHoleY: Theme.barEdge === "bottom" ? Math.max(0, root.height - barHoleThickness) : 0
+    readonly property real barHoleW: Theme.barVertical ? barHoleThickness : root.width
+    readonly property real barHoleH: Theme.barVertical ? root.height : barHoleThickness
+
     Item {
         id: barHole
-        anchors.left: (!Theme.barVertical || Theme.barEdge === "left") ? parent.left : undefined
-        anchors.right: (!Theme.barVertical || Theme.barEdge === "right") ? parent.right : undefined
-        anchors.top: (Theme.barVertical || Theme.barEdge === "top") ? parent.top : undefined
-        anchors.bottom: (Theme.barVertical || Theme.barEdge === "bottom") ? parent.bottom : undefined
-        width: Theme.barVertical ? Theme.barThickness : parent.width
-        height: Theme.barVertical ? parent.height : Theme.barThickness
+        x: root.barHoleX
+        y: root.barHoleY
+        width: root.barHoleW
+        height: root.barHoleH
     }
 
     readonly property var otherScreens: {
@@ -117,14 +129,15 @@ PanelWindow {
                 item: awayHole
                 intersection: Intersection.Xor
             }
+            // Same explicit rect as the host's punch-out, for the same reason:
+            // an anchor left over from the previous edge would punch the wrong
+            // strip out and leave this backdrop swallowing the sidebar.
             Item {
                 id: awayHole
-                anchors.left: (!Theme.barVertical || Theme.barEdge === "left") ? parent.left : undefined
-                anchors.right: (!Theme.barVertical || Theme.barEdge === "right") ? parent.right : undefined
-                anchors.top: (Theme.barVertical || Theme.barEdge === "top") ? parent.top : undefined
-                anchors.bottom: (Theme.barVertical || Theme.barEdge === "bottom") ? parent.bottom : undefined
-                width: Theme.barVertical ? Theme.barThickness : parent.width
-                height: Theme.barVertical ? parent.height : Theme.barThickness
+                x: root.barHoleX
+                y: root.barHoleY
+                width: root.barHoleW
+                height: root.barHoleH
             }
             MouseArea {
                 anchors.fill: parent
