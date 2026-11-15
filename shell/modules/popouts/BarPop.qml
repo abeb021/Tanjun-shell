@@ -87,27 +87,40 @@ Item {
         return spot.x;
     }
 
-    // The card meets the bar flush: two translucent layers overlapping by a
-    // pixel would show a seam of doubled tint. Only styles whose bar has a rule
-    // line need the overlap, to stop that line at the menu.
-    readonly property int attachOverlap: Theme.barRule > 0 ? 1 : 0
-
-    // Across the bar the card is glued to the strip.
+    // Across the bar the card is glued to the strip: its edge sits exactly on the
+    // bar's inner edge, so the two share one boundary and no line shows between
+    // them. The bar's rule is cut at this card's span instead of being covered by
+    // an overlap, which would only push the card's outline into the bar.
     readonly property real cardX: root.vertical
-        ? (root.edge === "right" ? root.spanW - root.bar + root.attachOverlap - root.cardW : root.bar - root.attachOverlap)
+        ? (root.edge === "right" ? root.spanW - root.bar - root.cardW : root.bar)
         : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8))
     readonly property real cardY: root.vertical
         ? Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8))
-        : (root.edge === "bottom" ? root.spanH - root.bar + root.attachOverlap - root.shownH : root.bar - root.attachOverlap)
+        : (root.edge === "bottom" ? root.spanH - root.bar - root.shownH : root.bar)
 
     onOpenChanged: {
         if (!open) {
             if (UiMode.hoverCard === root.name)
                 UiMode.hoverCard = "";
+            // Stop masking the bar's rule once this menu is gone.
+            if (UiMode.menuSpanName === root.name)
+                UiMode.clearMenuSpan();
             return;
         }
         adoptSize();
         card.forceActiveFocus();
+        // Tell the bar which stretch of its inner rule this card covers, so the
+        // line can stop at the menu instead of running under it.
+        publishSpan();
+    }
+
+    onCardWChanged: if (open)
+        publishSpan()
+    onShownHChanged: if (open)
+        publishSpan()
+
+    function publishSpan() {
+        UiMode.setMenuSpan(root.name, `${barWindow ? barWindow.screen.name : ""}`, Math.round(root.cardX), Math.round(root.cardX + root.cardW));
     }
  
 

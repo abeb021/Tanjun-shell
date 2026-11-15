@@ -195,11 +195,33 @@ Scope {
                         color: Theme.glass ? Theme.glassSurface : Theme.bg
                     }
 
+                    // The inner rule. When a menu is open on this output the
+                    // line stops at that menu's stretch of the bar, so the card
+                    // reads as the bar opening rather than sitting over a line.
+                    // Two segments rather than a clipped one: a clip would also
+                    // cut the card's own edges where they meet the bar.
+                    readonly property bool cutting: !barWin.vertical
+                        && UiMode.menuSpanFrom >= 0
+                        && UiMode.menuSpanTo > UiMode.menuSpanFrom
+                        && (!UiMode.menuSpanScreen.length || (barWin.screen && `${barWin.screen.name}` === UiMode.menuSpanScreen))
+
                     Rectangle {
-                        width: barWin.vertical ? Theme.barRule : parent.width
+                        width: barWin.vertical ? Theme.barRule : (barStrip.cutting ? Math.max(0, UiMode.menuSpanFrom) : parent.width)
                         height: barWin.vertical ? parent.height : Theme.barRule
                         anchors.left: barWin.edge === "right" ? parent.left : undefined
                         anchors.right: barWin.edge === "left" ? parent.right : undefined
+                        anchors.top: barWin.edge === "bottom" ? parent.top : undefined
+                        anchors.bottom: barWin.edge === "top" ? parent.bottom : undefined
+                        color: Theme.barLine
+                    }
+
+                    // The stretch after the menu. Only a horizontal bar with a
+                    // menu open has one.
+                    Rectangle {
+                        visible: barStrip.cutting
+                        width: Math.max(0, parent.width - UiMode.menuSpanTo)
+                        height: Theme.barRule
+                        x: UiMode.menuSpanTo
                         anchors.top: barWin.edge === "bottom" ? parent.top : undefined
                         anchors.bottom: barWin.edge === "top" ? parent.bottom : undefined
                         color: Theme.barLine

@@ -25,7 +25,8 @@ Rectangle {
             }
         }
         Rectangle {
-            visible: Theme.sliderGlow
+            // A ring is a drag affordance, so a read-only meter gets none.
+            visible: Theme.sliderGlow && bar.interactive
             anchors.fill: parent
             anchors.margins: -2
             radius: 4
@@ -36,7 +37,8 @@ Rectangle {
     }
 
     Rectangle {
-        visible: bar.thumb
+        // A thumb is a handle, so it only appears when the bar can be dragged.
+        visible: bar.thumb && bar.interactive
         width: 10
         height: 10
         radius: Theme.radius

@@ -69,6 +69,11 @@ Singleton {
     readonly property int cardPad: panelStyle ? 28 : 20
     readonly property color planeBorder: panelStyle ? accent : hairline
     readonly property color popBorder: panelStyle ? accent : hairline
+    // A menu hanging off the bar is drawn with the same border as a free card, so
+    // it keeps its edges. The edge that meets the bar is not drawn (see
+    // Face.attach), so the border traces the menu without cutting it off.
+    readonly property color attachBorder: popBorder
+    readonly property int attachBorderWidth: panelStyle ? 1 : 0
     readonly property color hot: panelStyle ? wash(accent, 0.10) : surfaceHover
     readonly property color hotSoft: panelStyle ? wash(accent, 0.08) : surfaceHover
     readonly property color barLine: panelStyle ? wash(accent, 0.55) : "transparent"

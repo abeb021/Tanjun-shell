@@ -2,10 +2,8 @@ import QtQuick
 import "../widgets"
 import "../../services"
 
-// Load, memory, and cpu temperature in one small card. Three rows, each a
-// number and a hairline bar: the same reading the sidebar gives, without the
-// drawer. Only rows that have something to say are drawn — a machine with no
-// thermal sensor simply has no temperature row.
+// Load, memory, and cpu temperature in one small card. The two load figures get
+// a hairline bar; temperature is one number and reads as text.
 Face {
     id: root
     job: "pop"
@@ -18,9 +16,6 @@ Face {
 
     readonly property real load: Math.max(0, Math.min(1, Host.cpu / 100))
     readonly property real mem: Math.max(0, Math.min(1, Host.ramRatio))
-    // 40–95 °C is the range a laptop actually moves through; a bare number
-    // would not say whether 60 is idle or warm.
-    readonly property real heat: Host.hasTemp ? Math.max(0, Math.min(1, (Host.temp - 40) / 55)) : 0
     readonly property color loadTint: Host.cpu >= 90 ? Theme.critical : (Host.cpu >= 70 ? Theme.warning : Theme.accent)
     readonly property color memTint: Host.ramRatio >= 0.9 ? Theme.critical : (Host.ramRatio >= 0.75 ? Theme.warning : Theme.accent)
     readonly property color heatTint: Host.temp >= 90 ? Theme.critical : (Host.temp >= 75 ? Theme.warning : Theme.accent)
@@ -130,47 +125,36 @@ Face {
             }
         }
 
-        Column {
+        // A bar implies a range you can move through, which a temperature is not.
+        Item {
             width: parent.width
-            spacing: 5
+            height: 15
             visible: Host.hasTemp
 
-            Item {
-                width: parent.width
-                height: 15
-
-                BarText {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "󰔏"
-                    icon: true
-                    px: 12
-                    color: root.heatTint
-                }
-                BarText {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 18
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "temp"
-                    px: 11
-                    family: Config.defaultFontUi
-                    color: Theme.fgSub
-                }
-                BarText {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: Host.tempText
-                    px: 13
-                    family: Config.defaultFontUi
-                    color: Theme.fg
-                }
+            BarText {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰔏"
+                icon: true
+                px: 12
+                color: root.heatTint
             }
-
-            VolumeBar {
-                width: parent.width
-                value: root.heat
-                fill: root.heatTint
-                interactive: false
+            BarText {
+                anchors.left: parent.left
+                anchors.leftMargin: 18
+                anchors.verticalCenter: parent.verticalCenter
+                text: "temp"
+                px: 11
+                family: Config.defaultFontUi
+                color: Theme.fgSub
+            }
+            BarText {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: Host.tempText
+                px: 13
+                family: Config.defaultFontUi
+                color: Theme.fg
             }
         }
 

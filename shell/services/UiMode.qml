@@ -78,6 +78,29 @@ Singleton {
     property string overviewPick: ""
     property int overviewCount: 0
 
+    // The stretch of the bar an open menu covers, in window coordinates, so the
+    // bar's inner rule can stop there and the menu reads as the bar opening
+    // instead of a card laid over a line. Only one menu is ever open, so a
+    // single span is enough.
+    property string menuSpanName: ""
+    property string menuSpanScreen: ""
+    property real menuSpanFrom: -1
+    property real menuSpanTo: -1
+
+    function setMenuSpan(name, screen, from, to) {
+        menuSpanName = `${name || ""}`;
+        menuSpanScreen = `${screen || ""}`;
+        menuSpanFrom = from;
+        menuSpanTo = to;
+    }
+
+    function clearMenuSpan() {
+        menuSpanName = "";
+        menuSpanScreen = "";
+        menuSpanFrom = -1;
+        menuSpanTo = -1;
+    }
+
     // Hover-intent helpers. hoverPopout is what a bar button calls once the
     // pointer has rested on it long enough; the away timer closes it again when
     // the pointer is on neither a popout button nor the open card.
@@ -165,6 +188,7 @@ Singleton {
         hoverPop = false;
         hoverCard = "";
         hoverAway.stop();
+        clearMenuSpan();
     }
 
     function closePopout() {
@@ -183,6 +207,7 @@ Singleton {
         overviewPick = "";
         overviewCount = 0;
         wallsOpen = false;
+        clearMenuSpan();
         dropTimer.restart();
     }
 

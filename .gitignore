@@ -12,5 +12,7 @@ __pycache__/
 # Cursor — local only (rules, research, IDE)
 .cursor/
 .cursor/**
+.agent/
+.agent/**
 .cursorignore
 .vscode/

@@ -18,6 +18,10 @@ Scope {
             grabKeys: Compositor.isScreenFocused(modelData)
             contentOpacity: stage.opacity
             dismissOthers: false
+            // The key handler below is what takes Tab and Enter, so KeyPrime must
+            // prime it. Without this the host's own focus scope held the keys on
+            // open and the first Tab went to the window underneath.
+            focusField: kb
 
             readonly property bool isFocused: Compositor.isScreenFocused(modelData)
             readonly property string outputName: modelData && modelData.name ? `${modelData.name}` : ""
@@ -352,7 +356,8 @@ Scope {
             Item {
                 id: kb
                 anchors.fill: parent
-                focus: win.open && win.isFocused
+                // KeyPrime owns the focus hand-over now (this is focusField), so a
+                // `focus:` binding here would only compete with the host's scope.
                 Keys.priority: Keys.BeforeItem
                 Keys.onPressed: event => {
                     if (!win.open || !win.isFocused)
