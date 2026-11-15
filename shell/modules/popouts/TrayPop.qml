@@ -103,6 +103,10 @@ Face {
                 delegate: Item {
                     required property var modelData
                     width: col.width
+                    // A separator has its own height; a row's comes from the row,
+                    // which now exposes implicitHeight. Reading a height it did
+                    // not have collapsed every label to zero while the separators
+                    // stayed, leaving a menu of blank gaps.
                     implicitHeight: modelData.isSeparator ? 9 : row.implicitHeight
 
                     Rectangle {

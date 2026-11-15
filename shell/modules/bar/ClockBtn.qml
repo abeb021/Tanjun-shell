@@ -17,6 +17,10 @@ BarButton {
     readonly property string hh: pad(Time.hhmm.h)
     readonly property string mm: pad(Time.hhmm.m)
 
+    // Only the clock gets a taller hit area on a vertical bar: the stacked pair
+    // needs the room, where every other button stays `barHeight` tall.
+    implicitHeight: root.compact ? Theme.barThickness : Theme.barHeight
+
     function pad(n) {
         const s = `${Number(n) || 0}`;
         return s.length < 2 ? `0${s}` : s;
@@ -30,19 +34,20 @@ BarButton {
     }
 
     // Vertical bar: hours over minutes. Both halves are the body colour — one
-    // time, not a primary and a secondary line.
+    // time, not a primary and a secondary line. 12px still fits two digits in the
+    // 40px strip; 10px read small next to the rest of the bar.
     Column {
         visible: root.compact
-        spacing: -2
+        spacing: -4
         BarText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.hh
-            px: 10
+            px: 16
         }
         BarText {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.mm
-            px: 10
+            px: 16
         }
     }
 }

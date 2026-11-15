@@ -76,7 +76,10 @@ Singleton {
     readonly property int attachBorderWidth: panelStyle ? 1 : 0
     readonly property color hot: panelStyle ? wash(accent, 0.10) : surfaceHover
     readonly property color hotSoft: panelStyle ? wash(accent, 0.08) : surfaceHover
-    readonly property color barLine: panelStyle ? wash(accent, 0.55) : "transparent"
+    // The inner edge of the bar. A faint wash of the accent, not a stripe: at 55%
+    // a full-width line reads as the bar turning the accent colour on horizontal
+    // edges, where it spans the whole output.
+    readonly property color barLine: panelStyle ? wash(accent, 0.22) : "transparent"
 
     readonly property color hairline: Qt.rgba(fg.r, fg.g, fg.b, 0.16)
     readonly property int typeCaption: Math.max(10, fontPx - 2)

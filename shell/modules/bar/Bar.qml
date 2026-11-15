@@ -216,14 +216,15 @@ Scope {
                     }
 
                     // The stretch after the menu. Only a horizontal bar with a
-                    // menu open has one.
+                    // menu open has one. Positioned with y rather than anchors:
+                    // setting any anchor would override `x` and pull the segment
+                    // back to the left edge.
                     Rectangle {
                         visible: barStrip.cutting
                         width: Math.max(0, parent.width - UiMode.menuSpanTo)
                         height: Theme.barRule
                         x: UiMode.menuSpanTo
-                        anchors.top: barWin.edge === "bottom" ? parent.top : undefined
-                        anchors.bottom: barWin.edge === "top" ? parent.bottom : undefined
+                        y: barWin.edge === "bottom" ? 0 : parent.height - height
                         color: Theme.barLine
                     }
 

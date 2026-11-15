@@ -48,9 +48,9 @@ Rectangle {
     Rectangle {
         id: attachFrame
         visible: root.attachEdgeWidth > 0
-        // Above the content: the outline is the outermost pixel, and a section
-        // spanning the full width would otherwise paint over it.
-        z: 5
+        // Above the card's own fill but below its content, so a full-width row
+        // still paints over the border rather than under it.
+        z: 0
         readonly property real bleed: root.attachEdgeWidth
         color: "transparent"
         border.width: root.attachEdgeWidth

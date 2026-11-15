@@ -21,7 +21,8 @@ Item {
     readonly property bool hasIcon: icon.length > 0
 
     width: parent ? parent.width : 0
-    height: sub.length > 0 ? 34 : 26
+    implicitHeight: sub.length > 0 ? 34 : 26
+    height: implicitHeight
 
     Rectangle {
         anchors.fill: parent

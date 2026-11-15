@@ -120,7 +120,8 @@ Item {
         publishSpan()
 
     function publishSpan() {
-        UiMode.setMenuSpan(root.name, `${barWindow ? barWindow.screen.name : ""}`, Math.round(root.cardX), Math.round(root.cardX + root.cardW));
+        const sc = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
+        UiMode.setMenuSpan(root.name, sc, Math.round(root.cardX), Math.round(root.cardX + root.cardW));
     }
  
 
