@@ -15,6 +15,42 @@ except ValueError:
     INTERVAL = 2.0
 INTERVAL = max(0.05, min(INTERVAL, 60.0))
 LIMIT = 5
+# The QML side writes this file to steer the watch loop: {"procs": <bool>,
+# "interval": <seconds>}. The sampler is a child of Quickshell, so a file is the
+# simplest way for it to hear about a sidebar opening. The path is passed on the
+# command line (--control <path>) because the process cwd is Quickshell's, not the
+# state dir; TANJUN_HOST_CONTROL remains as an override for running by hand.
+def _control_path():
+    args = sys.argv[1:]
+    if "--control" in args:
+        i = args.index("--control")
+        if i + 1 < len(args):
+            return Path(args[i + 1])
+    return Path(os.environ.get("TANJUN_HOST_CONTROL") or "/proc/self/cwd/state/host.json")
+
+
+CONTROL = _control_path()
+
+
+def read_control():
+    """(procs, interval) for this tick.
+
+    Missing or malformed control falls back to the old behaviour: full procs on
+    the startup interval, so running the script by hand still prints everything.
+    """
+    try:
+        data = json.loads(CONTROL.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return True, INTERVAL
+    if not isinstance(data, dict):
+        return True, INTERVAL
+    want = data.get("procs")
+    want = bool(want) if isinstance(want, bool) else True
+    try:
+        span = float(data.get("interval"))
+    except (TypeError, ValueError):
+        span = INTERVAL
+    return want, max(0.05, min(span, 60.0))
 
 
 def cpu_rows():
@@ -264,7 +300,7 @@ def pct(a, b):
     return max(0.0, min(100.0, 100.0 * (1.0 - (idle2 - idle1) / dt)))
 
 
-def sample(prev, facts, want=0):
+def sample(prev, facts, want=0, procs_on=True):
     a2 = cpu_rows()
     r2, u2 = net()
     t2 = time.monotonic()
@@ -273,7 +309,6 @@ def sample(prev, facts, want=0):
         core_pct = []
         down = up = 0
         span = INTERVAL
-        proc_rows, proc_map = scan_procs(want or LIMIT, None, span)
     else:
         span = max(0.05, t2 - prev["t"])
         cpu = pct(prev["cpu"][0], a2[0]) if prev["cpu"] and a2 else 0.0
@@ -283,7 +318,16 @@ def sample(prev, facts, want=0):
         ]
         down = round(max(0.0, (r2 - prev["rx"]) / span))
         up = round(max(0.0, (u2 - prev["tx"]) / span))
-        proc_rows, proc_map = scan_procs(want or LIMIT, prev["procs"], span)
+    # The pid sweep is the expensive part of a tick and only the sidebar shows the
+    # result, so it is skipped entirely unless the control file asks for it. The
+    # map is still carried forward, so the first tick after re-enabling has a
+    # baseline to diff against instead of a blank one.
+    proc_rows, proc_map = [], {}
+    if procs_on:
+        if prev is None:
+            proc_rows, proc_map = scan_procs(want or LIMIT, None, span)
+        else:
+            proc_rows, proc_map = scan_procs(want or LIMIT, prev["procs"], span)
     used, total = mem()
     temp = cpu_temp()
     out = {
@@ -321,12 +365,13 @@ def main() -> None:
     prev = None
     facts = True
     while True:
-        out, prev = sample(prev, facts)
+        procs_on, span = read_control()
+        out, prev = sample(prev, facts, procs_on=procs_on)
         print(json.dumps(out), flush=True)
         facts = False
         if not WATCH:
             return
-        time.sleep(INTERVAL)
+        time.sleep(span)
 
 
 if __name__ == "__main__":

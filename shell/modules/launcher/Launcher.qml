@@ -398,27 +398,20 @@ Scope {
                         if (!appMatch(a, low))
                             continue;
                         const id = a.id || a.name || `${i}`;
-                        out.push({ kind: "app", key: "app:" + i + ":" + id, name: a.name, entry: a });
+                        // precompute sort keys once per row instead of per comparison
+                        out.push({
+                            kind: "app", key: "app:" + i + ":" + id, name: a.name, entry: a,
+                            count: Launches.count(id), last: Launches.last(id),
+                            prefix: low.length && (a.name || "").toLowerCase().startsWith(low) ? 1 : 0
+                        });
                     }
                     out.sort((a, b) => {
-                        const ia = a.entry && a.entry.id ? a.entry.id : a.name;
-                        const ib = b.entry && b.entry.id ? b.entry.id : b.name;
-                        const ca = Launches.count(ia);
-                        const cb = Launches.count(ib);
-                        if (cb !== ca)
-                            return cb - ca;
-                        const ta = Launches.last(ia);
-                        const tb = Launches.last(ib);
-                        if (tb !== ta)
-                            return tb - ta;
-                        if (low.length) {
-                            const na = (a.name || "").toLowerCase();
-                            const nb = (b.name || "").toLowerCase();
-                            const pa = na.startsWith(low) ? 1 : 0;
-                            const pb = nb.startsWith(low) ? 1 : 0;
-                            if (pb !== pa)
-                                return pb - pa;
-                        }
+                        if (b.count !== a.count)
+                            return b.count - a.count;
+                        if (b.last !== a.last)
+                            return b.last - a.last;
+                        if (b.prefix !== a.prefix)
+                            return b.prefix - a.prefix;
                         return (a.name || "").localeCompare(b.name || "");
                     });
                 }

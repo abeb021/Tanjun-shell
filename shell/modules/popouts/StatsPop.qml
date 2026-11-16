@@ -20,8 +20,8 @@ Face {
     readonly property color memTint: Host.ramRatio >= 0.9 ? Theme.critical : (Host.ramRatio >= 0.75 ? Theme.warning : Theme.accent)
     readonly property color heatTint: Host.temp >= 90 ? Theme.critical : (Host.temp >= 75 ? Theme.warning : Theme.accent)
 
-    // The menu is the only thing on the bar that needs the sampler, so opening
-    // it is what starts the tick and closing it stops the tick again.
+    // The bar readout keeps the sampler running on its own; opening the menu
+    // just adds its own request while the card is on screen.
     readonly property bool open: UiMode.popout === "stats"
     onOpenChanged: Host.menuOpen = root.open
     Component.onDestruction: Host.menuOpen = false

@@ -25,11 +25,21 @@ Singleton {
     property string disk: ""
     property var corePct: []
     property bool facts: false
-    // Set by whatever is showing live numbers. The sidebar, the system page and
-    // the load menu each want the full sampler without the others being open.
+    // Set by whatever is showing live numbers. The sidebar, the system page, the
+    // bar readout and the load menu each want the full sampler without the others
+    // being open.
     property bool menuOpen: false
+    // The bar readout is visible at all times, so it asks for the sampler too and
+    // the numbers stay live without a menu being open.
+    property bool barReading: false
     readonly property bool ticking: proc.running
-    readonly property bool wanted: UiMode.sidebarOpen || menuOpen || (UiMode.settingsOpen && SettingsNav.page === "system")
+    readonly property bool wanted: barReading || UiMode.sidebarOpen || menuOpen || (UiMode.settingsOpen && SettingsNav.page === "system")
+    // A real reader shows more than the bar readout, so it earns a faster tick.
+    readonly property bool panelOpen: UiMode.sidebarOpen || menuOpen || (UiMode.settingsOpen && SettingsNav.page === "system")
+    // Only the sidebar lists top processes; nobody else sees Host.procs, so the
+    // per-pid /proc sweep is skipped while it is closed.
+    readonly property bool procsWanted: UiMode.sidebarOpen
+    readonly property int interval: panelOpen ? 2 : 5
 
     readonly property real ramRatio: ramTotal > 0 ? ramUsed / ramTotal : 0
     readonly property string ramText: ramTotal > 0 ? `${fmtGiB(ramUsed)} / ${fmtGiB(ramTotal)}` : "—"
@@ -150,9 +160,34 @@ Singleton {
         Quickshell.execDetached(["kill", "-TERM", `${n}`]);
     }
 
+    readonly property string controlPath: `${Config.stateDir}/host.json`
+
+    // The sampler is a separate process, so its tick rate and whether it sweeps
+    // /proc/<pid> are passed to it through a small handshake file it re-reads
+    // every tick. Written only when the values change; Config creates the dir.
+    function writeControl() {
+        Config.ensureStateDir();
+        const body = JSON.stringify({ procs: root.procsWanted, interval: root.interval });
+        if (hostCtl.path !== root.controlPath)
+            hostCtl.path = root.controlPath;
+        hostCtl.setText(body);
+    }
+
+    onProcsWantedChanged: writeControl()
+    onIntervalChanged: writeControl()
+
+    FileView {
+        id: hostCtl
+        path: root.controlPath
+        printErrors: false
+        atomicWrites: true
+    }
+
+    Component.onCompleted: writeControl()
+
     Process {
         id: proc
-        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`, "--watch"]
+        command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-host.py`, "--watch", "--control", `${Config.stateDir}/host.json`]
         running: root.wanted
         stdout: SplitParser {
             onRead: line => {
