@@ -60,6 +60,7 @@ Column {
     }
     VolumeBar {
         width: parent.width
+        thumb: true
         value: root.ratio
         fill: root.fill
         interactive: root.interactive

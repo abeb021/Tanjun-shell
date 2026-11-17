@@ -209,11 +209,17 @@ Scope {
                         && UiMode.menuSpanFrom >= 0
                         && UiMode.menuSpanTo > UiMode.menuSpanFrom
                         && (!UiMode.menuSpanScreen.length || (barWin.screen && `${barWin.screen.name}` === UiMode.menuSpanScreen))
+                    // A menu that runs to the screen's edge leaves no bar after it,
+                    // so the rule ends at the menu instead of trailing a sliver at
+                    // the corner.
+                    readonly property bool ruleEndsAtMenu: cutting
+                        && UiMode.menuSpanTo >= parent.width - Theme.attachBorderWidth
 
                     Rectangle {
                         width: barWin.vertical ? Theme.barRule : (barStrip.cutting ? Math.max(0, UiMode.menuSpanFrom) : parent.width)
                         height: barWin.vertical ? parent.height : Theme.barRule
                         x: barWin.edge === "right" ? 0 : (barWin.vertical ? parent.width - width : 0)
+                        visible: barWin.vertical || !barStrip.ruleEndsAtMenu
                         // The rule sits on the strip's last row. A fractional output
                         // scale (1.2 here) puts that row on a half pixel of the
                         // physical grid, and Qt then smears the hairline over two
@@ -234,7 +240,7 @@ Scope {
                     // setting any anchor would override `x` and pull the segment
                     // back to the left edge.
                     Rectangle {
-                        visible: barStrip.cutting
+                        visible: barStrip.cutting && !barStrip.ruleEndsAtMenu
                         width: Math.max(0, parent.width - UiMode.menuSpanTo)
                         height: Theme.barRule
                         x: UiMode.menuSpanTo
@@ -486,7 +492,11 @@ Scope {
                     name: "battery"
                     barWindow: barWin
                     strip: barStrip
+                    // The battery is the last item on the bar, so its menu runs to
+                    // the screen's edge rather than the 8px inset a menu anchored
+                    // to a button in the middle of the bar keeps.
                     anchorItem: barWin.vertical ? vBatteryBtn : hBatteryBtn
+                    reachEdge: true
                     align: Item.TopRight
                     source: "BatteryPop.qml"
                 }

@@ -22,6 +22,10 @@ Item {
     // Which point of the anchor the panel hangs from: Top centres it, TopRight
     // aligns its right edge to the anchor (the usual case for a right-hand menu).
     property int align: Item.TopLeft
+    // Whether the card runs to the screen's edge along the bar instead of ending
+    // at the anchor item. The menu on the bar's last button sits in the corner the
+    // bar ends at, so it shares that edge with the bar and the screen.
+    property bool reachEdge: false
     property string source: ""
     property real cardW: 280
     property real cardH: 200
@@ -80,6 +84,8 @@ Item {
         const len = root.anchorLen;
         if (root.vertical)
             return spot.y + len / 2 - root.cardH / 2;
+        if (root.reachEdge)
+            return root.spanW - root.cardW;
         if (root.align === Item.TopRight)
             return spot.x + len - root.cardW;
         if (root.align === Item.Top)
@@ -92,10 +98,10 @@ Item {
     // them. The bar's rule is cut at this card's span instead of being covered by
     // an overlap, which would only push the card's outline into the bar.
     readonly property real cardX: root.vertical
-        ? (root.edge === "right" ? root.spanW - root.bar - root.cardW : root.bar)
-        : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8))
+        ? (root.reachEdge ? (root.edge === "right" ? root.spanW - root.cardW : 0) : (root.edge === "right" ? root.spanW - root.bar - root.cardW : root.bar))
+        : (root.reachEdge ? Math.max(0, Math.min(root.cardAlong, root.spanW - root.cardW)) : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8)))
     readonly property real cardY: root.vertical
-        ? Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8))
+        ? (root.reachEdge ? Math.max(0, Math.min(root.cardAlong, root.spanH - root.shownH)) : Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8)))
         : (root.edge === "bottom" ? root.spanH - root.bar - root.shownH : root.bar)
 
     onOpenChanged: {
