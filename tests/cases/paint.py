@@ -31,18 +31,8 @@ def _load_pam():
     return mod
 
 
-def _load_host():
-    path = SHELL / "scripts" / "tanjun-host.py"
-    spec = importlib.util.spec_from_file_location("tanjun_host", path)
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
 def register(s) -> None:
     paint = _load_paint()
-    host = _load_host()
     pam_mod = _load_pam()
 
     s.eq("slug kind", paint.slug("Dark", "dark"), "dark")
@@ -86,55 +76,14 @@ def register(s) -> None:
         s.ok("sample pal dict", isinstance(pal1, dict) and pal1.get("kind") == "wall", str(pal1)[:120])
         s.ok("sample pal accent", isinstance(pal1.get("accent"), str) and pal1["accent"].startswith("#"), str(pal1.get("accent")))
 
-    rows = host.procs(limit=3)
-    s.ok("procs list", isinstance(rows, list), str(type(rows)))
-    if rows:
-        s.ok("proc has pid", isinstance(rows[0].get("pid"), int), str(rows[0]))
-        s.ok("proc has name", isinstance(rows[0].get("name"), str) and rows[0]["name"], str(rows[0]))
-
-    first, prev = host.sample(None, True)
-    s.ok("sample dict", isinstance(first, dict) and "cpu" in first, str(type(first)))
-    s.ok("sample procs list", isinstance(first.get("procs"), list), str(first.get("procs")))
-    s.ok("sample facts", bool(first.get("distro") or first.get("kernel")), str(first.keys()))
-    second, _ = host.sample(prev, False)
-    s.ok("sample tick dict", isinstance(second, dict) and "cpu" in second, str(second))
-    s.ok("sample tick no facts", "distro" not in second, str(second.keys()))
-
-    watch_env = os.environ.copy()
-    watch_env["TANJUN_HOST_INTERVAL"] = "0.05"
-    watch = subprocess.Popen(
-        [sys.executable, str(SHELL / "scripts" / "tanjun-host.py"), "--watch"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        env=watch_env,
-    )
-    try:
-        line1 = watch.stdout.readline() if watch.stdout else ""
-        line2 = watch.stdout.readline() if watch.stdout else ""
-    finally:
-        watch.terminate()
-        try:
-            watch.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            watch.kill()
-            watch.wait(timeout=1)
-    try:
-        w1 = json.loads(line1.strip() or "null")
-        w1_err = ""
-    except json.JSONDecodeError as e:
-        w1 = None
-        w1_err = str(e)
-    try:
-        w2 = json.loads(line2.strip() or "null")
-        w2_err = ""
-    except json.JSONDecodeError as e:
-        w2 = None
-        w2_err = str(e)
-    s.ok("watch line 1 json", isinstance(w1, dict) and not w1_err, w1_err or line1[:120])
-    s.ok("watch line 2 json", isinstance(w2, dict) and not w2_err, w2_err or line2[:120])
-    s.ok("watch line 1 cpu", isinstance(w1, dict) and "cpu" in w1, str(w1))
-    s.ok("watch line 2 cpu", isinstance(w2, dict) and "cpu" in w2, str(w2))
+    # Host metrics are read in-process by shell/services/Host.qml now, so there is
+    # no helper script to unit-test and no Python entry point to exercise. The live
+    # numbers are checked with `qs ipc call tanjun hostJson`.
+    host_src = (SHELL / "services" / "Host.qml").read_text(encoding="utf-8")
+    s.ok("host has no helper script", not (SHELL / "scripts" / "tanjun-host.py").exists(), "script")
+    s.ok("host reads proc stat", '"/proc/stat"' in host_src, host_src[:80])
+    s.ok("host lists procs with ps", '"ps"' in host_src, "ps")
+    s.ok("host reloads each source", "statFile.reload()" in host_src, "reload")
 
     buds = (ROOT / "scripts" / "bluetooth.sh").read_text(encoding="utf-8")
     s.ok("buds script has no MAC", not re.search(r"(?i)([0-9a-f]{2}:){5}[0-9a-f]{2}", buds), buds[:200])
