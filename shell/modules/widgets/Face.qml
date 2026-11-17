@@ -71,18 +71,21 @@ Rectangle {
         anchors.rightMargin: root.attachEdge === "right" ? -bleed : 0
     }
 
+    // Corner marks. Only the top-right and bottom-left pair is drawn: on a
+    // square card all four read as a picture frame, while two opposite corners
+    // read as registration marks.
     Repeater {
-        model: root.ticks ? 4 : 0
+        model: root.ticks ? [Item.TopRight, Item.BottomLeft] : []
         Rectangle {
-            required property int index
+            required property var modelData
             z: 8
-            width: index % 2 === 0 ? root.tickLen : Theme.tickArm
-            height: index % 2 === 0 ? Theme.tickArm : root.tickLen
+            width: modelData === Item.TopRight ? root.tickLen : Theme.tickArm
+            height: modelData === Item.TopRight ? Theme.tickArm : root.tickLen
             color: Theme.accent
-            anchors.top: index < 2 ? parent.top : undefined
-            anchors.left: index < 2 ? parent.left : undefined
-            anchors.bottom: index >= 2 ? parent.bottom : undefined
-            anchors.right: index >= 2 ? parent.right : undefined
+            anchors.top: modelData === Item.TopRight ? parent.top : undefined
+            anchors.right: modelData === Item.TopRight ? parent.right : undefined
+            anchors.bottom: modelData === Item.BottomLeft ? parent.bottom : undefined
+            anchors.left: modelData === Item.BottomLeft ? parent.left : undefined
             anchors.margins: root.tickPad
         }
     }
