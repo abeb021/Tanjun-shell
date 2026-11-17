@@ -26,6 +26,35 @@ Singleton {
         return JSON.stringify(pollObject());
     }
 
+    // The whole sampler, as the UI sees it. `qs ipc call tanjun hostJson` is how
+    // the numbers get checked by eye in a live session, since a failure to read
+    // /proc or /sys shows up as a zero here and nowhere else.
+    function hostJson() {
+        return JSON.stringify({
+            cpu: Host.cpu,
+            cores: Host.cores,
+            threads: Host.threads,
+            corePct: Host.corePct,
+            temp: Host.temp,
+            ramUsed: Host.ramUsed,
+            ramTotal: Host.ramTotal,
+            ramText: Host.ramText,
+            down: Host.down,
+            up: Host.up,
+            procs: Host.procs,
+            uptime: Host.uptime,
+            disk: Host.disk,
+            distro: Host.distro,
+            kernel: Host.kernel,
+            hostName: Host.hostName,
+            gpu: Host.gpu,
+            cpuModel: Host.cpuModel,
+            wantProcs: Host.procsWanted,
+            interval: Host.interval,
+            tempSensors: Host.tempSources.length
+        });
+    }
+
     function hostCaps() {
         return JSON.stringify({
             hasGamma: Compositor.hasGamma,

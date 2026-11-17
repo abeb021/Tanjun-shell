@@ -103,6 +103,10 @@ ShellRoot {
             return TestHooks.pollJson();
         }
 
+        function hostJson(): string {
+            return TestHooks.hostJson();
+        }
+
         function hostCaps(): string {
             return TestHooks.hostCaps();
         }
