@@ -162,7 +162,6 @@ Item {
             job: "pop"
             lit: box.activeFocus
             danger: Lock.fail
-            ticks: false
 
             TextInput {
                 id: box

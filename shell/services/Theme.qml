@@ -43,21 +43,15 @@ Singleton {
     readonly property string defaultStyle: "chrome"
     readonly property var styles: [
         { key: "minimal", label: "Minimal", blurb: "Quiet 1px planes across the shell." },
-        { key: "chrome", label: "Chrome", blurb: "Ticks, chips, and marked rails. Palettes unchanged." }
+        { key: "chrome", label: "Chrome", blurb: "Chips and marked rails. Palettes unchanged." }
     ]
     readonly property string style: normStyle(Config.appearance.style)
     readonly property bool panelStyle: style === "chrome"
-    readonly property bool tick: panelStyle
-    readonly property bool tickPops: false
     readonly property bool pip: panelStyle
     readonly property bool railMark: panelStyle
     readonly property bool sliderGlow: panelStyle
     readonly property bool pillToggle: panelStyle
     readonly property int chipBorder: panelStyle ? 1 : 0
-    readonly property int tickPlane: 40
-    readonly property int tickPop: 18
-    readonly property int tickArm: 2
-    readonly property int tickPad: 14
     readonly property int thumb: panelStyle ? 12 : 8
     readonly property int barRule: panelStyle ? 1 : 0
     readonly property int brandTracking: panelStyle ? 4 : 0
@@ -76,10 +70,10 @@ Singleton {
     readonly property int attachBorderWidth: panelStyle ? 1 : 0
     readonly property color hot: panelStyle ? wash(accent, 0.10) : surfaceHover
     readonly property color hotSoft: panelStyle ? wash(accent, 0.08) : surfaceHover
-    // The inner edge of the bar. A faint wash of the accent, not a stripe: at 55%
-    // a full-width line reads as the bar turning the accent colour on horizontal
-    // edges, where it spans the whole output.
-    readonly property color barLine: panelStyle ? wash(accent, 0.22) : "transparent"
+    // The bar's inner edge. The same paint every card and menu outline uses
+    // (Theme.attachBorder, which is popBorder), so the bar's line matches the
+    // borders around it instead of being a dimmed copy of the accent.
+    readonly property color barLine: panelStyle ? attachBorder : "transparent"
 
     readonly property color hairline: Qt.rgba(fg.r, fg.g, fg.b, 0.16)
     readonly property int typeCaption: Math.max(10, fontPx - 2)
@@ -293,8 +287,6 @@ Singleton {
     function styleChrome() {
         return {
             key: style,
-            tick: tick,
-            tickPops: tickPops,
             pip: pip,
             railMark: railMark,
             sliderGlow: sliderGlow,
