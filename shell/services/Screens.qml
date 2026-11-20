@@ -274,7 +274,10 @@ Singleton {
     }
 
     function previewNight(v) {
-        if (!Compositor.hasGamma || !nightOn)
+        // Only hosts where a set is one cheap call preview live. On niri a set
+        // checks/starts the daemon and resolves the bus name, which is too heavy
+        // to run on every pointer move, so it applies on commit instead.
+        if (!Compositor.hasGamma || !nightOn || !Compositor.schedulesGamma)
             return;
         Compositor.setTemperature(clampKelvin(v));
     }

@@ -1,5 +1,6 @@
 spawn-at-startup "sh" "-c" "wl-paste --type text --watch cliphist store"
 spawn-at-startup "sh" "-c" "wl-paste --type image --watch cliphist store"
 spawn-at-startup "xwayland-satellite"
+spawn-at-startup "wl-gammarelay-rs"
 spawn-at-startup "sh" "-c" "python3 \"$HOME/.local/share/tanjun/shell/scripts/tanjun-paint.py\" restore"
 spawn-at-startup "sh" "-c" "exec quickshell"

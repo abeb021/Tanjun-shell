@@ -377,25 +377,30 @@ HostBase {
         if (testHost())
             return;
         const k = Math.max(1000, Math.min(20000, Math.round(Number(n) || 0)));
-        // Start the daemon if it is down, give it a moment to claim its bus
-        // name, then set the temperature; retry briefly in case it is slow.
+        // Start the daemon if it is down, then set the temperature. Some
+        // dbus-broker setups answer the well-known name with ServiceUnknown
+        // even while it is owned, so fall back to the connection's unique name.
         Quickshell.execDetached(["sh", "-c",
             "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; "
-            + "pgrep -f '[w]l-gammarelay-rs' >/dev/null || { wl-gammarelay-rs >/dev/null 2>&1 & sleep 0.3; }; "
-            + "for i in 1 2 3 4 5; do busctl --user set-property rs.wl-gammarelay / rs.wl.gammarelay Temperature q " + k + " >/dev/null 2>&1 && break; sleep 0.2; done"
+            + "pgrep -f '^([^ ]*/)?wl-gammarelay-rs' >/dev/null || { setsid wl-gammarelay-rs >/dev/null 2>&1 & sleep 0.4; }; "
+            + "set_t() { busctl --user set-property \"$1\" / rs.wl.gammarelay Temperature q " + k + " >/dev/null 2>&1; }; "
+            + "set_t rs.wl.gammarelay && exit 0; "
+            + "for i in 1 2 3 4 5 6 7 8; do "
+            + "u=$(busctl --user list 2>/dev/null | awk '$1 ~ /^:/ && $3 ~ /^wl-gammarelay/ {print $1; exit}'); "
+            + "[ -n \"$u\" ] && set_t \"$u\" && exit 0; sleep 0.25; done"
         ]);
     }
 
     function ensureSunset() {
         if (testHost())
             return;
-        Quickshell.execDetached(["sh", "-c", "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; pgrep -f '[w]l-gammarelay-rs' >/dev/null || { wl-gammarelay-rs >/dev/null 2>&1 & }"]);
+        Quickshell.execDetached(["sh", "-c", "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; pgrep -f '^([^ ]*/)?wl-gammarelay-rs' >/dev/null || { setsid wl-gammarelay-rs >/dev/null 2>&1 & }"]);
     }
 
     function reloadSunset() {
         if (testHost())
             return;
-        Quickshell.execDetached(["sh", "-c", "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; pkill -f '[w]l-gammarelay-rs' >/dev/null 2>&1; sleep 0.2; wl-gammarelay-rs >/dev/null 2>&1 &"]);
+        Quickshell.execDetached(["sh", "-c", "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; pkill -f '^([^ ]*/)?wl-gammarelay-rs' >/dev/null 2>&1; sleep 0.2; setsid wl-gammarelay-rs >/dev/null 2>&1 &"]);
     }
 
     function readGamma(text) {
