@@ -6,7 +6,7 @@
 
 One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the shell does not care.
 
-### **[▶ Demo](docs/demo.mp4)  -  [What you get](#what-you-get)  -  [Keys](#keys)  -  [Install](#install)  -  [Manual](#manual)**
+### **[▶ Demo](docs/demo.webm)  -  [What you get](#what-you-get)  -  [Keys](#keys)  -  [Install](#install)  -  [Manual](#manual)**
 
 </div>
 
