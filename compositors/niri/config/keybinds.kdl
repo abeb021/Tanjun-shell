@@ -16,6 +16,11 @@ binds {
     Mod+Up { focus-window-or-workspace-up; }
     Mod+Down { focus-window-or-workspace-down; }
 
+    Mod+H { focus-column-left; }
+    Mod+L { focus-column-right; }
+    Mod+K { focus-window-or-workspace-up; }
+    Mod+J { focus-window-or-workspace-down; }
+    
     Mod+Q { spawn "kitty"; }
     Mod+E { spawn "kitty" "--title=Yazi" "-e" "yazi"; }
     Mod+A hotkey-overlay-title="Launcher" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleLauncher"; }
@@ -26,7 +31,6 @@ binds {
     Alt+Print { screenshot-screen; }
 
     Mod+O allow-when-locked=true hotkey-overlay-title="Logout" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "logout"; }
-    Mod+L hotkey-overlay-title="Lock" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "lock"; }
     Mod+P hotkey-overlay-title="Lock" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "lock"; }
 
     Mod+V hotkey-overlay-title="Clipboard" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleClipboard"; }
