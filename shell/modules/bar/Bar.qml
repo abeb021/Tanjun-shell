@@ -201,57 +201,54 @@ Scope {
                     // Two segments rather than a clipped one: a clip would also
                     // cut the card's own edges where they meet the bar.
                     //
-                    // Placed with x/y rather than anchors for the same reason the
-                    // overlay punch-out is: an anchor binding that yields
-                    // `undefined` does not clear the previous anchor, so moving
-                    // the bar would leave the line pinned to the old edge.
-                    readonly property bool cutting: !barWin.vertical
-                        && UiMode.menuSpanFrom >= 0
+                    // The stretch a menu covers runs along the bar — X on a
+                    // horizontal bar, Y on a vertical one — and the hairline runs
+                    // across it. Placed with x/y rather than anchors for the same
+                    // reason the overlay punch-out is: an anchor binding that
+                    // yields `undefined` does not clear the previous anchor, so
+                    // moving the bar would leave the line pinned to the old edge.
+                    readonly property bool cutting: UiMode.menuSpanFrom >= 0
                         && UiMode.menuSpanTo > UiMode.menuSpanFrom
                         && (!UiMode.menuSpanScreen.length || (barWin.screen && `${barWin.screen.name}` === UiMode.menuSpanScreen))
                     // A menu that runs to the screen's edge leaves no bar after it,
                     // so the rule ends at the menu instead of trailing a sliver at
                     // the corner.
+                    readonly property real alongLen: barWin.vertical ? parent.height : parent.width
                     readonly property bool ruleEndsAtMenu: cutting
-                        && UiMode.menuSpanTo >= parent.width - Theme.attachBorderWidth
+                        && UiMode.menuSpanTo >= alongLen - Theme.attachBorderWidth
+                    // Half a physical pixel, to snap the hairline to one row at a
+                    // fractional output scale.
+                    readonly property real lineNudge: 2 / (barWin.screen ? barWin.screen.devicePixelRatio : 1)
 
                     Rectangle {
+                        // Along the bar this runs to the menu; across it is the
+                        // hairline (width on a vertical bar, height on a
+                        // horizontal one).
                         width: barWin.vertical ? Theme.barRule : (barStrip.cutting ? Math.max(0, UiMode.menuSpanFrom) : parent.width)
-                        height: barWin.vertical ? parent.height : Theme.barRule
-                        x: barWin.edge === "right" ? 0 : (barWin.vertical ? parent.width - width : 0)
-                        visible: barWin.vertical || !barStrip.ruleEndsAtMenu
+                        height: barWin.vertical ? (barStrip.cutting ? Math.max(0, UiMode.menuSpanFrom) : parent.height) : Theme.barRule
+                        x: barWin.vertical ? (barWin.edge === "right" ? 0 : parent.width - width) : 0
+                        visible: !barStrip.cutting || !barStrip.ruleEndsAtMenu
                         // The rule sits on the strip's last row. A fractional output
                         // scale (1.2 here) puts that row on a half pixel of the
                         // physical grid, and Qt then smears the hairline over two
                         // rows. Nudging by half a physical pixel snaps it to one
                         // crisp row at any scale, where a bare 0.5 only worked at
                         // the scale it was tuned for. The nudge goes down, not up:
-                        // the row has to stay flush with the card below it, and a
-                        // menu's clip starts at the strip's edge, so anything
-                        // lifted above that line leaves a gap at the corner.
-                        y: barWin.edge === "bottom"
-                            ? 0
-                            : (barWin.vertical ? 0 : parent.height - height + 2 / (barWin.screen ? barWin.screen.devicePixelRatio : 1))
+                        // the row has to stay flush with the card, and a menu's clip
+                        // starts at the strip's edge, so anything lifted above that
+                        // line leaves a gap at the corner.
+                        y: barWin.vertical ? 0 : (barWin.edge === "bottom" ? 0 : parent.height - height + barStrip.lineNudge)
                         color: Theme.barLine
                     }
 
-                    // The stretch after the menu. Only a horizontal bar with a
-                    // menu open has one. Positioned with y rather than anchors:
-                    // setting any anchor would override `x` and pull the segment
-                    // back to the left edge.
+                    // The stretch after the menu. Positioned with x/y rather than
+                    // anchors: setting any anchor would override them.
                     Rectangle {
                         visible: barStrip.cutting && !barStrip.ruleEndsAtMenu
-                        width: Math.max(0, parent.width - UiMode.menuSpanTo)
-                        height: Theme.barRule
-                        x: UiMode.menuSpanTo
-                        // Same offset as the segment before the menu: both halves
-                        // of the rule have to sit on one row, flush with the card
-                        // below. They are drawn separately because a menu opens
-                        // between them; a clip instead would also cut the card's
-                        // own edges where it meets the bar.
-                        y: barWin.edge === "bottom"
-                            ? 0
-                            : parent.height - height + 2 / (barWin.screen ? barWin.screen.devicePixelRatio : 1)
+                        width: barWin.vertical ? Theme.barRule : Math.max(0, parent.width - UiMode.menuSpanTo)
+                        height: barWin.vertical ? Math.max(0, parent.height - UiMode.menuSpanTo) : Theme.barRule
+                        x: barWin.vertical ? (barWin.edge === "right" ? 0 : parent.width - width) : UiMode.menuSpanTo
+                        y: barWin.vertical ? UiMode.menuSpanTo : (barWin.edge === "bottom" ? 0 : parent.height - height + barStrip.lineNudge)
                         color: Theme.barLine
                     }
 

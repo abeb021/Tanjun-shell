@@ -16,11 +16,19 @@ Singleton {
     // delay, and a menu opened that way closes when the pointer leaves both the
     // button and the card. A click leaves hoverPop false, so those menus ignore
     // the pointer and only close on a click away.
+    //
+    // One pointer rests on one button at a time, so this is a single slot
+    // (`hoverButton`) rather than a per-button counter: the state machine and its
+    // two timers live here, not on every bar button.
     property bool hoverPop: false
     property string hoverCard: ""
-    property int hoverButtons: 0
+    property string hoverButton: ""
+    property Item hoverAnchor: null
     readonly property int hoverOpenDelay: 420
     readonly property int hoverCloseDelay: 340
+    // A leave is only believed once the pointer has stayed away this long, so a
+    // one-frame blip cannot cancel the dwell or close the menu.
+    readonly property int hoverLinger: Math.max(1, Math.round(hoverOpenDelay / 3))
 
     readonly property string kind: {
         if (settingsOpen)
@@ -101,9 +109,35 @@ Singleton {
         menuSpanTo = -1;
     }
 
-    // Hover-intent helpers. hoverPopout is what a bar button calls once the
-    // pointer has rested on it long enough; the away timer closes it again when
-    // the pointer is on neither a popout button nor the open card.
+    // Hover-intent helpers. A bar button reports the pointer entering and
+    // leaving it. Resting for hoverOpenDelay opens its menu; a leave only drops
+    // the dwell after the linger, because the window's input region changes the
+    // moment a menu opens and can flash a leave at the pointer.
+    function hoverEnter(name, anchor) {
+        if (!Config.appearance.hoverMenus || barDragging)
+            return;
+        if (anchor)
+            hoverAnchor = anchor;
+        lingerTimer.stop();
+        hoverAway.stop();
+        if (popout === name) {
+            // Already open: record the rest so a later leave can arm the close,
+            // but do not restart the dwell.
+            hoverButton = name;
+            return;
+        }
+        if (hoverButton !== name) {
+            hoverButton = name;
+            hoverDwell.restart();
+        }
+    }
+
+    function hoverLeave(name) {
+        if (hoverButton === name)
+            lingerTimer.restart();
+    }
+
+    // What the dwell calls once the pointer has rested long enough.
     function hoverPopout(name, anchor) {
         if (!Config.appearance.hoverMenus || barDragging)
             return;
@@ -119,7 +153,7 @@ Singleton {
     }
 
     function armHoverAway() {
-        if (!hoverPop || hoverCard.length || hoverButtons > 0) {
+        if (!hoverPop || hoverCard.length || hoverButton.length) {
             hoverAway.stop();
             return;
         }
@@ -127,7 +161,7 @@ Singleton {
     }
 
     onHoverCardChanged: armHoverAway()
-    onHoverButtonsChanged: armHoverAway()
+    onHoverButtonChanged: armHoverAway()
 
     function togglePopout(name, anchor) {
         if (popout === name) {
@@ -187,6 +221,10 @@ Singleton {
         trayItem = null;
         hoverPop = false;
         hoverCard = "";
+        hoverButton = "";
+        hoverAnchor = null;
+        hoverDwell.stop();
+        lingerTimer.stop();
         hoverAway.stop();
         clearMenuSpan();
     }
@@ -208,6 +246,10 @@ Singleton {
         overviewCount = 0;
         wallsOpen = false;
         clearMenuSpan();
+        // Drop any dwell in flight so a menu closed by Escape or a click away
+        // cannot be reopened by a timer that was already counting down.
+        hoverDwell.stop();
+        lingerTimer.stop();
         dropTimer.restart();
     }
 
@@ -346,6 +388,27 @@ Singleton {
     function pickWall(path) {
         wallsOpen = false;
         Theme.setWallpaper(path);
+    }
+
+    // The dwell: how long the pointer rests on a button before its menu opens.
+    Timer {
+        id: hoverDwell
+        interval: root.hoverOpenDelay
+        repeat: false
+        onTriggered: if (root.hoverButton.length)
+            root.hoverPopout(root.hoverButton, root.hoverAnchor)
+    }
+
+    // The linger: a leave is only believed once the pointer has stayed away, so
+    // a hover blip cannot cancel the dwell or close a menu.
+    Timer {
+        id: lingerTimer
+        interval: root.hoverLinger
+        repeat: false
+        onTriggered: {
+            root.hoverButton = "";
+            hoverDwell.stop();
+        }
     }
 
     Timer {

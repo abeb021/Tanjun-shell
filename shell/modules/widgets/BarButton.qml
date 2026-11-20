@@ -23,7 +23,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: hover.hovered || (root.active && !root.mark) ? Theme.hotSoft : "transparent"
+        color: mouse.containsMouse || (root.active && !root.mark) ? Theme.hotSoft : "transparent"
         radius: Theme.radius
     }
 
@@ -76,33 +76,24 @@ Item {
                 root.middleClicked();
         }
         onWheel: event => root.wheeled(event.angleDelta.y > 0 ? 1 : -1)
-    }
 
-    // Hover-intent: resting on a menu button opens its menu. The pointer has to
-    // stay on the button for a moment, so crossing the bar does nothing, and the
-    // menu closes again once the pointer leaves both the button and the card.
-    HoverHandler {
-        id: hover
-        onHoveredChanged: {
-            if (!root.popoutName.length || !Config.appearance.hoverMenus)
+        // Hover-intent: resting on a menu button opens its menu, and the menu
+        // closes again once the pointer leaves both the button and the card.
+        //
+        // This reads the MouseArea's own `containsMouse` rather than a
+        // `HoverHandler` on the item. The MouseArea is the item under the
+        // pointer, so it reports hover reliably; the item-level `HoverHandler`
+        // did not report consistently for these buttons, which left a sideways
+        // bar's menus never opening on hover. The dwell and its grace live in
+        // UiMode, so there is one timer pair for the whole bar, not one per
+        // button.
+        onContainsMouseChanged: {
+            if (!root.popoutName.length)
                 return;
-            if (hovered) {
-                UiMode.hoverButtons++;
-                if (UiMode.popout !== root.popoutName)
-                    openTimer.restart();
-            } else {
-                UiMode.hoverButtons = Math.max(0, UiMode.hoverButtons - 1);
-                openTimer.stop();
-            }
-        }
-    }
-
-    Timer {
-        id: openTimer
-        interval: UiMode.hoverOpenDelay
-        onTriggered: {
-            if (!UiMode.barDragging && UiMode.popout !== root.popoutName)
-                UiMode.hoverPopout(root.popoutName, root);
+            if (containsMouse)
+                UiMode.hoverEnter(root.popoutName, root);
+            else
+                UiMode.hoverLeave(root.popoutName);
         }
     }
 

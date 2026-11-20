@@ -83,7 +83,10 @@ Item {
         const spot = root.anchorSpot;
         const len = root.anchorLen;
         if (root.vertical)
-            return spot.y + len / 2 - root.cardH / 2;
+            // `reachEdge` runs the card to the end the bar ends at: on a
+            // sideways bar that is the bottom, where the last button sits, so
+            // the along axis is Y here and the across axis is X.
+            return root.reachEdge ? root.spanH - root.cardH : spot.y + len / 2 - root.cardH / 2;
         if (root.reachEdge)
             return root.spanW - root.cardW;
         if (root.align === Item.TopRight)
@@ -97,8 +100,13 @@ Item {
     // bar's inner edge, so the two share one boundary and no line shows between
     // them. The bar's rule is cut at this card's span instead of being covered by
     // an overlap, which would only push the card's outline into the bar.
+    //
+    // `reachEdge` only speaks to the along axis (X for a horizontal bar, Y for a
+    // vertical one). On a sideways bar the across axis has to stay glued to the
+    // strip whatever `reachEdge` says, otherwise the card's edge lands on the
+    // screen edge and the reveal grows out of the wall instead of the bar.
     readonly property real cardX: root.vertical
-        ? (root.reachEdge ? (root.edge === "right" ? root.spanW - root.cardW : 0) : (root.edge === "right" ? root.spanW - root.bar - root.cardW : root.bar))
+        ? (root.edge === "right" ? root.spanW - root.bar - root.cardW : root.bar)
         : (root.reachEdge ? Math.max(0, Math.min(root.cardAlong, root.spanW - root.cardW)) : Math.max(8, Math.min(root.cardAlong, root.spanW - root.cardW - 8)))
     readonly property real cardY: root.vertical
         ? (root.reachEdge ? Math.max(0, Math.min(root.cardAlong, root.spanH - root.shownH)) : Math.max(8, Math.min(root.cardAlong, root.spanH - root.shownH - 8)))
@@ -122,12 +130,22 @@ Item {
 
     onCardWChanged: if (open)
         publishSpan()
+    onCardXChanged: if (open)
+        publishSpan()
     onShownHChanged: if (open)
+        publishSpan()
+    onCardYChanged: if (open)
         publishSpan()
 
     function publishSpan() {
+        // The span is along the bar, so the rule can be cut where this card sits:
+        // X on a horizontal bar, Y on a vertical one. Window coordinates, which
+        // are screen coordinates.
         const sc = barWindow && barWindow.screen ? `${barWindow.screen.name}` : "";
-        UiMode.setMenuSpan(root.name, sc, Math.round(root.cardX), Math.round(root.cardX + root.cardW));
+        if (root.vertical)
+            UiMode.setMenuSpan(root.name, sc, Math.round(root.cardY), Math.round(root.cardY + root.shownH));
+        else
+            UiMode.setMenuSpan(root.name, sc, Math.round(root.cardX), Math.round(root.cardX + root.cardW));
     }
  
 
