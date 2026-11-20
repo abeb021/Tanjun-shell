@@ -28,7 +28,7 @@ BarButton {
     // Horizontal: one line.
     BarText {
         visible: !root.compact
-        text: "\uf2db"
+        text: ""
         icon: true
         px: 13
         color: Theme.fg
@@ -47,7 +47,7 @@ BarButton {
     }
     BarText {
         visible: !root.compact
-        text: "\uefc5"
+        text: ""
         icon: true
         px: 13
         color: root.ramColor
@@ -70,7 +70,7 @@ BarButton {
         BarText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: "\uf2db"
+            text: ""
             icon: true
             px: 13
             color: Theme.fg
@@ -91,7 +91,7 @@ BarButton {
         BarText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            text: "\uefc5"
+            text: ""
             icon: true
             px: 13
             color: root.ramColor

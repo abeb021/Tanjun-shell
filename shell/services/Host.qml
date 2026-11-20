@@ -22,6 +22,8 @@ Singleton {
     property var procs: []
     property string user: Quickshell.env("USER") || Quickshell.env("LOGNAME") || ""
     property string distro: ""
+    property string distroId: ""
+    property string distroLike: ""
     property string kernel: ""
     property int cores: 0
     property int threads: 0
@@ -612,13 +614,56 @@ Singleton {
     function readOsRelease() {
         const rows = `${osReleaseFile.text() || ""}`.split("\n");
         for (let i = 0; i < rows.length; i++) {
-            if (!rows[i].startsWith("PRETTY_NAME="))
+            const row = rows[i];
+            const eq = row.indexOf("=");
+            if (eq < 0)
                 continue;
-            const v = rows[i].split("=")[1].trim().replace(/^"|"$/g, "");
-            if (v.length)
-                root.distro = v;
-            return;
+            const key = row.slice(0, eq).trim();
+            const val = row.slice(eq + 1).trim().replace(/^"|"$/g, "");
+            if (key === "PRETTY_NAME")
+                root.distro = val;
+            else if (key === "ID")
+                root.distroId = val.toLowerCase();
+            else if (key === "ID_LIKE")
+                root.distroLike = val.toLowerCase();
         }
+    }
+
+    // The bar's distro mark: a Nerd Font "linux" glyph keyed by os-release ID
+    // (codepoints from nerd-fonts glyphnames.json). An unknown ID falls back
+    // through ID_LIKE, then to nothing so the caller can keep the Tanjun seal.
+    readonly property var distroGlyphs: ({
+        "nixos": "",
+        "arch": "", "archarm": "", "archlinux": "",
+        "cachyos": "", "arcolinux": "", "archcraft": "",
+        "archlabs": "", "manjaro": "", "manjaro-arm": "",
+        "endeavouros": "", "artix": "", "garuda": "",
+        "debian": "", "devuan": "", "ubuntu": "",
+        "kubuntu": "", "xubuntu": "", "lubuntu": "",
+        "linuxmint": "", "pop": "", "kali": "",
+        "raspbian": "", "zorin": "", "mx": "",
+        "elementary": "", "deepin": "", "trisquel": "",
+        "parabola": "",
+        "fedora": "", "nobara": "", "rhel": "",
+        "centos": "", "rocky": "", "almalinux": "",
+        "ol": "",
+        "opensuse-tumbleweed": "", "opensuse-leap": "",
+        "opensuse": "", "sles": "", "sled": "",
+        "gentoo": "", "alpine": "", "void": "",
+        "solus": "", "slackware": "", "mageia": "",
+        "openbsd": "", "freebsd": "", "guix": "",
+        "qubes": "", "tails": "", "postmarketos": "",
+        "vanilla": "", "hyperbola": ""
+    })
+    readonly property string distroIcon: {
+        if (root.distroGlyphs[root.distroId])
+            return root.distroGlyphs[root.distroId];
+        const like = `${root.distroLike || ""}`.split(/\s+/);
+        for (let i = 0; i < like.length; i++) {
+            if (root.distroGlyphs[like[i]])
+                return root.distroGlyphs[like[i]];
+        }
+        return "";
     }
 
     Process {

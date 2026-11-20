@@ -33,7 +33,7 @@ Column {
             Repeater {
                 model: [
                     { k: "󰒋  HOSTNAME", v: Host.hostName || Host.user },
-                    { k: " OS", v: Host.distro },
+                    { k: `${Host.distroIcon.length ? Host.distroIcon : ""}  OS`, v: Host.distro },
                     { k: "󰔛  UPTIME", v: Host.uptime }
                 ]
                 Column {
@@ -64,7 +64,7 @@ Column {
             model: [
                 { k: "󰍛  CPU", v: Host.cpuModel || Host.cpuTip },
                 { k: "󰢮  GPU", v: Host.gpu },
-                { k: "󰘚  MEMORY", v: Host.ramText },
+                { k: "  MEMORY", v: Host.ramText },
                 { k: "󰋊  STORAGE", v: Host.disk }
             ]
             Column {
