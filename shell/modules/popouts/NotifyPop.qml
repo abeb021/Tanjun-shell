@@ -132,7 +132,7 @@ Face {
                 spacing: 6
                 BarText {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "󰂜"
+                    text: ""
                     icon: true
                     px: 22
                     color: Theme.fgSub

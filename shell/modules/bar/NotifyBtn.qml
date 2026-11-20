@@ -8,7 +8,7 @@ BarButton {
     onRightClicked: UiMode.dnd = !UiMode.dnd
     onMiddleClicked: Notifs.clear()
     BarText {
-        text: UiMode.dnd ? "" : ""
+        text: UiMode.dnd ? "" : ""
         icon: true
         px: 13
     }
