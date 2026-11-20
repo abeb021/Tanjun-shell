@@ -17,18 +17,19 @@ One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the
 
 ## What you get
 
-- **Quiet bar** — 単, desks, clock, a few glyphs. Click opens a panel, not a terminal.
+- **Quiet bar** — the distro mark (falls back to 単), desks, clock, load, a few glyphs. Click or rest on a glyph to open its panel, not a terminal.
 - **Launcher** — rest card (clock, weather, track) until you type. Prefixes: `=` calc, `:` emoji, `/` wallpaper.
 - **Overview** — live window previews. Super+Tab on Hyprland, Super+Grave on niri.
 - **System drawer** — per-stream mixer, Bluetooth, Wi-Fi, VPN, host meters, power, skins.
-- **Settings** — rail, live JSON pins, font picker, search. Super+,
+- **Settings** — rail, live JSON pins, font picker, search. Super+Ctrl+,
 - **Color** — named skins, From wall, or pull colors from a paper. Keep the palette so a new wall cannot jump the rice.
-- **Idle and lock** — dim, lock, DPMS, sleep in-shell. Fingerprint if PAM has it. Super+L.
+- **Idle and lock** — dim, lock, DPMS, sleep in-shell. Fingerprint if PAM has it. Super+P.
+- **Night light** — on/off, temperature, and a night/day schedule. hyprsunset on Hyprland, wl-gammarelay-rs on niri (the nix modules install it).
 - **Wallpaper** — still or video. Lock uses a still frame.
 
 ## Keys
 
-Compositor binds come from `scripts/setup.sh`. Left click on a bar glyph opens its panel.
+Compositor binds come from `scripts/setup.sh`. Left click or rest on a bar glyph opens its panel.
 
 | Keybind | Action |
 |---------|--------|
@@ -42,11 +43,12 @@ Compositor binds come from `scripts/setup.sh`. Left click on a bar glyph opens i
 | `Super + C` | Close window |
 | `Super + R` | Toggle float |
 | `Super + B` | Pair buds |
-| `Super + L` | Lock |
+| `Super + P` | Lock |
 | `Super + O` | Logout |
-| `Super + ,` | Settings |
+| `Super + Ctrl + ,` | Settings |
 | `Super + Space` | Keyboard layout |
 | `Super + arrows` | Focus |
+| `Super + H J K L` | Focus (niri) |
 | `Super + Shift + arrows` | Resize |
 | `Print` | Region screenshot |
 | `Super + Print` | Window screenshot |
@@ -98,4 +100,4 @@ tests/                  bash tests/run.sh
 
 ---
 
-v3.5
+v3.6

@@ -1,6 +1,6 @@
 # TODO
 
-Current: **v3.5**
+Current: **v3.6**
 
 ## v1.0 — bar
 
@@ -172,6 +172,16 @@ Current: **v3.5**
 - [x] Overview cards keyed by window id; desk ListView; unload Settings/Overview/Clipboard/Launcher after close
 - [x] Niri capture + debounce; weather/backlight/clip/audio/launcher/paint/wait-qs cheap paths
 - [x] Idle RSS: GPU Qt Quick (removed QT_QUICK_BACKEND=software — it leaked into launcher apps via Hyprland/systemd env import); seal font; unload launcher; cap notifications
+
+## v3.6 — edges and marks
+
+- [x] Hover-intent menus open on every edge: the dwell and its leave grace live in UiMode, driven by the button's own MouseArea (the item-level HoverHandler missed on side bars)
+- [x] Side bars join their menus with no seam: the inner rule is cut along Y and the menu span is published on the bar's axis; `reachEdge` no longer shifts a sideways card onto the screen edge
+- [x] Vertical bar: the load button stacks cpu over ram at the horizontal sizes
+- [x] Distro mark in the bar and the System page: os-release `ID` (then `ID_LIKE`) → a Nerd Font `linux` glyph, seal fallback; literal glyphs in source
+- [x] Night light on niri: `wl-gammarelay-rs` over `zwlr_gamma_control_v1`, with the shell running the night/day schedule (hyprsunset still does it on Hyprland); niri autostart + nix module package
+- [x] niri: portal and file-dialog pickers open floating at half size
+- [x] niri: `Mod+H/J/K/L` focus binds; lock stays on `Mod+P` (niri rejects the duplicate `Mod+L`)
 
 ## later — shell-owned motion and glass
 
