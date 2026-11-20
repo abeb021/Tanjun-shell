@@ -14,6 +14,7 @@ Singleton {
     property bool _sunsetRestart: false
     property var _intentInternal: null
     property int _fallbackTries: 0
+    property int _lastGamma: -1
 
     readonly property string sunsetPath: `${Config.configHome}/hypr/hyprsunset.conf`
     readonly property string nightAt: Config.screens.nightAt.length ? Config.screens.nightAt : "21:00"
@@ -108,6 +109,7 @@ Singleton {
         if (!Compositor.hasGamma)
             return;
         Compositor.ensureSunset();
+        applySchedule(true);
     }
 
     function adopt(out) {
@@ -263,6 +265,8 @@ Singleton {
         Config.screens.nightOn = !!on;
         Config.writeSparse();
         writeSunset(true);
+        if (!Compositor.schedulesGamma)
+            return; // niri: writeSunset applied the schedule
         if (!on)
             Compositor.identityGamma();
         else
@@ -311,6 +315,35 @@ Singleton {
     function clampKelvin(v) {
         const k = Math.round(Number(v) || 0);
         return Math.max(3000, Math.min(6500, k));
+    }
+
+    function nightIsNow() {
+        const t = parseHM(nightAt);
+        const d = parseHM(dayAt);
+        if (!t || !d)
+            return false;
+        const now = new Date();
+        const cur = now.getHours() * 60 + now.getMinutes();
+        const nm = t.h * 60 + t.min;
+        const dm = d.h * 60 + d.min;
+        if (nm === dm)
+            return false;
+        return nm < dm ? (cur >= nm && cur < dm) : (cur >= nm || cur < dm);
+    }
+
+    // When the host has no scheduler (niri), run the day/night switch here; the
+    // hyprsunset path on Hyprland does it from its own config.
+    function applySchedule(force) {
+        if (!Compositor.hasGamma || Compositor.schedulesGamma)
+            return;
+        const k = (nightOn && nightIsNow()) ? nightKelvin : 6500;
+        if (!force && k === _lastGamma)
+            return;
+        _lastGamma = k;
+        if (k >= 6500)
+            Compositor.identityGamma();
+        else
+            Compositor.setTemperature(k);
     }
 
     function sunsetJson() {
@@ -370,12 +403,17 @@ Singleton {
         Config.screens.nightTemp = clampKelvin(v);
         Config.writeSparse();
         writeSunset(false);
-        if (nightOn)
+        if (Compositor.schedulesGamma && nightOn)
             Compositor.setTemperature(Config.screens.nightTemp);
     }
 
     function writeSunset(restart) {
         _sunsetRestart = restart !== false;
+        // niri has no hyprsunset; the shell runs the schedule itself.
+        if (Compositor.hasGamma && !Compositor.schedulesGamma) {
+            applySchedule(true);
+            return;
+        }
         if (!nightOn) {
             _sunsetBody = "max-gamma = 150\n\n"
                 + "profile {\n"
@@ -443,6 +481,15 @@ Singleton {
         interval: 350
         repeat: false
         onTriggered: root.ensureLit()
+    }
+
+    // niri has no gamma scheduler, so step the day/night switch here.
+    Timer {
+        id: nightSchedule
+        interval: 30000
+        repeat: true
+        running: Compositor.hasGamma && !Compositor.schedulesGamma
+        onTriggered: root.applySchedule(false)
     }
 
     Connections {

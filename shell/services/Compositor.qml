@@ -34,6 +34,7 @@ Singleton {
     readonly property string focusedOutput: host.focusedOutput
     readonly property string layoutName: host.layoutName
     readonly property bool hasGamma: host.hasGamma
+    readonly property bool schedulesGamma: host.schedulesGamma
     readonly property bool grabFocus: host.grabFocus
     readonly property string screenNote: host.screenNote
     readonly property var monitorQuery: host.monitorQuery

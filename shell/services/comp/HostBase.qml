@@ -6,6 +6,9 @@ Item {
 
     property bool live: false
     property bool hasGamma: false
+    // Whether the host schedules the day/night switch itself (hyprsunset does)
+    // or the shell must run it (niri has no scheduler).
+    property bool schedulesGamma: true
     property bool grabFocus: false
     property bool idleInhibited: false
     property bool overviewOpen: false

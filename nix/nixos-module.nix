@@ -39,6 +39,10 @@ in
         security.rtkit.enable = lib.mkDefault true;
         services.power-profiles-daemon.enable = lib.mkDefault true;
         services.upower.enable = lib.mkDefault true;
+
+        # Night light on niri is driven through wlr-gamma-control by
+        # wl-gammarelay-rs; Hyprland uses hyprsunset.
+        environment.systemPackages = lib.optional (cfg.compositor == "niri") pkgs.wl-gammarelay-rs;
       }
 
       # `programs.niri` is not available on every nixpkgs revision.

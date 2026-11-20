@@ -52,10 +52,12 @@ in
   config = lib.mkIf cfg.enable {
     # The compositor autostart and the keybinds in compositors/ call the plain
     # `quickshell`/`qs` binaries. `cfg.package` is only the wrapper.
-    home.packages = [
-      cfg.package
-      pkgs.quickshell
-    ];
+    home.packages =
+      [
+        cfg.package
+        pkgs.quickshell
+      ]
+      ++ lib.optional (cfg.compositor == "niri") pkgs.wl-gammarelay-rs;
 
     home.activation.tanjunAttach = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       checkout=${lib.escapeShellArg (toString cfg.checkout)}

@@ -6,7 +6,8 @@ import Quickshell.Wayland
 HostBase {
     id: root
 
-    hasGamma: false
+    hasGamma: true
+    schedulesGamma: false
     grabFocus: false
     screenNote: "scale and mode persist in ~/.config/niri/output.kdl."
     monitorQuery: ["niri", "msg", "--json", "outputs"]
@@ -363,11 +364,40 @@ HostBase {
         });
     }
 
+    // niri implements zwlr_gamma_control_v1; wl-gammarelay-rs drives it and
+    // exposes a temperature we set over D-Bus. It keeps no schedule, so Screens
+    // runs the day/night switch (schedulesGamma is false).
     function setGamma(n) {}
-    function identityGamma() {}
-    function setTemperature(n) {}
-    function reloadSunset() {}
-    function ensureSunset() {}
+
+    function identityGamma() {
+        setTemperature(6500);
+    }
+
+    function setTemperature(n) {
+        if (testHost())
+            return;
+        const k = Math.max(1000, Math.min(20000, Math.round(Number(n) || 0)));
+        // Start the daemon if it is down, give it a moment to claim its bus
+        // name, then set the temperature; retry briefly in case it is slow.
+        Quickshell.execDetached(["sh", "-c",
+            "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; "
+            + "pgrep -f '[w]l-gammarelay-rs' >/dev/null || { wl-gammarelay-rs >/dev/null 2>&1 & sleep 0.3; }; "
+            + "for i in 1 2 3 4 5; do busctl --user set-property rs.wl-gammarelay / rs.wl.gammarelay Temperature q " + k + " >/dev/null 2>&1 && break; sleep 0.2; done"
+        ]);
+    }
+
+    function ensureSunset() {
+        if (testHost())
+            return;
+        Quickshell.execDetached(["sh", "-c", "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; pgrep -f '[w]l-gammarelay-rs' >/dev/null || { wl-gammarelay-rs >/dev/null 2>&1 & }"]);
+    }
+
+    function reloadSunset() {
+        if (testHost())
+            return;
+        Quickshell.execDetached(["sh", "-c", "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; pkill -f '[w]l-gammarelay-rs' >/dev/null 2>&1; sleep 0.2; wl-gammarelay-rs >/dev/null 2>&1 &"]);
+    }
+
     function readGamma(text) {
         return 0;
     }
