@@ -339,6 +339,12 @@ EOF
     printf '%s\n' '// Outputs. Settings → screen writes this file.' > "$NIRI/output.kdl"
     echo "wrote $NIRI/output.kdl"
   fi
+  # Seed the palette so niri draws in Tanjun colours before the first theme
+  # change; tanjun-paint.py overwrites it on every paint.
+  if [[ ! -f "$NIRI/tanjun-colors.kdl" ]]; then
+    python3 "$ROOT/shell/scripts/tanjun-paint.py" dark monochrome >/dev/null 2>&1 || true
+    echo "wrote $NIRI/tanjun-colors.kdl"
+  fi
 }
 
 attach() {

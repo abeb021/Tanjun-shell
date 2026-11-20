@@ -15,13 +15,23 @@ input {
         tap
         natural-scroll
         dwt
+        // Mirrors Hyprland's input: `accel-speed` is libinput's speed setting, the
+        // same number `sensitivity` passes, and `flat` keeps the 1:1 curve. Positive
+        // here means faster — do not flip the sign.
         accel-profile "flat"
+        accel-speed 0.3
         scroll-factor 0.2
     }
     mouse {
+        // No scroll-factor here: Hyprland leaves the external mouse at libinput's
+        // default (1.0) and only slows the touchpad.
         accel-profile "flat"
         accel-speed 0.3
     }
+
+    // Hyprland's follow_mouse = 1: hovering a window focuses it, without letting
+    // the view scroll under the pointer.
+    focus-follows-mouse max-scroll-amount="0%"
 }
 
 switch-events {

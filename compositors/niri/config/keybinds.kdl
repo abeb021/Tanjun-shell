@@ -6,7 +6,9 @@ binds {
 
     Mod+R { toggle-window-floating; }
     Mod+F { fullscreen-window; }
-    Mod+C { close-window; }
+    Mod+Shift+F { maximize-window-to-edges; }
+    Mod+C { close-window; }    
+    Mod+M { maximize-column; }
     Mod+Tab hotkey-overlay-title="Overview" { spawn "quickshell" "ipc" "--any-display" "call" "tanjun" "toggleOverview"; }
 
     Mod+Left { focus-column-left; }

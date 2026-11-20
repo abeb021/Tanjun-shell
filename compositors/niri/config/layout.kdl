@@ -1,15 +1,22 @@
 layout {
     gaps 0
-    background-color "#1b1b1f"
+    // The palette below overrides these. They only show until the first paint.
+    background-color "#1e1e1e"
     focus-ring {
         off
     }
     border {
         width 2
         active-color "#e0e0e0"
-        inactive-color "#252525"
+        inactive-color "#282828"
     }
 }
+
+// Written by tanjun-paint.py from the active palette. Includes merge into the
+// layout above, so only the colours listed here change. Top-level, because niri
+// rejects an include nested inside another section; optional, so the config is
+// valid before the first theme has been painted.
+include optional=true "~/.config/niri/tanjun-colors.kdl"
 
 prefer-no-csd
 screenshot-path "~/Pictures/Screenshots/screenshot_%Y-%m-%d_%H-%M-%S.png"

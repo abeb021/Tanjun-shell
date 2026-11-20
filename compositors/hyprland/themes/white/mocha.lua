@@ -53,4 +53,5 @@ return {
     mantleAlpha = "181825",
     crust = "rgb(11111b)",
     crustAlpha = "11111b",
+    border_primary = "rgb(cba6f7)",
 }
