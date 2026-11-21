@@ -48,6 +48,10 @@ Singleton {
     property bool _loaded: false
     property string _pendingText: ""
 
+    // True once config.json has been read (or found missing). Work that replays
+    // persisted state waits for it instead of running on default values.
+    readonly property bool loaded: _loaded
+
     function prettyZone(id) {
         const s = `${id || ""}`;
         if (!s.length)

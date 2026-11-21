@@ -16,6 +16,12 @@ import "modules/polkit"
 ShellRoot {
     property bool _idle: Idle.watching
 
+    // `Screens` is a lazy QML singleton: nothing else reads it during boot, so
+    // its gamma daemon, day/night timer and monitor list would sleep until the
+    // screen page was first opened. Wake it here so night light is live from the
+    // first second instead of from your first visit to Settings.
+    Component.onCompleted: Screens.boot()
+
     Bar {}
     Osd {}
     Toasts {}

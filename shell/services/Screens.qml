@@ -101,6 +101,15 @@ Singleton {
         return compactMode(a) === compactMode(b);
     }
 
+    // Boot hook, called once by the shell root. `Screens` is a lazy QML
+    // singleton, so without this its gamma daemon, its day/night timer and the
+    // monitor list would sleep until the screen page was first opened — night
+    // light only came on after a visit to Settings.
+    function boot() {
+        sunsetFile.reload();
+        refresh();
+    }
+
     function refresh() {
         monProc.running = false;
         Qt.callLater(() => {
@@ -339,6 +348,10 @@ Singleton {
     function applySchedule(force) {
         if (!Compositor.hasGamma || Compositor.schedulesGamma)
             return;
+        // The persisted times and temperature arrive after boot; applying the
+        // built-in defaults first would flash identity and race the real value.
+        if (!Config.loaded)
+            return;
         const k = (nightOn && nightIsNow()) ? nightKelvin : 6500;
         if (!force && k === _lastGamma)
             return;
@@ -495,6 +508,25 @@ Singleton {
         onTriggered: root.applySchedule(false)
     }
 
+    // config.json is read after the shell root boots, and each key lands as its
+    // own property change. One debounced apply runs once they have settled, so
+    // the first night-light set uses the persisted time and temperature rather
+    // than the built-in defaults.
+    Connections {
+        target: Config.screens
+        function onNightAtChanged() { configSettle.restart(); }
+        function onDayAtChanged() { configSettle.restart(); }
+        function onNightTempChanged() { configSettle.restart(); }
+        function onNightOnChanged() { configSettle.restart(); }
+    }
+
+    Timer {
+        id: configSettle
+        interval: 150
+        repeat: false
+        onTriggered: root.applySchedule(false)
+    }
+
     Connections {
         target: Compositor
         function onMonitorsDirty() {
@@ -512,6 +544,7 @@ Singleton {
 
     FileView {
         id: sunsetFile
+        path: root.sunsetPath
         printErrors: false
         atomicWrites: true
         onLoaded: root.ingestSunset(text())
@@ -534,11 +567,6 @@ Singleton {
         }
     }
 
-    Component.onCompleted: {
-        sunsetFile.path = sunsetPath;
-        sunsetFile.reload();
-        refresh();
-    }
 
     function cloneRow(r) {
         return {

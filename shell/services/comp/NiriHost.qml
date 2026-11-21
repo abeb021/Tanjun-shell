@@ -373,14 +373,26 @@ HostBase {
         setTemperature(6500);
     }
 
+    // One daemon call at a time. A burst (boot, config load, slider commit, the
+    // 30 s schedule) used to race, and the slowest busctl won — leaving the
+    // screen on an older temperature. A request made while a call is in flight
+    // is folded into a single follow-up with the latest value.
+    property int _gammaWant: -1
+    property int _gammaBusy: -1
+
     function setTemperature(n) {
         if (testHost())
             return;
-        const k = Math.max(1000, Math.min(20000, Math.round(Number(n) || 0)));
-        // Start the daemon if it is down, then set the temperature. Some
-        // dbus-broker setups answer the well-known name with ServiceUnknown
+        _gammaWant = Math.max(1000, Math.min(20000, Math.round(Number(n) || 0)));
+        if (_gammaBusy < 0)
+            runGamma(_gammaWant);
+    }
+
+    function runGamma(k) {
+        _gammaBusy = k;
+        // The well-known name answers ServiceUnknown on some dbus-broker setups
         // even while it is owned, so fall back to the connection's unique name.
-        Quickshell.execDetached(["sh", "-c",
+        gammaProc.command = ["sh", "-c",
             "command -v wl-gammarelay-rs >/dev/null 2>&1 || exit 0; "
             + "pgrep -f '^([^ ]*/)?wl-gammarelay-rs' >/dev/null || { setsid wl-gammarelay-rs >/dev/null 2>&1 & sleep 0.4; }; "
             + "set_t() { busctl --user set-property \"$1\" / rs.wl.gammarelay Temperature q " + k + " >/dev/null 2>&1; }; "
@@ -388,7 +400,21 @@ HostBase {
             + "for i in 1 2 3 4 5 6 7 8; do "
             + "u=$(busctl --user list 2>/dev/null | awk '$1 ~ /^:/ && $3 ~ /^wl-gammarelay/ {print $1; exit}'); "
             + "[ -n \"$u\" ] && set_t \"$u\" && exit 0; sleep 0.25; done"
-        ]);
+        ];
+        gammaProc.running = false;
+        Qt.callLater(() => {
+            gammaProc.running = true;
+        });
+    }
+
+    Process {
+        id: gammaProc
+        onExited: {
+            const ran = root._gammaBusy;
+            root._gammaBusy = -1;
+            if (root._gammaWant >= 0 && root._gammaWant !== ran)
+                root.runGamma(root._gammaWant);
+        }
     }
 
     function ensureSunset() {

@@ -180,6 +180,7 @@ Current: **v3.6**
 - [x] Vertical bar: the load button stacks cpu over ram at the horizontal sizes
 - [x] Distro mark in the bar and the System page: os-release `ID` (then `ID_LIKE`) → a Nerd Font `linux` glyph, seal fallback; literal glyphs in source
 - [x] Night light on niri: `wl-gammarelay-rs` over `zwlr_gamma_control_v1`, with the shell running the night/day schedule (hyprsunset still does it on Hyprland); niri autostart + nix module package
+- [x] Night light applies from boot, not from the first Settings visit: `Screens` is a lazy QML singleton, so the shell root boots it; the first apply waits for `config.json`, and niri's gamma sets are serialised (a burst used to race and the slowest `busctl` won)
 - [x] niri: portal and file-dialog pickers open floating at half size
 - [x] niri: `Mod+H/J/K/L` focus binds; lock stays on `Mod+P` (niri rejects the duplicate `Mod+L`)
 
