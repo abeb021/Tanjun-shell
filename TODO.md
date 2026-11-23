@@ -181,6 +181,8 @@ Current: **v3.6**
 - [x] Distro mark in the bar and the System page: os-release `ID` (then `ID_LIKE`) → a Nerd Font `linux` glyph, seal fallback; literal glyphs in source
 - [x] Night light on niri: `wl-gammarelay-rs` over `zwlr_gamma_control_v1`, with the shell running the night/day schedule (hyprsunset still does it on Hyprland); niri autostart + nix module package
 - [x] Night light applies from boot, not from the first Settings visit: `Screens` is a lazy QML singleton, so the shell root boots it; the first apply waits for `config.json`, and niri's gamma sets are serialised (a burst used to race and the slowest `busctl` won)
+- [x] "From wall" is matugen: one Material You scheme (smart dark/light, scheme-content) writes the shell palette plus the compositor strip (Hyprland table or niri `tanjun-colors.kdl`); presets stay hand-written. ~130 ms cold / ~20 ms cached, ~22 MB peak, against ~180 ms / ~37 MB for the old PIL sampler, which is gone
+- [x] Picking a wall is never silent: a missing `swaybg`/`hyprpaper` skips only the image, the palette still applies, and helper stderr reaches the shell log; the nix modules install `matugen` (and `swaybg` on niri) so a fresh install has both
 - [x] niri: portal and file-dialog pickers open floating at half size
 - [x] niri: `Mod+H/J/K/L` focus binds; lock stays on `Mod+P` (niri rejects the duplicate `Mod+L`)
 

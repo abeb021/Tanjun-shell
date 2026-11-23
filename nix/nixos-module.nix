@@ -41,8 +41,11 @@ in
         services.upower.enable = lib.mkDefault true;
 
         # Night light on niri is driven through wlr-gamma-control by
-        # wl-gammarelay-rs; Hyprland uses hyprsunset.
-        environment.systemPackages = lib.optional (cfg.compositor == "niri") pkgs.wl-gammarelay-rs;
+        # wl-gammarelay-rs; Hyprland uses hyprsunset. matugen derives the
+        # wallpaper palette for the shell, and niri needs swaybg to show it.
+        environment.systemPackages =
+          [ pkgs.matugen ]
+          ++ lib.optionals (cfg.compositor == "niri") [ pkgs.wl-gammarelay-rs pkgs.swaybg ];
       }
 
       # `programs.niri` is not available on every nixpkgs revision.

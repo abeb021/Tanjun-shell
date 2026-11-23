@@ -1,0 +1,21 @@
+# Tanjun wallpaper colours (Hyprland). Only "From wall" runs matugen; the named
+# presets stay hand-written in shell/themes and compositors/hyprland/themes.
+#
+# Template paths are relative to this file, so the checkout can live anywhere.
+# Outputs use ~ because the home-manager module assumes the default XDG layout.
+[config]
+# No update checks: they can reach the network on every run.
+version_check = false
+# Repeating the same wallpaper after a reload is ~20 ms instead of ~130 ms.
+caching = true
+# Some walls yield several source colours; matugen fails unless one is chosen.
+# 0 is the dominant one.
+source_color_index = 0
+
+[templates.palette]
+input_path = "./templates/palette.json"
+output_path = "~/.local/state/tanjun/palette.json"
+
+[templates.hyprland]
+input_path = "./templates/hyprland.lua"
+output_path = "~/.config/hypr/hyprland/themes/wall/wall.lua"

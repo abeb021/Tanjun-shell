@@ -56,8 +56,14 @@ in
       [
         cfg.package
         pkgs.quickshell
+        # "From wall" derives its palette with matugen; presets need nothing.
+        pkgs.matugen
       ]
-      ++ lib.optional (cfg.compositor == "niri") pkgs.wl-gammarelay-rs;
+      # niri draws no wallpaper itself: swaybg is what start_still launches.
+      ++ lib.optionals (cfg.compositor == "niri") [
+        pkgs.wl-gammarelay-rs
+        pkgs.swaybg
+      ];
 
     home.activation.tanjunAttach = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       checkout=${lib.escapeShellArg (toString cfg.checkout)}

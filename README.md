@@ -22,7 +22,7 @@ One [Quickshell](https://quickshell.outfoxxed.me) process. Hyprland or niri; the
 - **Overview** — live window previews. Super+Tab on Hyprland, Super+Grave on niri.
 - **System drawer** — per-stream mixer, Bluetooth, Wi-Fi, VPN, host meters, power, skins.
 - **Settings** — rail, live JSON pins, font picker, search. Super+Ctrl+,
-- **Color** — named skins, From wall, or pull colors from a paper. Keep the palette so a new wall cannot jump the rice.
+- **Color** — nine hand-tuned skins, or **From wall**: matugen derives the palette from the wallpaper (Material You, smart dark/light). Keep the palette so a new wall cannot jump the rice.
 - **Idle and lock** — dim, lock, DPMS, sleep in-shell. Fingerprint if PAM has it. Super+P.
 - **Night light** — on/off, temperature, and a night/day schedule. hyprsunset on Hyprland, wl-gammarelay-rs on niri (the nix modules install it).
 - **Wallpaper** — still or video. Lock uses a still frame.

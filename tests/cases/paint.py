@@ -4,13 +4,32 @@ import importlib.util
 import json
 import os
 import re
+import shutil
 import stat
 import subprocess
 import sys
 import time
+import zlib
 from pathlib import Path
 
-from lib import ROOT, SCRIPTS, SHELL
+from lib import PALETTE_KEYS, ROOT, SCRIPTS, SHELL
+
+
+def _write_png(path: Path, rgb: tuple[int, int, int], size: int = 8) -> None:
+    """A flat PNG, so the matugen check needs no image library."""
+    import struct
+
+    raw = (b"\x00" + bytes(rgb) * size) * size
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 2, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(raw))
+        + chunk(b"IEND", b"")
+    )
 
 
 def _load_paint():
@@ -65,16 +84,53 @@ def register(s) -> None:
         str(dirs),
     )
 
-    try:
-        from PIL import Image
-    except ImportError:
-        Image = None
-    if Image is not None:
-        sample_img = tmp / "sample-wall.png"
-        Image.new("RGB", (24, 24), (32, 64, 96)).save(sample_img)
-        pal1 = paint.sample_palette(sample_img)
-        s.ok("sample pal dict", isinstance(pal1, dict) and pal1.get("kind") == "wall", str(pal1)[:120])
-        s.ok("sample pal accent", isinstance(pal1.get("accent"), str) and pal1["accent"].startswith("#"), str(pal1.get("accent")))
+    mdir = ROOT / "matugen"
+    for name in ("config.toml", "config-niri.toml"):
+        cfg = mdir / name
+        s.ok(f"matugen {name} exists", cfg.is_file(), str(cfg))
+        if cfg.is_file():
+            text = cfg.read_text(encoding="utf-8")
+            s.ok(f"matugen {name} palette template", "[templates.palette]" in text, text[:120])
+            s.ok(f"matugen {name} skips update check", "version_check = false" in text, text[:120])
+
+    tpl = mdir / "templates" / "palette.json"
+    s.ok("matugen palette template exists", tpl.is_file(), str(tpl))
+    if tpl.is_file():
+        text = tpl.read_text(encoding="utf-8")
+        for key in PALETTE_KEYS:
+            s.ok(f"matugen template {key}", f'"{key}":' in text, key)
+
+    matugen = shutil.which("matugen")
+    if matugen is not None and tpl.is_file():
+        sample_img = tmp / "matugen-wall.png"
+        _write_png(sample_img, (32, 64, 96))
+        cfg = tmp / "matugen-test.toml"
+        out = tmp / "matugen-palette.json"
+        niri_kdl = tmp / "matugen-niri.kdl"
+        niri_tpl = mdir / "templates" / "niri.kdl"
+        cfg.write_text(
+            "[config]\nversion_check = false\nsource_color_index = 0\n\n"
+            "[templates.palette]\n"
+            f'input_path = "{tpl}"\noutput_path = "{out}"\n\n'
+            "[templates.niri]\n"
+            f'input_path = "{niri_tpl}"\noutput_path = "{niri_kdl}"\n',
+            encoding="utf-8",
+        )
+        mt = subprocess.run(
+            [matugen, "image", str(sample_img), "-c", str(cfg), "-m", "dark", "-t", "scheme-content", "-q"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        s.eq("matugen exit", mt.returncode, 0)
+        try:
+            data = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else {}
+        except json.JSONDecodeError:
+            data = {}
+        s.ok("matugen palette accent", str(data.get("accent", "")).startswith("#"), str(data)[:120])
+        s.ok("matugen palette keys", all(k in data for k in PALETTE_KEYS), str(sorted(data)))
+        kdl = niri_kdl.read_text(encoding="utf-8") if niri_kdl.is_file() else ""
+        s.ok("matugen niri kdl", "active-color" in kdl and "{{" not in kdl, kdl[:120])
 
     # Host metrics are read in-process by shell/services/Host.qml now, so there is
     # no helper script to unit-test and no Python entry point to exercise. The live

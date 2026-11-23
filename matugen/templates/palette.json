@@ -1,0 +1,16 @@
+{
+  "kind": "wall",
+  "name": "wall",
+  "label": "From wall",
+  "accent": "{{ colors.primary.default.hex }}",
+  "accentHover": "{{ colors.primary.default.hex | lighten: 10.0 }}",
+  "critical": "#ef4444",
+  "warning": "#eab308",
+  "info": "#808080",
+  "good": "#7bc379",
+  "fg": "{{ colors.on_background.default.hex }}",
+  "fgSub": "{{ colors.on_surface_variant.default.hex }}",
+  "bg": "{{ colors.background.default.hex }}",
+  "surface": "{{ colors.surface_container.default.hex }}",
+  "surfaceHover": "{{ colors.surface_container_high.default.hex }}"
+}

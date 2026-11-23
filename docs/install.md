@@ -69,7 +69,7 @@ On rebuild, Home Manager:
 
 - symlinks `~/.local/share/tanjun` and `~/.config/quickshell` to that checkout
 - writes the Hyprland or niri compositor stub under `~/.config`
-- installs `tanjun-quickshell` (same binary as `quickshell -p ~/.config/quickshell`) plus the plain `quickshell`/`qs` binaries used by the compositor autostart and binds
+- installs `tanjun-quickshell` (same binary as `quickshell -p ~/.config/quickshell`) plus the plain `quickshell`/`qs` binaries used by the compositor autostart and binds, `matugen` for wallpaper palettes, and `swaybg` on niri (niri draws no wallpaper itself)
 
 The other runtime tools (`cliphist`, `wl-clipboard`, `brightnessctl`, `playerctl`, `libqalculate`, `ffmpeg`, compositor helpers) stay in your NixOS modules. Hyprland autostart in the Tanjun rice still starts Quickshell; you can call `tanjun-quickshell` manually instead.
 

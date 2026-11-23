@@ -54,9 +54,21 @@ Singleton {
         });
     }
 
+    // The helper's stderr used to vanish, so a missing wallpaper tool or a
+    // matugen failure looked like a click that did nothing. Surface it in the
+    // shell log instead.
+    function noteError(t) {
+        const s = `${t || ""}`.trim();
+        if (s.length)
+            console.warn("tanjun-paint:", s);
+    }
+
     Process {
         id: setProc
         command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, Config.theme.sampleWall ? "set" : "wall", root.wallPick]
+        stderr: StdioCollector {
+            onStreamFinished: root.noteError(text)
+        }
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {
@@ -90,6 +102,9 @@ Singleton {
     Process {
         id: sampleProc
         command: ["python3", `${Quickshell.shellDir}/scripts/tanjun-paint.py`, "sample"]
+        stderr: StdioCollector {
+            onStreamFinished: root.noteError(text)
+        }
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: {

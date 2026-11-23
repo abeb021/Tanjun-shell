@@ -12,10 +12,10 @@ layout {
     }
 }
 
-// Written by tanjun-paint.py from the active palette. Includes merge into the
-// layout above, so only the colours listed here change. Top-level, because niri
-// rejects an include nested inside another section; optional, so the config is
-// valid before the first theme has been painted.
+// Written at runtime: by matugen for "From wall", by tanjun-paint.py for a
+// named preset. Includes merge into the layout above, so only the colours
+// listed here change. Top-level, because niri rejects an include nested inside
+// another section; optional, so the config is valid before the first paint.
 include optional=true "~/.config/niri/tanjun-colors.kdl"
 
 prefer-no-csd
