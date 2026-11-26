@@ -20,6 +20,7 @@ Singleton {
     readonly property alias screens: adapter.screens
     readonly property alias idle: adapter.idle
     readonly property alias theme: adapter.theme
+    readonly property alias notifications: adapter.notifications
 
     readonly property string defaultFontUi: "JetBrains Mono"
     readonly property string defaultFontJp: "Noto Sans CJK JP"
@@ -165,6 +166,10 @@ Singleton {
             out.appearance = ap;
         if (theme.sampleWall === false)
             out.theme = { sampleWall: false };
+        // DND is a toggle that has to survive a shell restart, so it lives in the
+        // config instead of in UiMode's session state.
+        if (notifications.dnd)
+            out.notifications = { dnd: true };
         const sc = {};
         if (screens.gamma > 0)
             sc.gamma = screens.gamma;
@@ -296,6 +301,10 @@ Singleton {
 
             property JsonObject theme: JsonObject {
                 property bool sampleWall: true
+            }
+
+            property JsonObject notifications: JsonObject {
+                property bool dnd: false
             }
         }
     }

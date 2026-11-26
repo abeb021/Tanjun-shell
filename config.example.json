@@ -11,5 +11,8 @@
   },
   "appearance": {
     "fontPx": 14
+  },
+  "notifications": {
+    "dnd": false
   }
 }

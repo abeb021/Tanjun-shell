@@ -5,7 +5,7 @@ import "../../services"
 BarButton {
     id: root
     popoutName: "notify"
-    onRightClicked: UiMode.dnd = !UiMode.dnd
+    onRightClicked: UiMode.toggleDnd()
     onMiddleClicked: Notifs.clear()
     BarText {
         text: UiMode.dnd ? "" : ""

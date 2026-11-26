@@ -480,7 +480,7 @@ OverlayHost {
                             }
                             BarButton {
                                 implicitWidth: parent.width
-                                onClicked: UiMode.dnd = !UiMode.dnd
+                                onClicked: UiMode.toggleDnd()
                                 BarText {
                                     text: UiMode.dnd ? "dnd · on" : "dnd · off"
                                     px: 12

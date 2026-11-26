@@ -276,7 +276,7 @@ ShellRoot {
         }
 
         function toggleDnd(): void {
-            UiMode.dnd = !UiMode.dnd;
+            UiMode.toggleDnd();
         }
 
         function closeMenus(): void {

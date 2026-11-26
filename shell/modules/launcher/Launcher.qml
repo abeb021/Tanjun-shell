@@ -520,7 +520,7 @@ Scope {
                     return;
                 }
                 if (id === "dnd") {
-                    UiMode.dnd = !UiMode.dnd;
+                    UiMode.toggleDnd();
                     UiMode.closeMenus();
                     return;
                 }

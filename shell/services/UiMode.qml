@@ -60,7 +60,6 @@ Singleton {
     property bool overviewOpen: false
     property bool sidebarOpen: false
     property bool settingsOpen: false
-    property bool dnd: false
     property bool wallsOpen: false
     property string wallFolder: ""
 
@@ -388,6 +387,19 @@ Singleton {
     function pickWall(path) {
         wallsOpen = false;
         Theme.setWallpaper(path);
+    }
+
+    // Do not disturb is a real setting, not session state: it is written to
+    // config.json and read back on the next start.
+    readonly property bool dnd: Config.notifications.dnd
+
+    function setDnd(on) {
+        Config.notifications.dnd = !!on;
+        Config.writeSparse();
+    }
+
+    function toggleDnd() {
+        setDnd(!dnd);
     }
 
     // The dwell: how long the pointer rests on a button before its menu opens.

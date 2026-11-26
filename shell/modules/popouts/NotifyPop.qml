@@ -24,7 +24,7 @@ Face {
         PopChip {
             label: "DND"
             active: UiMode.dnd
-            onClicked: UiMode.dnd = !UiMode.dnd
+            onClicked: UiMode.toggleDnd()
         }
         PopChip {
             label: "CLEAR"

@@ -45,6 +45,30 @@ Singleton {
         precision: SystemClock.Minutes
     }
 
+    // Qt timers count on a clock that stops while the machine sleeps, so after a
+    // suspend or hibernate the next minute tick can land up to a minute late (and
+    // hibernate skips whole days). This drift check is the cheap detector: the
+    // wall clock jumps while the timer did not. Bouncing `enabled` makes
+    // SystemClock reset its target and re-read the time at once.
+    function refresh() {
+        clock.enabled = false;
+        clock.enabled = true;
+    }
+
+    property double _lastBeat: Date.now()
+
+    Timer {
+        interval: 10000
+        repeat: true
+        running: true
+        onTriggered: {
+            const now = Date.now();
+            if (now - root._lastBeat > 20000)
+                root.refresh();
+            root._lastBeat = now;
+        }
+    }
+
     function formatTime(tz) {
         const opts = {
             hour: "2-digit",
